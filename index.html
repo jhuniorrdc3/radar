@@ -1,0 +1,2399 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Radar</title>
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0d0f0f;--panel:#171919;--panel-2:#1e2020;--panel-3:#252828;
+      --text:#eef1ef;--muted:#9aa3a0;--line:#2e3332;
+      --accent:#5cc0b1;--accent-dim:rgba(92,192,177,.12);
+      --good:#82c66f;--good-dim:rgba(130,198,111,.13);
+      --warn:#d3a256;--warn-dim:rgba(211,162,86,.13);
+      --bad:#d96b76;--bad-dim:rgba(217,107,118,.13);
+      --kax:#E34234;--kax-dark:#8B1A0E;--kax-cream:#F5F0EA;
+      --r:18px;--shadow:0 10px 28px rgba(0,0,0,.25);
+      --xs:clamp(.72rem,.68rem + .2vw,.82rem);
+      --sm:clamp(.84rem,.78rem + .3vw,.94rem);
+      --base:clamp(.95rem,.9rem + .25vw,1.05rem);
+      --lg:clamp(1.1rem,1rem + .5vw,1.35rem);
+      --xl:clamp(1.4rem,1.2rem + .8vw,1.9rem);
+    }
+    *,*::before,*::after{box-sizing:border-box}
+    html{-webkit-font-smoothing:antialiased} html,body{margin:0}
+    body{font-family:'Satoshi',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:var(--base)}
+    button,input,textarea,select{font:inherit}
+    .app{max-width:1160px;margin:auto;padding:16px}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:42px;height:42px;border-radius:50%;background:radial-gradient(circle at 38% 38%,rgba(92,192,177,.4),transparent 60%),#15201f;border:1px solid var(--line);display:grid;place-items:center;flex-shrink:0}
+    .logo:before{content:'';width:18px;height:18px;border:2px solid var(--accent);border-radius:50%;box-shadow:0 0 0 6px rgba(92,192,177,.08)}
+    h1{font-size:clamp(1.5rem,2vw,2rem);margin:0} .sub{color:var(--muted);font-size:.9rem}
+    .tabs{display:flex;gap:6px;flex-wrap:nowrap;align-items:center;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .tabs::-webkit-scrollbar{display:none}
+    .tab{background:var(--panel);border:1px solid var(--line);color:var(--muted);padding:.55rem .85rem;border-radius:999px;cursor:pointer;transition:all .2s;white-space:nowrap;font-size:clamp(.78rem,.7rem + .3vw,.92rem)}
+    .tab.active{background:var(--accent);color:#082320;border-color:transparent;font-weight:700}
+    .view{display:none} .view.active{display:block}
+    .grid{display:grid;gap:14px}
+    .col2{grid-template-columns:1.2fr .8fr} .col2eq{grid-template-columns:1fr 1fr}
+    .col3{grid-template-columns:repeat(3,1fr)} .col4{grid-template-columns:repeat(4,1fr)}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
+    .card h2{margin:0 0 8px;font-size:1.05rem} .card h3{margin:0 0 6px;font-size:.98rem}
+    .muted{color:var(--muted)} .small{font-size:var(--sm)} .tiny{font-size:var(--xs)}
+    .entry{min-height:80px;width:100%;resize:vertical;border:none;outline:none;background:var(--panel-2);color:var(--text);padding:12px 14px;border-radius:14px;line-height:1.6;transition:box-shadow .2s}
+    .entry:focus{box-shadow:0 0 0 2px var(--accent)}
+    .entry::placeholder{color:#6e7875}
+    .actions{display:flex;gap:8px;margin-top:10px}
+    .actions .btn{flex:1;text-align:center;padding:.75rem .6rem;font-size:.88rem}
+    .btn{border:none;border-radius:999px;padding:.82rem 1.1rem;cursor:pointer;background:var(--accent);color:#082320;font-weight:700;transition:transform .12s,background .15s,box-shadow .15s}
+    .btn:hover{background:#4aada0;box-shadow:0 4px 14px rgba(92,192,177,.25)}
+    .btn:active{transform:scale(0.96)}
+    .btn.sec{background:var(--panel-2);color:var(--text);border:1px solid var(--line)}
+    .btn.sec:hover{background:var(--panel-3)}
+    .btn.danger{background:var(--bad-dim);color:var(--bad);border:1px solid rgba(217,107,118,.3)}
+    .kax-wrap{position:fixed;bottom:24px;right:24px;z-index:100;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+    .kax-bubble{background:var(--panel);border:1px solid var(--line);border-radius:16px 16px 4px 16px;padding:12px 14px;max-width:240px;font-size:.88rem;line-height:1.45;box-shadow:var(--shadow);opacity:0;transform:translateY(8px) scale(.96);transition:opacity .3s,transform .3s;pointer-events:none}
+    .kax-bubble.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+    .kax-avatar{width:64px;height:64px;cursor:pointer;filter:drop-shadow(0 4px 10px rgba(227,66,52,.3));transition:transform .2s}
+    .kax-avatar:hover{transform:scale(1.08)}
+    @keyframes kax-idle{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+    @keyframes kax-celebrate{0%,100%{transform:rotate(0)}25%{transform:rotate(-10deg)}75%{transform:rotate(10deg)}}
+    @keyframes kax-alert{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+    .kax-avatar.idle{animation:kax-idle 3s ease-in-out infinite}
+    .kax-avatar.celebrate{animation:kax-celebrate .5s ease-in-out 3}
+    .kax-avatar.alert{animation:kax-alert .2s ease-in-out 4}
+    @keyframes fadeSlideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+    .move{animation:fadeSlideUp .25s ease both}
+    .consejo{animation:fadeSlideUp .3s ease both}
+    .recommend{background:linear-gradient(150deg,rgba(92,192,177,.1),rgba(92,192,177,.03));border:1px solid rgba(92,192,177,.2);padding:14px;border-radius:14px;line-height:1.5}
+    .pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .pill{display:inline-flex;align-items:center;padding:.28rem .65rem;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);font-size:.8rem;color:var(--muted)}
+    .kpi strong{display:block;font-size:1.65rem;margin:4px 0 2px;font-variant-numeric:tabular-nums;transition:color .3s}
+    .topline{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+    .list-wrap{max-height:380px;overflow:auto;padding-right:4px}
+    .move{display:flex;justify-content:space-between;gap:12px;padding:13px 0;border-top:1px solid var(--line)}
+    .move:first-child{border-top:none;padding-top:0}
+    .move-meta{font-size:.8rem;color:var(--muted);margin-top:3px}
+    .move.saved-row{opacity:.6}
+    .tag{display:inline-block;padding:.22rem .55rem;border-radius:999px;font-size:.78rem;font-weight:600;margin-right:6px}
+    .tag.hc{background:var(--accent-dim);color:var(--accent)}
+    .tag.personal{background:var(--warn-dim);color:var(--warn)}
+    .tag.ingreso{background:var(--good-dim);color:var(--good)}
+    .tag.saved{background:rgba(130,198,111,.15);color:var(--good);font-size:.7rem}
+    .consejo{display:flex;gap:10px;align-items:flex-start;padding:12px;border-radius:12px;background:var(--warn-dim);border:1px solid rgba(211,162,86,.2);margin-bottom:10px}
+    .consejo.good{background:var(--good-dim);border-color:rgba(130,198,111,.2)}
+    .consejo.accent{background:var(--accent-dim);border-color:rgba(92,192,177,.2)}
+    .consejo .ico{font-size:1.2rem;flex-shrink:0}
+    .progress{height:11px;background:var(--panel-3);border-radius:999px;overflow:hidden;margin:6px 0}
+    .progress span{display:block;height:100%;border-radius:999px;background:var(--accent);transition:width .6s cubic-bezier(.4,0,.2,1)}
+    .report-box{background:var(--panel-2);border:1px dashed var(--line);border-radius:14px;padding:14px;white-space:pre-wrap;line-height:1.55;font-size:.85rem}
+    /* FIX: subcat-grid SIEMPRE 3 columnas, incluso en móvil */
+    .subcat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+    .subcat{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:9px 10px;transition:border-color .2s}
+    .subcat:hover{border-color:var(--accent)}
+    .subcat .tiny{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .subcat strong{display:block;font-size:1.05rem;margin:3px 0 2px;font-variant-numeric:tabular-nums}
+    .project,.deuda-item,.fijo-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+    .project:first-child,.deuda-item:first-child,.fijo-item:first-child{border-top:none;padding-top:0}
+    .add-row{display:flex;gap:10px;flex-wrap:wrap}
+    .add-row input,.form-input{background:var(--panel-2);border:1px solid var(--line);color:var(--text);padding:.82rem 1rem;border-radius:999px;transition:border-color .2s}
+    .add-row input:focus,.form-input:focus{outline:none;border-color:var(--accent)}
+    .add-row input{flex:1;min-width:180px}
+    .note{padding:10px 12px;border-left:3px solid var(--accent);background:var(--panel-2);border-radius:10px;font-size:.85rem}
+    .semaforo{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;font-weight:700;transition:background .4s}
+    .semaforo.verde{background:var(--good-dim);border:1px solid rgba(130,198,111,.25)}
+    .semaforo.amarillo{background:var(--warn-dim);border:1px solid rgba(211,162,86,.25)}
+    .semaforo.rojo{background:var(--bad-dim);border:1px solid rgba(217,107,118,.13)}
+    .dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;transition:background .4s}
+    .dot.verde{background:var(--good)} .dot.amarillo{background:var(--warn)} .dot.rojo{background:var(--bad)}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+    label{display:block;font-size:.82rem;color:var(--muted);margin-bottom:4px}
+    .oportunidad{display:flex;gap:10px;align-items:flex-start;padding:12px;border-radius:12px;background:var(--accent-dim);border:1px solid rgba(92,192,177,.2);margin-bottom:10px;animation:fadeSlideUp .3s ease both}
+    .alert-badge{display:inline-block;background:var(--bad);color:white;font-size:.72rem;font-weight:700;padding:.15rem .45rem;border-radius:999px;margin-left:6px;vertical-align:middle}
+    #saveStatus{font-size:.85rem;color:var(--muted);margin-top:8px;min-height:20px}
+    .period-tabs{display:flex;gap:6px}
+    .period-tab{background:var(--panel-2);border:1px solid var(--line);color:var(--muted);padding:.4rem .85rem;border-radius:999px;cursor:pointer;font-size:.8rem;font-weight:600;transition:all .2s;border:none}
+    .period-tab.active{background:var(--accent);color:#082320}
+    .section-label{font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:6px 0 2px;margin-top:10px;border-top:1px solid var(--line)}
+    /* Date navigator */
+    .date-nav{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+    .date-nav input[type=date]{background:var(--panel-2);border:1px solid var(--line);color:var(--text);padding:.5rem .9rem;border-radius:999px;font-size:.85rem}
+    .date-nav input[type=date]:focus{outline:none;border-color:var(--accent)}
+    .nav-btn{background:var(--panel-2);border:1px solid var(--line);color:var(--text);padding:.5rem .85rem;border-radius:999px;cursor:pointer;font-size:.9rem}
+    .nav-btn:hover{background:var(--panel-3)}
+    .today-chip{font-size:.8rem;color:var(--accent);font-weight:700;padding:.3rem .7rem;border-radius:999px;background:var(--accent-dim);border:1px solid rgba(92,192,177,.2);cursor:pointer}
+    /* Modal */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:300;align-items:center;justify-content:center}
+    .modal-overlay.open{display:flex}
+    .modal-box{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px;width:min(440px,94vw);max-height:88vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+    .modal-box h2{margin:0 0 14px;font-size:1.1rem}
+    .modal-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+    /* Chart legend */
+    .chart-legend{display:flex;gap:16px;font-size:.78rem;margin-bottom:12px;flex-wrap:wrap}
+    .chart-legend span{display:flex;align-items:center;gap:5px}
+    .legend-dot{width:12px;height:10px;border-radius:3px;flex-shrink:0}
+    #categoryChart{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    /* Móvil: solo col2/col3/col4 colapsan, subcat-grid NO */
+    .col4kpi{grid-template-columns:repeat(4,1fr)}
+    @media(max-width:960px){.col2,.col2eq,.col3,.col4{grid-template-columns:1fr 1fr}}
+    @media(max-width:640px){
+      .col2,.col2eq,.col3,.col4,.form-row{grid-template-columns:1fr}
+      .col4kpi{grid-template-columns:repeat(2,1fr)} /* siempre 2x2 en móvil */
+      .top{flex-direction:column;align-items:flex-start}
+      .kax-wrap{bottom:16px;right:16px}
+      .subcat-grid{grid-template-columns:repeat(3,1fr)} /* forzar siempre 3 cols */
+    }
+    /* Undo toast */
+    .undo-toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:10px 18px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);z-index:400;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;white-space:nowrap;font-size:.88rem}
+    .undo-toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+    .undo-toast .undo-bar{height:3px;background:var(--accent);border-radius:999px;transition:width linear}
+    .undo-btn{background:var(--accent);color:#082320;border:none;border-radius:999px;padding:.3rem .85rem;font-weight:700;cursor:pointer;font-size:.85rem}
+  </style>
+</head>
+<body>
+
+<script>
+  const APPS_URL = "https://script.google.com/macros/s/AKfycbxgj7yn9Nxp0f8QgDhsQydb97utV0YBNdqinPXKI0EIVJwxTHfzJvfveVmKiv9j5kN7NA/exec";
+  const RESUMEN = {};
+  // INITIAL_DATA se inyecta abajo via template de Apps Script
+  // Desde Netlify queda como objeto vacío y se carga via sync
+  let INITIAL_DATA = null;
+</script>
+
+<div class="app">
+  <div class="top">
+    <div class="brand">
+      <div class="logo"></div>
+      <div><h1>Radar</h1><div class="sub">Gastos · Ingresos · Metas · Hot and Cold</div></div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="hoy">Hoy</button>
+      <button class="tab" data-tab="finanzas">Finanzas</button>
+      <button class="tab" data-tab="fijos">Fijos <span class="alert-badge" id="fijoBadge" style="display:none">!</span></button>
+      <button class="tab" data-tab="informe">Informe</button>
+      <button class="tab" data-tab="proyectos">Proyectos</button>
+      <button class="btn sec" id="syncBtn" title="Sincronizar con Sheets" style="border-radius:999px;padding:.6rem .9rem;font-size:1rem">📡</button>
+    </div>
+    <span id="syncStatus" style="display:none;font-size:.78rem;color:var(--muted);margin-left:4px">Sincronizando…</span>
+  </div>
+
+  <!-- HOY -->
+  <section class="view active" id="hoy">
+    <div class="grid col2">
+      <div class="card">
+        <textarea class="entry" id="entry" placeholder="¿Qué pasó hoy? Dicta o escribe todo junto…"></textarea>
+        <div class="actions">
+          <button class="btn" id="voiceBtn" style="flex:1">🎙️ Dictar con Chrome</button>
+          <button class="btn sec" id="parseBtn" style="flex:1">Organizar registro</button>
+        </div>
+        <div id="saveStatus"></div>
+        <!-- Movimientos pendientes (por confirmar) -->
+        <div id="pendingArea" style="display:none;margin-top:14px">
+          <div class="section-label">⏳ Por confirmar</div>
+          <div class="list-wrap" style="max-height:220px" id="pendingList"></div>
+          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn" id="confirmBtn">✅ Guardar todos en Sheets</button>
+            <button class="btn sec" id="clearPendingBtn">✕ Descartar</button>
+          </div>
+        </div>
+        <div class="tiny muted" style="margin-top:8px">Puedes mezclar gastos personales y de Hot and Cold en el mismo texto.</div>
+      </div>
+      <div class="card">
+        <h2>Recomendación del día</h2>
+        <div class="recommend" id="recommendation">Cargando tu agenda del día…</div>
+        <div class="pills" id="recommendPills"></div>
+        <div id="semaforoBox" style="margin-top:12px"></div>
+        <div id="calendarBox" style="margin-top:10px">
+          <div class="tiny muted" style="margin-bottom:6px">📅 Eventos de hoy</div>
+          <div id="calendarEvents" class="tiny muted">Cargando calendario…</div>
+        </div>
+      </div>
+    </div>
+    <div class="grid col4kpi" style="margin-top:14px">
+      <div class="card kpi"><div class="muted tiny">Total del día</div><strong id="totalDay">S/ 0</strong><div class="tiny muted">Todo lo registrado</div></div>
+      <div class="card kpi"><div class="muted tiny">Hot and Cold</div><strong id="totalHC">S/ 0</strong><div class="tiny muted">Proyectos + internos</div></div>
+      <div class="card kpi"><div class="muted tiny">Personal</div><strong id="totalPersonal">S/ 0</strong><div class="tiny muted">Tus gastos propios</div></div>
+      <div class="card kpi"><div class="muted tiny">TC usada hoy</div><strong id="totalTC">S/ 0</strong><div class="tiny muted">Controlar mezcla</div></div>
+    </div>
+    <div class="grid col2eq" style="margin-top:14px">
+      <div class="card">
+        <div class="topline">
+          <h2 id="movTitulo">Movimientos de hoy</h2>
+          <span class="pill" id="countMoves">0 movimientos</span>
+        </div>
+        <!-- Navegador de fecha -->
+        <div class="date-nav">
+          <button class="nav-btn" id="prevDayBtn">‹</button>
+          <input type="date" id="viewDatePicker"/>
+          <button class="nav-btn" id="nextDayBtn">›</button>
+          <span class="today-chip" id="goTodayBtn">Hoy</span>
+        </div>
+        <div class="list-wrap" id="movementList"><div class="tiny muted">Todavía no hay movimientos guardados.</div></div>
+        <button class="btn sec" id="addPastMoveBtn" style="margin-top:10px;width:100%">+ Agregar gasto en esta fecha</button>
+      </div>
+      <div class="card">
+        <h2>Conciencia de hábito</h2>
+        <div id="consejoBox"><div class="tiny muted">Registra gastos para ver consejos personalizados.</div></div>
+        <h3 style="margin-top:14px">Subcategorías de hoy</h3>
+        <div class="subcat-grid">
+          <div class="subcat"><div class="tiny muted">🍽️ Comida</div><strong id="sc-comida">S/ 0</strong></div>
+          <div class="subcat"><div class="tiny muted">🚕 Transp.</div><strong id="sc-transporte">S/ 0</strong></div>
+          <div class="subcat"><div class="tiny muted">☕ Café</div><strong id="sc-cafe">S/ 0</strong></div>
+          <div class="subcat"><div class="tiny muted">💊 Farmacia</div><strong id="sc-farmacia">S/ 0</strong></div>
+          <div class="subcat"><div class="tiny muted">👗 Ropa</div><strong id="sc-ropa">S/ 0</strong></div>
+          <div class="subcat"><div class="tiny muted">💑 Ocio</div><strong id="sc-ocio">S/ 0</strong></div>
+          <div class="subcat"><div class="tiny muted">🛒 Mercado</div><strong id="sc-mercado">S/ 0</strong></div>
+          <div class="subcat"><div class="tiny muted">🏋️ Salud</div><strong id="sc-salud">S/ 0</strong></div>
+          <div class="subcat"><div class="tiny muted">❓ Otros</div><strong id="sc-otros">S/ 0</strong></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINANZAS -->
+  <section class="view" id="finanzas">
+    <div class="grid col3">
+      <div class="card kpi"><div class="muted tiny">Ingresos del mes</div><strong id="totalIngresos">S/ 0</strong><div class="tiny muted" id="totalIngresosLabel">Honorarios + Universidad</div></div>
+      <div class="card kpi"><div class="muted tiny">Compromisos fijos</div><strong id="totalFijosMes" style="color:var(--warn)">S/ 0</strong><div class="tiny muted">Lo que sale sí o sí</div></div>
+      <div class="card kpi"><div class="muted tiny">Excedente real</div><strong id="excedente">S/ 0</strong><div class="tiny muted">Ingresos − fijos − gastos</div></div>
+    </div>
+
+    <!-- Historial semanal / mensual -->
+    <div class="card" style="margin-top:14px">
+      <div class="topline">
+        <h2>Gastos acumulados</h2>
+        <div class="period-tabs">
+          <button class="period-tab active" data-period="semana">7 días</button>
+          <button class="period-tab" data-period="mes">Este mes</button>
+        </div>
+      </div>
+      <div id="histSubcats" class="subcat-grid"></div>
+      <div id="histResumen" style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"></div>
+      <div class="section-label" style="margin-top:14px">Movimientos del período</div>
+      <div class="list-wrap" style="max-height:280px;margin-top:6px" id="histMoves"><div class="tiny muted">Sin datos.</div></div>
+    </div>
+
+    <!-- Gráfico por categorías: mes actual vs anterior -->
+    <div class="card" style="margin-top:14px">
+      <div class="topline">
+        <h2>¿En qué estás gastando más?</h2>
+        <div class="chart-legend">
+          <span><span class="legend-dot" style="background:var(--panel-3)"></span><span id="labelMesAnterior">Mes anterior</span></span>
+          <span><span class="legend-dot" style="background:var(--accent)"></span><span id="labelMesActual">Este mes</span></span>
+        </div>
+      </div>
+      <div id="categoryChart"><div class="tiny muted">Sin datos suficientes para graficar.</div></div>
+    </div>
+
+    <div class="grid col2eq" style="margin-top:14px">
+      <div class="card">
+        <h2>Registrar ingreso</h2>
+        <div class="form-row">
+          <div><label>Fuente</label><select class="form-input" id="ingresoFuente" onchange="toggleIngresoProyecto()"><option value="universidad">Universidad</option><option value="hotandcold">Hot and Cold</option><option value="otro">Otro</option></select></div>
+          <div><label>Monto (S/)</label><input class="form-input" type="number" id="ingresoMonto" placeholder="3000"/></div>
+        </div>
+        <div class="form-row">
+          <div><label>Descripción</label><input class="form-input" id="ingresoDesc" placeholder="Sueldo mayo"/></div>
+          <div><label>Fecha</label><input class="form-input" type="date" id="ingresoFecha"/></div>
+        </div>
+        <div class="form-row" id="ingresoHCRow" style="display:none">
+          <div><label>Proyecto</label>
+            <select class="form-input" id="ingresoProyecto">
+              <option value="">Sin proyecto</option>
+            </select>
+          </div>
+          <div><label>Tipo de ingreso HC</label>
+            <select class="form-input" id="ingresoTipoHC">
+              <option value="honorario">Honorario / sueldo</option>
+              <option value="caja_chica">Caja chica de proyecto</option>
+              <option value="reembolso">Reembolso</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div><label>Banco / medio de cobro</label>
+            <select class="form-input" id="ingresoBanco">
+              <option value="efectivo">Efectivo</option>
+              <option value="BCP">BCP</option>
+              <option value="Interbank">Interbank</option>
+              <option value="Yape">Yape</option>
+              <option value="Plin">Plin</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+          <div><label>&#8203;</label>
+            <div class="tiny muted" style="padding:.82rem 0;line-height:1.4">¿Por qué banco o medio te llegó este ingreso?</div>
+          </div>
+        </div>
+        <button class="btn" id="addIngresoBtn">Registrar ingreso</button>
+        <div class="list-wrap" style="margin-top:14px;max-height:200px" id="ingresoList"><div class="tiny muted">Sin ingresos registrados aún.</div></div>
+      </div>
+      <div class="card">
+        <h2>Préstamos recibidos</h2>
+        <div class="form-row">
+          <div><label>¿A quién le debo?</label><input class="form-input" id="prestamoPersona" placeholder="Papás, hermano…"/></div>
+          <div><label>Monto (S/)</label><input class="form-input" type="number" id="prestamoMonto" placeholder="200"/></div>
+        </div>
+        <button class="btn sec" id="addPrestamoBtn">Agregar préstamo</button>
+        <div id="prestamoList" style="margin-top:14px"><div class="tiny muted">Sin préstamos registrados.</div></div>
+        <div class="note tiny" style="margin-top:12px" id="prestamoConsejo">Kax te sugerirá cuándo devolver cuando haya excedente disponible.</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h2>Motor de oportunidades</h2>
+      <div id="oportunidadBox"><div class="tiny muted">Cuando tengas excedente, Kax te mostrará oportunidades de crecimiento.</div></div>
+    </div>
+  </section>
+
+  <!-- FIJOS -->
+  <section class="view" id="fijos">
+    <div class="card" style="margin-bottom:14px">
+      <h2>Compromisos fijos del mes</h2>
+      <div class="tiny muted" style="margin-bottom:14px">Kax te avisará antes de que venzan y te alertará en meses sin universidad.</div>
+      <div class="form-row">
+        <div><label>Nombre</label><input class="form-input" id="fijoNombre" placeholder="Alquiler, Luz, Perplexity…"/></div>
+        <div><label>Monto (S/)</label><input class="form-input" type="number" id="fijoMonto" placeholder="600"/></div>
+        <div><label>Día que vence</label><input class="form-input" type="number" id="fijoDia" placeholder="5" min="1" max="31"/></div>
+        <div style="display:flex;align-items:flex-end"><button class="btn" id="addFijoBtn">Agregar</button></div>
+      </div>
+      <div id="fijoList"><div class="tiny muted">Sin compromisos fijos registrados aún.</div></div>
+    </div>
+    <div class="grid col2eq">
+      <div class="card">
+        <h2>Total fijos del mes</h2>
+        <strong id="totalFijosDisplay" style="font-size:2rem;font-variant-numeric:tabular-nums;color:var(--warn)">S/ 0</strong>
+        <div class="tiny muted" style="margin-top:6px">Lo mínimo que necesitas cubrir antes de cualquier otro gasto.</div>
+      </div>
+      <div class="card">
+        <h2>Proyección meses críticos</h2>
+        <div id="proyeccionBox"><div class="tiny muted">Agrega tus fijos para ver la proyección.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INFORME -->
+  <section class="view" id="informe">
+    <div class="grid col3">
+      <div class="card"><h3>Proyecto con más gasto</h3><strong id="maxProject">Aún sin datos</strong><div class="tiny muted">Cuál proyecto está jalando más caja.</div></div>
+      <div class="card"><h3>TC en gastos empresa</h3><strong id="mixAccount">Sin alertas</strong><div class="tiny muted">Gastos de empresa con tu tarjeta.</div></div>
+      <div class="card"><h3>Mayor gasto personal</h3><strong id="maxSubcat">Sin datos</strong><div class="tiny muted">Subcategoría dominante del día.</div></div>
+    </div>
+    <div class="grid col2eq" style="margin-top:14px">
+      <div class="card">
+        <h2>Salud del sistema</h2>
+        <div class="tiny muted" style="margin-bottom:10px">Basado en tus datos reales de uso.</div>
+        <div class="small">Calidad de captura</div>
+        <div class="progress"><span id="captureBar" style="width:0%"></span></div>
+        <div class="small" style="margin-top:10px">Separación empresa / personal</div>
+        <div class="progress"><span id="splitBar" style="width:0%;background:var(--warn)"></span></div>
+        <div class="small" style="margin-top:10px">Constancia semanal</div>
+        <div class="progress"><span id="constanciaBar" style="width:0%;background:var(--good)"></span></div>
+        <div class="tiny muted" style="margin-top:6px" id="constanciaLabel"></div>
+      </div>
+      <div class="card">
+        <h2>Informe exportable</h2>
+        <div class="report-box" id="exportReport">Radar aún no tiene suficiente información para generar un informe útil.</div>
+        <div class="actions"><button class="btn sec" id="copyReport">Copiar informe</button></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h2>Resumen del mes (desde Sheets)</h2>
+      <div class="grid col3" style="margin-top:10px">
+        <div class="kpi"><div class="tiny muted">Gasto mes personal</div><strong id="sheets-gasto-personal">–</strong></div>
+        <div class="kpi"><div class="tiny muted">Caja chica disponible</div><strong id="sheets-cc-disponible">–</strong></div>
+        <div class="kpi"><div class="tiny muted">Estado Kax negocio</div><strong id="sheets-estado-negocio">–</strong></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROYECTOS -->
+  <section class="view" id="proyectos">
+    <div class="grid col2eq">
+      <div class="card">
+        <h2>Proyectos activos</h2>
+        <div id="projectList"></div>
+      </div>
+      <div class="card">
+        <h2>Agregar proyecto</h2>
+        <div class="add-row"><input id="newProject" placeholder="Nombre del nuevo proyecto"/><button class="btn" id="addProjectBtn">Agregar</button></div>
+        <div class="note tiny" style="margin-top:12px">Los proyectos se guardan localmente y en Sheets automáticamente.</div>
+        <div style="margin-top:16px">
+          <div class="tiny muted">Caja chica total recibida</div><strong id="sheets-cc-total">–</strong>
+          <div class="tiny muted" style="margin-top:8px">Caja chica ejecutada</div><strong id="sheets-cc-ejecutada">–</strong>
+          <div class="tiny muted" style="margin-top:8px">Caja chica disponible</div><strong id="sheets-cc-disp2">–</strong>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- KAX -->
+<!-- MODAL: Editar movimiento -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal-box">
+    <h2>Editar este gasto</h2>
+    <input type="hidden" id="editIdx"/>
+    <input type="hidden" id="editDateKey"/>
+    <div class="modal-row">
+      <div><label>Descripción</label><input class="form-input" id="editDesc" style="width:100%"/></div>
+      <div><label>Monto (S/)</label><input class="form-input" type="number" id="editMonto" style="width:100%"/></div>
+    </div>
+    <div class="modal-row">
+      <div><label>Tipo</label>
+        <select class="form-input" id="editTipo" style="width:100%">
+          <option value="Personal">Personal</option>
+          <option value="Hot and Cold">Hot and Cold</option>
+        </select>
+      </div>
+      <div><label>Subcategoría</label>
+        <select class="form-input" id="editSubcat" style="width:100%">
+          <option value="comida">Comida</option>
+          <option value="transporte">Transporte</option>
+          <option value="cafe">Café</option>
+          <option value="farmacia">Farmacia</option>
+          <option value="ropa">Ropa</option>
+          <option value="ocio">Ocio</option>
+          <option value="mercado">Mercado</option>
+          <option value="salud">Salud</option>
+          <option value="otros">Otros</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-row">
+      <div><label>Cuenta</label>
+        <select class="form-input" id="editCuenta" style="width:100%">
+          <option value="efectivo">Efectivo</option>
+          <option value="TC">TC (crédito)</option>
+          <option value="Débito">Débito</option>
+          <option value="BCP">BCP</option>
+          <option value="Interbank">Interbank</option>
+          <option value="BBVA">BBVA</option>
+          <option value="Yape">Yape</option>
+          <option value="Plin">Plin</option>
+        </select>
+      </div>
+      <div><label>Proyecto (si HC)</label><input class="form-input" id="editProyecto" style="width:100%" placeholder="Pajaten, Viviana…"/></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
+      <button class="btn" id="saveEditBtn" style="flex:1">Guardar cambios</button>
+      <button class="btn sec" id="cancelEditBtn" style="flex:1">Cancelar</button>
+    </div>
+    <div id="editStatus" style="display:none;text-align:center;margin-top:10px;font-size:.85rem;color:var(--accent)">⏳ Guardando en Sheets…</div>
+  </div>
+</div>
+
+<!-- MODAL: Agregar gasto en fecha pasada -->
+<div class="modal-overlay" id="addPastModal">
+  <div class="modal-box">
+    <h2 id="addPastTitle">Agregar gasto</h2>
+    <div class="modal-row">
+      <div><label>Descripción</label><input class="form-input" id="apDesc" style="width:100%" placeholder="Taxi, café, almuerzo…"/></div>
+      <div><label>Monto (S/)</label><input class="form-input" type="number" id="apMonto" style="width:100%"/></div>
+    </div>
+    <div class="modal-row">
+      <div><label>Tipo</label>
+        <select class="form-input" id="apTipo" style="width:100%">
+          <option value="Personal">Personal</option>
+          <option value="Hot and Cold">Hot and Cold</option>
+        </select>
+      </div>
+      <div><label>Subcategoría</label>
+        <select class="form-input" id="apSubcat" style="width:100%">
+          <option value="comida">Comida</option>
+          <option value="transporte">Transporte</option>
+          <option value="cafe">Café</option>
+          <option value="farmacia">Farmacia</option>
+          <option value="ropa">Ropa</option>
+          <option value="ocio">Ocio</option>
+          <option value="mercado">Mercado</option>
+          <option value="salud">Salud</option>
+          <option value="otros">Otros</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-row">
+      <div><label>Cuenta</label>
+        <select class="form-input" id="apCuenta" style="width:100%">
+          <option value="efectivo">Efectivo</option>
+          <option value="TC">TC (crédito)</option>
+          <option value="Débito">Débito</option>
+          <option value="BCP">BCP</option>
+          <option value="Interbank">Interbank</option>
+          <option value="BBVA">BBVA</option>
+          <option value="Yape">Yape</option>
+          <option value="Plin">Plin</option>
+        </select>
+      </div>
+      <div><label>Proyecto (si HC)</label><input class="form-input" id="apProyecto" style="width:100%" placeholder="Pajaten…"/></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
+      <button class="btn" id="saveAddPastBtn" style="flex:1">Guardar</button>
+      <button class="btn sec" id="cancelAddPastBtn" style="flex:1">Cancelar</button>
+    </div>
+    <div id="addPastStatus" style="display:none;text-align:center;margin-top:10px;font-size:.85rem;color:var(--accent)">⏳ Guardando en Sheets…</div>
+  </div>
+</div>
+
+<!-- UNDO TOAST -->
+<div class="undo-toast" id="undoToast">
+  <span id="undoMsg">Eliminado</span>
+  <div class="undo-bar" id="undoBar" style="width:100%;min-width:60px"></div>
+  <button class="undo-btn" id="undoBtnEl">↩ Deshacer</button>
+</div>
+
+<div class="kax-wrap" id="kaxWrap">
+  <div class="kax-bubble" id="kaxBubble">¡Hola Jhunior! Soy Kax. Estoy listo para ayudarte a registrar tu día. 🦊</div>
+  <svg class="kax-avatar idle" id="kaxAvatar" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg" onclick="kaxTap()">
+    <ellipse cx="50" cy="80" rx="28" ry="30" fill="#E34234"/>
+    <ellipse cx="50" cy="85" rx="16" ry="18" fill="#F5F0EA"/>
+    <polygon points="22,30 14,5 35,22" fill="#E34234"/>
+    <polygon points="24,28 18,10 33,23" fill="#8B1A0E" opacity=".5"/>
+    <polygon points="78,30 86,5 65,22" fill="#E34234"/>
+    <polygon points="76,28 82,10 67,23" fill="#8B1A0E" opacity=".5"/>
+    <ellipse cx="50" cy="42" rx="28" ry="26" fill="#E34234"/>
+    <ellipse cx="50" cy="50" rx="18" ry="14" fill="#F5F0EA"/>
+    <circle cx="42" cy="38" r="4" fill="#1a0a0a"/>
+    <circle cx="58" cy="38" r="4" fill="#1a0a0a"/>
+    <circle cx="43.5" cy="36.5" r="1.2" fill="white"/>
+    <circle cx="59.5" cy="36.5" r="1.2" fill="white"/>
+    <ellipse cx="50" cy="47" rx="2.5" ry="1.8" fill="#8B1A0E"/>
+    <path d="M43 52 Q50 58 57 52" stroke="#8B1A0E" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <rect x="45" y="52" width="4" height="3.5" rx="1" fill="white"/>
+    <rect x="51" y="52" width="4" height="3.5" rx="1" fill="white"/>
+    <ellipse cx="24" cy="76" rx="7" ry="12" fill="#E34234" transform="rotate(-20,24,76)"/>
+    <ellipse cx="20" cy="86" rx="5" ry="4" fill="#F5F0EA"/>
+    <ellipse cx="76" cy="76" rx="7" ry="12" fill="#E34234" transform="rotate(20,76,76)"/>
+    <ellipse cx="80" cy="86" rx="5" ry="4" fill="#F5F0EA"/>
+    <ellipse cx="38" cy="108" rx="10" ry="6" fill="#8B1A0E"/>
+    <ellipse cx="38" cy="106" rx="8" ry="5" fill="#E34234"/>
+    <ellipse cx="62" cy="108" rx="10" ry="6" fill="#8B1A0E"/>
+    <ellipse cx="62" cy="106" rx="8" ry="5" fill="#E34234"/>
+    <path d="M78 95 Q95 80 88 65" stroke="#E34234" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <path d="M78 95 Q95 80 88 65" stroke="#F5F0EA" stroke-width="3" fill="none" stroke-linecap="round"/>
+  </svg>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// TABS
+// ─────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(btn => btn.addEventListener('click', () => {
+  if (!btn.dataset.tab) return; // ignorar botones sin tab asignado
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(btn.dataset.tab).classList.add('active');
+  if (btn.dataset.tab === 'finanzas') { renderHistorial(currentPeriod); renderCategoryChart(); }
+  if (btn.dataset.tab === 'informe')  renderInformeCompleto();
+}));
+
+// ─────────────────────────────────────────────
+// CONSTANTES Y ESTADO
+// ─────────────────────────────────────────────
+const MESES_UNI = ['abril','mayo','junio','julio','agosto','octubre','noviembre','diciembre'];
+// proyectos: array de {nombre: string, id: string}
+// knownProjectNames: array de strings para el parser (derivado)
+let proyectos = [];
+function knownProjectNames() { return proyectos.map(p => p.nombre.toLowerCase()); }
+
+const METAS = [
+  {min:200,  max:500,   ico:'💳', msg:'Con este excedente podrías devolver parte de un préstamo sin afectar tus gastos esenciales.'},
+  {min:300,  max:800,   ico:'🎽', msg:'Tienes margen para equiparte o renovar algo que hayas necesitado.'},
+  {min:500,  max:1200,  ico:'📱', msg:'Considera invertir en herramientas para ORA o en un curso de UX de reconocimiento mundial.'},
+  {min:800,  max:2000,  ico:'🏢', msg:'Podrías cubrir el primer mes de un departamento propio o empezar un fondo para alquiler.'},
+  {min:1000, max:5000,  ico:'✈️', msg:'Vas bien hacia el viaje de navidad. Guarda este excedente en una cuenta separada.'},
+  {min:1500, max:99999, ico:'📈', msg:'Tienes capital real. Considera un fondo de inversión o ampliar Hot and Cold.'},
+  {min:3000, max:99999, ico:'🚀', msg:'Estás cerca de tu meta de S/ 10,000. Cada sol guardado acelera el lanzamiento de ORA.'},
+];
+
+const CONSEJOS_RULES = [
+  {subcat:'transporte', threshold:30,  ico:'🚌', msg:'Gastaste bastante en taxi hoy. Si tienes clases mañana, considera salir más temprano y tomar el bus.'},
+  {subcat:'cafe',       threshold:10,  ico:'☕', msg:'Seguido en café. Prepárate un termo en casa, especialmente en días largos de universidad.'},
+  {subcat:'comida',     threshold:25,  ico:'🍱', msg:'Bastante en comida hoy. Llevar almuerzo desde casa puede ahorrarte S/ 300+ al mes.'},
+  {subcat:'ocio',       threshold:40,  ico:'💑', msg:'Gasto en salidas. Para no perder el control, ten un tope mensual para ocio.'},
+  {subcat:'farmacia',   threshold:0,   ico:'💊', msg:'Gasto en farmacia. Si es recurrente, considera un seguro de salud básico.'},
+];
+
+// ─────────────────────────────────────────────
+// UTILIDADES DE FECHA — usan hora LOCAL (no UTC)
+// UTC causa desfase de 5h en Lima → día incorrecto
+// ─────────────────────────────────────────────
+const todayISO = () => {
+  const d = new Date();
+  return d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0');
+};
+const mesISO = () => {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+};
+const LS_TODAY = () => 'radar_today_' + todayISO();
+
+// ─────────────────────────────────────────────
+// PERSISTENCIA (localStorage)
+// ─────────────────────────────────────────────
+
+// Estado en memoria
+let pendingMoves = [];
+let ingresos  = [];
+let prestamos = [];
+let fijos     = [];
+let currentPeriod = 'semana';
+let viewDate = todayISO(); // ahora sí: todayISO ya está declarada
+
+function lsSave(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {} }
+function lsLoad(key, def) { try { return JSON.parse(localStorage.getItem(key)) ?? def; } catch(e) { return def; } }
+
+function initState() {
+  const allIngresos = lsLoad('radar_ingresos', []);
+  ingresos  = allIngresos.filter(x => !x.fecha || x.fecha.startsWith(mesISO()));
+  prestamos = lsLoad('radar_prestamos', []);
+  fijos     = lsLoad('radar_fijos', []);
+  proyectos = lsLoad('radar_proyectos', []);
+}
+
+// Guardar savedToday en localStorage
+function getSavedToday() { return lsLoad(LS_TODAY(), []); }
+function persistToday(moves) { lsSave(LS_TODAY(), moves); }
+
+// Todos los moves de un período (para historial)
+function getAllMovesForPeriod(period) {
+  const todayStr = todayISO();   // fecha local YYYY-MM-DD
+  const mesStr   = mesISO();     // mes local YYYY-MM
+  const result   = [];
+
+  // Generar últimos 7 días en formato YYYY-MM-DD (local)
+  const last7 = new Set();
+  if (period === 'semana') {
+    for (let i = 0; i <= 6; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      last7.add(
+        d.getFullYear() + '-' +
+        String(d.getMonth()+1).padStart(2,'0') + '-' +
+        String(d.getDate()).padStart(2,'0')
+      );
+    }
+  }
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith('radar_today_')) continue;
+    const dateStr = key.replace('radar_today_', '');
+    let include = false;
+    if (period === 'mes') {
+      include = dateStr.startsWith(mesStr);
+    } else {
+      include = last7.has(dateStr);
+    }
+    if (include) {
+      lsLoad(key, []).forEach(m => result.push({ ...m, fechaMov: dateStr }));
+    }
+  }
+  return result;
+}
+
+// ─────────────────────────────────────────────
+// SISTEMA DE DESHACER (undo toast 5 segundos)
+// ─────────────────────────────────────────────
+let _undoTimer     = null;
+let _undoBarTimer  = null;
+let _undoPending   = null; // { label, restore: fn, confirm: fn }
+const UNDO_MS = 3000; // 3 segundos para deshacer
+
+function scheduleDelete({ label, restore, confirm }) {
+  // Cancelar undo anterior pendiente sin restaurar (confirmar el delete anterior)
+  if (_undoPending) { _undoPending.confirm(); _clearUndo(false); }
+
+  _undoPending = { label, restore, confirm };
+
+  // Mostrar toast
+  const toast  = document.getElementById('undoToast');
+  const msg    = document.getElementById('undoMsg');
+  const bar    = document.getElementById('undoBar');
+  msg.textContent = label;
+  bar.style.transition = 'none';
+  bar.style.width = '100%';
+  toast.classList.add('show');
+
+  // Animar barra
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      bar.style.transition = `width ${UNDO_MS}ms linear`;
+      bar.style.width = '0%';
+    });
+  });
+
+  // Auto-confirmar después de 5s
+  _undoTimer = setTimeout(() => {
+    if (_undoPending) { _undoPending.confirm(); _clearUndo(false); }
+  }, UNDO_MS);
+}
+
+function _clearUndo(restore) {
+  clearTimeout(_undoTimer);
+  _undoTimer = null;
+  const toast = document.getElementById('undoToast');
+  toast.classList.remove('show');
+  if (restore && _undoPending) _undoPending.restore();
+  _undoPending = null;
+}
+
+document.getElementById('undoBtnEl').addEventListener('click', () => {
+  _clearUndo(true);
+  kaxSay('Restaurado. 👍', 'celebrate', 2500);
+});
+const kaxBubble = document.getElementById('kaxBubble');
+const kaxAvatar = document.getElementById('kaxAvatar');
+let kaxTimer = null;
+function kaxSay(msg, mood = 'idle', duration = 5000) {
+  clearTimeout(kaxTimer);
+  kaxBubble.textContent = msg;
+  kaxBubble.classList.add('show');
+  kaxAvatar.className = 'kax-avatar ' + mood;
+  kaxTimer = setTimeout(() => { kaxBubble.classList.remove('show'); kaxAvatar.className = 'kax-avatar idle'; }, duration);
+}
+function kaxTap() {
+  const msgs = ["¡Aquí estoy! ¿Qué pasó hoy?","Recuerda registrar cada gasto, aunque sea pequeño.","Mañana revisa tus fijos para no quedarte en cero.","¡Cada sol registrado es un paso hacia tu meta! 🚀"];
+  kaxSay(msgs[Math.floor(Math.random() * msgs.length)], 'idle', 4000);
+}
+setTimeout(() => kaxSay('¡Hola Jhunior! Soy Kax. Registra tu día cuando estés listo. 🦊', 'idle', 5000), 1200);
+
+// ─────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────
+function money(n) { return 'S/ ' + Number(n || 0).toFixed(2).replace(/\.00$/, ''); }
+function todayLabel() { return new Date().toLocaleDateString('es-PE', { day:'2-digit', month:'short' }); }
+function daysUntil(day) {
+  const now  = new Date();
+  const next = new Date(now.getFullYear(), now.getMonth(), day);
+  if (next < now) next.setMonth(next.getMonth() + 1);
+  return Math.ceil((next - now) / (1000 * 60 * 60 * 24));
+}
+function animateValue(id, target) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  let start = 0;
+  const dur  = 600;
+  const step = ts => {
+    if (!start) start = ts;
+    const p = Math.min((ts - start) / dur, 1);
+    el.textContent = 'S/ ' + Math.floor(p * target);
+    if (p < 1) requestAnimationFrame(step);
+    else el.textContent = money(target);
+  };
+  requestAnimationFrame(step);
+}
+
+// ─────────────────────────────────────────────
+// DETECCIÓN AUTOMÁTICA
+// ─────────────────────────────────────────────
+function detectProject(t) {
+  const l = t.toLowerCase();
+  for (const p of knownProjectNames()) { if (l.includes(p)) return p.charAt(0).toUpperCase() + p.slice(1); }
+  if (/intern[ao]|oficina|extensi[oó]n para la oficina/.test(l)) return 'Gastos internos';
+  if (/obra|cliente|proveedor|proyecto/.test(l)) return 'Gastos internos';
+  return 'Sin proyecto';
+}
+function detectSubcat(t) {
+  const l = t.toLowerCase();
+  if (/café|cafe|cappuccino|americano/.test(l))         return 'cafe';
+  if (/almuerz|men[uú]|comida|cena|desayuno|pollería|pollerio|restaurante|snack|ceviche|cebiche|lomo\s*saltado|causa|chifa|pizza|hamburgues|sushi|pollo\s*a\s*la\s*brasa|anticucho|chicharr[oó]n|tamal|pan\s*con|sanguchería|sanguch|arroz\s*con|seco\s*de|tallarin|pasta|fideos|jugo|refresco|gaseosa|lonche/.test(l)) return 'comida';
+  if (/taxi|uber|cabify|didi|bus\b|combi|pasaje|transporte|micro|mototaxi|metro|tren|colectivo|beat/.test(l)) return 'transporte';
+  if (/farmacia|botica|medicina|pastilla/.test(l))      return 'farmacia';
+  if (/ropa|polo|zapatilla|camisa|pantalón|falabella|ripley/.test(l)) return 'ropa';
+  if (/novia|cine|parque|salida|bar|discoteca|paseo|ocio/.test(l))    return 'ocio';
+  if (/mercado|supermercado|plaza vea|wong|tottus|limpieza/.test(l))  return 'mercado';
+  if (/gym|gimnasio|running|deporte|salud|doctor|médico|clínica/.test(l)) return 'salud';
+  return 'otros';
+}
+function detectType(t) {
+  const l = t.toLowerCase();
+  if (/hot and cold|proyecto|obra|cliente|proveedor|pajaten|viviana|felipe|interno|oficina empresa|extensi[oó]n para la oficina/.test(l)) return 'Hot and Cold';
+  return 'Personal';
+}
+function detectAccount(t) {
+  const l = t.toLowerCase();
+  // Tarjeta de crédito / débito
+  if (/\btc\b|tarjeta de cr[eé]dito|con la tarjeta|con tc/.test(l))  return 'TC';
+  if (/tarjeta de d[eé]bito|con la d[eé]bito/.test(l))               return 'Débito';
+  // Bancos
+  if (/\bbcp\b|banco de cr[eé]dito/.test(l))                         return 'BCP';
+  if (/interbank/.test(l))                                            return 'Interbank';
+  if (/bbva/.test(l))                                                 return 'BBVA';
+  if (/scotiabank/.test(l))                                           return 'Scotiabank';
+  // Billeteras digitales
+  if (/\byape\b/.test(l))                                             return 'Yape';
+  if (/\bplin\b/.test(l))                                             return 'Plin';
+  if (/lukita/.test(l))                                               return 'Lukita';
+  if (/tunki/.test(l))                                                return 'Tunki';
+  // Efectivo
+  if (/efectivo|en efectivo|en cash|cash/.test(l))                   return 'efectivo';
+  return 'efectivo'; // default
+}
+function detectDesc(t) {
+  const l = t.toLowerCase();
+  if (/taxi.*ida/i.test(l))    return 'Taxi ida';
+  if (/taxi.*vuelta/i.test(l)) return 'Taxi vuelta';
+  if (/taxi/i.test(l))         return 'Taxi';
+  if (/almuerz|men[uú]/i.test(l)) return 'Almuerzo';
+  if (/desayuno/i.test(l))     return 'Desayuno';
+  if (/café|cafe/i.test(l))    return 'Café';
+  if (/material/i.test(l))     return 'Materiales';
+  if (/extensi[oó]n/i.test(l)) return 'Extensión';
+  if (/farmacia/i.test(l))     return 'Farmacia';
+  if (/ropa|zapatill/i.test(l)) return 'Ropa';
+  if (/cine|salida/i.test(l))  return 'Salida/ocio';
+  return t.replace(/\d+(?:\.\d+)?\s*soles?/gi, '').trim().slice(0, 55) || 'Gasto';
+}
+
+function splitMoves(text) {
+  const c = text.replace(/\n/g,' ')
+    .replace(/\b(además|también|luego|y luego|pero también|adicionalmente)\b/gi, '|||')
+    .replace(/,\s*(y\s+)?(?=gasté|compré|pagué|tomé|almorcé)/gi, '|||')
+    .replace(/\by\s+(?=\d)/gi, '|||')   // "y 50" → split
+    .replace(/\.(?=\s|$)/g, '|||');
+  const parts = c.split('|||').map(s => s.trim()).filter(Boolean);
+  const result = [];
+  parts.forEach(p => {
+    if (/ida\s*\d+/i.test(p) && /vuelta\s*\d+/i.test(p)) {
+      const ida    = (p.match(/ida\s*(?:de\s*)?(\d+(?:\.\d+)?)/i) || [])[1];
+      const vuelta = (p.match(/vuelta\s*(?:de\s*)?(\d+(?:\.\d+)?)/i) || [])[1];
+      const base   = p.replace(/\bida\s*(?:de\s*)?\d+(?:\.\d+)?/i,'').replace(/\bvuelta\s*(?:de\s*)?\d+(?:\.\d+)?/i,'').trim();
+      if (ida)    result.push(parseSingle(base + ' taxi ida', ida));
+      if (vuelta) result.push(parseSingle(base + ' taxi vuelta', vuelta));
+    } else { result.push(parseSingle(p)); }
+  });
+  return result.filter(x => x.amount > 0);
+}
+function parseSingle(text, forcedAmount = null) {
+  const nums   = text.match(/\d+(?:\.\d+)?/g) || [];
+  const amount = forcedAmount ? Number(forcedAmount) : Number(nums[0] || 0);
+  const type   = detectType(text);
+  return {
+    type,
+    project: type === 'Hot and Cold' ? detectProject(text) : 'Personal',
+    subcat:  detectSubcat(text),  // siempre detectar subcat, sea HC o Personal
+    description: detectDesc(text),
+    amount,
+    account: detectAccount(text)
+  };
+}
+
+// ─────────────────────────────────────────────
+// RENDER PENDING (bajo el textarea)
+// ─────────────────────────────────────────────
+function renderPending() {
+  const area = document.getElementById('pendingArea');
+  const list = document.getElementById('pendingList');
+  if (!pendingMoves.length) { area.style.display = 'none'; return; }
+  area.style.display = 'block';
+  list.innerHTML = '';
+  pendingMoves.forEach((m, idx) => {
+    const div = document.createElement('div');
+    div.className = 'move';
+    div.style.animationDelay = idx * 0.05 + 's';
+    div.innerHTML = `<div>
+      <span class="tag ${m.type === 'Hot and Cold' ? 'hc' : 'personal'}">${m.type}</span>${m.description}${m.project && m.project !== 'Sin proyecto' && m.project !== 'Personal' ? ` — <strong>${m.project}</strong>` : ''}
+      <div class="move-meta">${m.account}${m.subcat ? ' · ' + m.subcat : ''}</div>
+    </div><strong>${money(m.amount)}</strong>`;
+    list.appendChild(div);
+  });
+}
+
+// ─────────────────────────────────────────────
+// DATE NAVIGATOR
+// ─────────────────────────────────────────────
+function setViewDate(dateStr) {
+  viewDate = dateStr;
+  const picker = document.getElementById('viewDatePicker');
+  if (picker) picker.value = dateStr;
+  const isToday = dateStr === todayISO();
+  const titulo  = document.getElementById('movTitulo');
+  if (titulo) titulo.textContent = isToday ? 'Movimientos de hoy' : 'Movimientos del ' + formatDateLabel(dateStr);
+  renderSavedToday();
+}
+function formatDateLabel(iso) {
+  const [y,m,d] = iso.split('-');
+  const months  = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return `${parseInt(d)} ${months[parseInt(m)-1]}`;
+}
+function shiftDate(days) {
+  const d = new Date(viewDate + 'T12:00:00');
+  d.setDate(d.getDate() + days);
+  const shifted = d.getFullYear() + '-' +
+    String(d.getMonth()+1).padStart(2,'0') + '-' +
+    String(d.getDate()).padStart(2,'0');
+  // No permitir ir al futuro
+  if (shifted > todayISO()) return;
+  setViewDate(shifted);
+}
+
+// ─────────────────────────────────────────────
+// RENDER SAVED (la lista principal — usa viewDate)
+// ─────────────────────────────────────────────
+function getSavedForDate(dateStr) { return lsLoad('radar_today_' + dateStr, []); }
+
+function renderSavedToday() {
+  const savedToday = getSavedForDate(viewDate);
+  const list = document.getElementById('movementList');
+  list.innerHTML = '';
+
+  const subcats = {comida:0,transporte:0,cafe:0,farmacia:0,ropa:0,ocio:0,mercado:0,salud:0,otros:0};
+  let total = 0, hc = 0, personal = 0, tc = 0;
+  const byProject = {};
+
+  const reversed = [...savedToday].reverse();
+  reversed.forEach((m, idx) => {
+    const origIdx = savedToday.length - 1 - idx; // índice real para edit/delete
+    total += m.amount;
+    if (m.type === 'Hot and Cold') { hc += m.amount; byProject[m.project] = (byProject[m.project] || 0) + m.amount; }
+    else { personal += m.amount; }
+    if (m.subcat && subcats[m.subcat] !== undefined) subcats[m.subcat] += m.amount;
+    if (m.account === 'TC') tc += m.amount;
+
+    const div = document.createElement('div');
+    div.className = 'move saved-row';
+    div.style.animationDelay = idx * 0.04 + 's';
+    div.innerHTML = `<div style="flex:1;min-width:0">
+      <span class="tag saved">✓</span><span class="tag ${m.type === 'Hot and Cold' ? 'hc' : 'personal'}">${m.type}</span>${m.description}${m.project && m.project !== 'Sin proyecto' && m.project !== 'Personal' ? ` — <strong>${m.project}</strong>` : ''}
+      <div class="move-meta">${m.account}${m.subcat ? ' · ' + m.subcat : ''}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <strong>${money(m.amount)}</strong>
+      <button onclick="openEditModal('${viewDate}',${origIdx})" title="Editar" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem;padding:2px 4px">✏️</button>
+      <button onclick="deleteMove('${viewDate}',${origIdx})" title="Eliminar" style="background:none;border:none;cursor:pointer;color:var(--bad);font-size:1rem;padding:2px 4px">🗑</button>
+    </div>`;
+    list.appendChild(div);
+  });
+
+  if (!savedToday.length) list.innerHTML = '<div class="tiny muted">Todavía no hay movimientos guardados.</div>';
+
+  animateValue('totalDay',      total);
+  animateValue('totalHC',       hc);
+  animateValue('totalPersonal', personal);
+  animateValue('totalTC',       tc);
+  document.getElementById('countMoves').textContent = `${savedToday.length} movimiento${savedToday.length === 1 ? '' : 's'}`;
+
+  Object.keys(subcats).forEach(k => {
+    const el = document.getElementById('sc-' + k);
+    if (el) el.textContent = money(subcats[k]);
+  });
+
+  const projectMax = Object.entries(byProject).sort((a,b) => b[1]-a[1])[0];
+  const subcatMax  = Object.entries(subcats).filter(([,v]) => v > 0).sort((a,b) => b[1]-a[1])[0];
+  const elMaxP = document.getElementById('maxProject');
+  const elMixA = document.getElementById('mixAccount');
+  const elMaxS = document.getElementById('maxSubcat');
+  if (elMaxP) {
+    if (projectMax) {
+      const nombre = projectMax[0] === 'Sin proyecto' || projectMax[0] === 'Gastos internos'
+        ? 'Gastos internos HC' : projectMax[0];
+      elMaxP.textContent = `${nombre} · ${money(projectMax[1])}`;
+    } else { elMaxP.textContent = 'Aun sin datos'; }
+  }
+  if (elMixA) elMixA.textContent = tc && hc ? `Empresa pagada con TC: ${money(tc)}` : 'Sin alertas';
+  if (elMaxS) elMaxS.textContent = subcatMax ? `${subcatMax[0]} · ${money(subcatMax[1])}` : 'Sin datos';
+
+  // Barras de salud (datos reales)
+  const capBar = document.getElementById('captureBar');
+  if (capBar) capBar.style.width = savedToday.length ? Math.min(95, 60 + savedToday.length * 5) + '%' : '0%';
+  const splitB = document.getElementById('splitBar');
+  if (splitB) splitB.style.width = savedToday.length ? (hc && personal ? 76 : 88) + '%' : '0%';
+
+  renderConsejos(subcats);
+  renderSemaforo();
+  if (tc && hc) kaxSay(`Ojo: usaste TC para Hot and Cold (${money(tc)}). Anótalo para el reembolso.`, 'alert', 6000);
+}
+
+// Constancia semanal (días con registros en últimos 7 días)
+function renderConstancia() {
+  let diasConRegistros = 0;
+  const now = new Date();
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now); d.setDate(d.getDate() - i);
+    const key = 'radar_today_' + (d.getFullYear() + '-' +
+      String(d.getMonth()+1).padStart(2,'0') + '-' +
+      String(d.getDate()).padStart(2,'0'));
+    const m   = lsLoad(key, []);
+    if (m.length > 0) diasConRegistros++;
+  }
+  const pct = Math.round((diasConRegistros / 7) * 100);
+  const bar = document.getElementById('constanciaBar');
+  const lbl = document.getElementById('constanciaLabel');
+  if (bar) bar.style.width = pct + '%';
+  if (lbl) lbl.textContent = `${diasConRegistros} de 7 días con registros`;
+}
+
+// ─────────────────────────────────────────────
+// LLAMADAS AL BACKEND — dual path
+
+// ─────────────────────────────────────────────
+// LLAMADAS AL BACKEND — dual path
+// ─────────────────────────────────────────────
+function backendCall(action, params) {
+  return new Promise((resolve, reject) => {
+    // Detectar si google.script.run está disponible (dentro de Apps Script)
+    const gsr = (typeof google !== 'undefined') && google.script && google.script.run;
+    if (gsr) {
+      const runner = google.script.run
+        .withSuccessHandler(function(r) { resolve(r); })
+        .withFailureHandler(function(e) { reject(e); });
+      // Llamadas explícitas — bracket notation no funciona en el proxy de Apps Script
+      switch(action) {
+        case 'getResumen':           runner.getResumen();                  break;
+        case 'getMovimientos':       runner.getMovimientosJS(params);      break;
+        case 'getFijosYPrestamos':   runner.getFijosYPrestamosJS(params);  break;
+        case 'getProyectos':         runner.getProyectosJS(params);        break;
+        case 'guardarMovimiento':    runner.guardarMovimientoJS(params);   break;
+        case 'actualizarMovimiento': runner.actualizarMovimientoJS(params);break;
+        case 'eliminarMovimiento':   runner.eliminarMovimientoJS(params);  break;
+        case 'guardarProyecto':      runner.guardarProyectoJS(params);     break;
+        case 'eliminarProyecto':     runner.eliminarProyectoJS(params);    break;
+        case 'getCalendar':          runner.getCalendarJS(params);         break;
+        default: reject(new Error('Accion no reconocida: ' + action));
+      }
+    } else {
+      // Externo (Netlify, archivo local): usar JSONP
+      jsonpPost({ action, ...params }).then(resolve).catch(reject);
+    }
+  });
+}
+function jsonpPost(params) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    const url    = APPS_URL + '?' + new URLSearchParams({ ...params, callback: cbName }).toString();
+    window[cbName] = (res) => { delete window[cbName]; resolve(res); };
+    const s = document.createElement('script');
+    s.src     = url;
+    s.onerror = () => { delete window[cbName]; reject(new Error('network')); };
+    document.head.appendChild(s);
+  });
+}
+
+document.getElementById('confirmBtn').addEventListener('click', async () => {
+  if (!pendingMoves.length) return;
+  const status  = document.getElementById('saveStatus');
+  const fecha   = viewDate;   // usa la fecha actualmente vista
+  status.textContent = 'Guardando…';
+
+  let guardados = 0, errores = 0;
+  const savedMoves = []; // moves con rowNumber ya asignado
+  for (const m of pendingMoves) {
+    try {
+      const res = await backendCall('guardarMovimiento', {
+        action: 'guardarMovimiento',
+        fecha,
+        descripcion:   m.description,
+        categoria:     m.subcat || '',
+        tipo:          'gasto',
+        monto:         String(m.amount),
+        etiqueta:      m.type === 'Hot and Cold' ? 'negocio' : 'personal',
+        proyecto:      m.project !== 'Sin proyecto' && m.project !== 'Personal' ? m.project : '',
+        tipo_deposito: '',
+        banco:         m.account || 'efectivo',
+        notas:         ''
+      });
+      if (res && res.ok) {
+        guardados++;
+        savedMoves.push({ ...m, movId: res.movId || null });
+      } else errores++;
+    } catch(e) { errores++; savedMoves.push({ ...m, movId: null }); }
+  }
+
+  if (guardados > 0) {
+    const saved  = getSavedForDate(viewDate);
+    const allDay = [...saved, ...savedMoves];
+    lsSave('radar_today_' + viewDate, allDay);
+    pendingMoves = [];
+
+    document.getElementById('entry').value   = '';
+    document.getElementById('pendingArea').style.display = 'none';
+
+    status.innerHTML = `✅ ${guardados} guardado${guardados === 1 ? '' : 's'} en Sheets &nbsp;<button class="btn sec" id="nuevaEntradaBtn" style="padding:.4rem .85rem;font-size:.82rem;display:inline-flex">✏️ Registrar más</button>`;
+    document.getElementById('nuevaEntradaBtn').onclick = () => {
+      status.textContent = '';
+      document.getElementById('entry').focus();
+    };
+
+    kaxSay(`¡Listo! ${guardados} guardado${guardados === 1 ? '' : 's'} en Sheets. 🦊`, 'celebrate', 5000);
+    renderSavedToday();
+    renderHistorial(currentPeriod);
+  } else {
+    status.textContent = `⚠️ Error al guardar (${errores} fallidos). Revisa conexión.`;
+  }
+});
+
+// Descartar pendientes
+document.getElementById('clearPendingBtn').addEventListener('click', () => {
+  pendingMoves = [];
+  document.getElementById('entry').value = '';
+  document.getElementById('pendingArea').style.display = 'none';
+  document.getElementById('saveStatus').textContent = '';
+});
+
+// ─────────────────────────────────────────────
+// CARGAR RESUMEN DESDE SHEETS (JSONP — fix CORS)
+// ─────────────────────────────────────────────
+function cargarResumenDesdeSheets() {
+  backendCall('getResumen', {})
+    .then(r => { if (r) cargarResumenSheets(r); })
+    .catch(() => {});
+}
+
+function cargarResumenSheets(r) {
+  if (!r) return;
+  // FIX: actualizar el objeto RESUMEN global
+  Object.assign(RESUMEN, r);
+  const fmt = v => v != null ? money(v) : '–';
+
+  const gp = document.getElementById('sheets-gasto-personal');
+  if (gp) gp.textContent = fmt(r['GASTO MES PERSONAL']);
+  const cd = document.getElementById('sheets-cc-disponible');
+  if (cd) cd.textContent = fmt(r['CAJA CHICA DISPONIBLE']);
+  const en = document.getElementById('sheets-estado-negocio');
+  if (en) {
+    const estado = String(r['ESTADO KAX NEGOCIO'] || '');
+    const esError = estado.includes('#') || estado === '';
+    en.textContent = esError ? 'Sin datos' : estado;
+    en.style.color = estado === 'en-control' ? 'var(--good)' : estado === 'en-riesgo' ? 'var(--warn)' : esError ? 'var(--muted)' : 'var(--bad)';
+  }
+  const ct = document.getElementById('sheets-cc-total');
+  if (ct) ct.textContent = fmt(r['CAJA CHICA TOTAL RECIBIDA']);
+  const ce = document.getElementById('sheets-cc-ejecutada');
+  if (ce) ce.textContent = fmt(r['CAJA CHICA EJECUTADA']);
+  const cd2 = document.getElementById('sheets-cc-disp2');
+  if (cd2) cd2.textContent = fmt(r['CAJA CHICA DISPONIBLE']);
+
+  if (r['TOTAL FIJOS MES'] && !fijos.length) {
+    document.getElementById('totalFijosMes').textContent = fmt(r['TOTAL FIJOS MES']);
+    document.getElementById('totalFijosDisplay').textContent = fmt(r['TOTAL FIJOS MES']);
+  }
+  // NO inyectar ingresos desde RESUMEN — los ingresos vienen del sync real
+  renderSemaforo();
+}
+cargarResumenDesdeSheets();
+
+// ─────────────────────────────────────────────
+// SYNC FIJOS Y PRÉSTAMOS DESDE SHEETS
+// ─────────────────────────────────────────────
+function cargarFijosYPrestamosDesdeSheets() {
+  backendCall('getFijosYPrestamos', {})
+    .then(res => { if (res && res.ok) procesarSyncFijosYPrestamos(res); })
+    .catch(() => {});
+}
+
+function procesarSyncFijosYPrestamos(res) {
+    if (res.fijos !== undefined) {
+      const idsSheets = new Set(res.fijos.map(f => f.movId).filter(Boolean));
+      const idsLS     = new Set(fijos.map(f => f.movId).filter(Boolean));
+      fijos = fijos.map(f => {
+        if (!f.movId) return f;
+        const s = res.fijos.find(x => x.movId === f.movId);
+        if (!s) return f;
+        return { ...f, nombre: s.nombre || f.nombre, monto: s.monto ?? f.monto, dia: s.dia ?? f.dia };
+      });
+      fijos = fijos.filter(f => !f.movId || idsSheets.has(f.movId));
+      res.fijos.forEach(f => { if (f.movId && !idsLS.has(f.movId)) fijos.push(f); });
+      lsSave('radar_fijos', fijos);
+      renderFijos();
+    }
+    if (res.prestamos !== undefined) {
+      const idsSheets = new Set(res.prestamos.map(p => p.movId).filter(Boolean));
+      const idsLS     = new Set(prestamos.map(p => p.movId).filter(Boolean));
+      prestamos = prestamos.map(p => {
+        if (!p.movId) return p;
+        const s = res.prestamos.find(x => x.movId === p.movId);
+        if (!s) return p;
+        return { ...p, persona: s.persona || p.persona, monto: s.monto ?? p.monto, fecha: s.fecha || p.fecha };
+      });
+      prestamos = prestamos.filter(p => !p.movId || idsSheets.has(p.movId));
+      res.prestamos.forEach(p => { if (p.movId && !idsLS.has(p.movId)) prestamos.push(p); });
+      lsSave('radar_prestamos', prestamos);
+      renderPrestamos();
+    }
+    if (res.ingresos !== undefined) {
+      const allLS     = lsLoad('radar_ingresos', []);
+      const idsSheets = new Set(res.ingresos.map(x => x.movId).filter(Boolean));
+      const updated = allLS.map(lsIng => {
+        if (!lsIng.movId) return lsIng;
+        const s = res.ingresos.find(x => x.movId === lsIng.movId);
+        if (!s) return lsIng;
+        return { ...lsIng, fuente: s.fuente || lsIng.fuente, monto: s.monto ?? lsIng.monto,
+          desc: s.desc || lsIng.desc, fecha: s.fecha || lsIng.fecha,
+          proyecto: s.proyecto !== undefined ? s.proyecto : lsIng.proyecto,
+          tipoDeposito: s.tipoDeposito !== undefined ? s.tipoDeposito : lsIng.tipoDeposito,
+          banco: s.banco || lsIng.banco };
+      });
+      const filtered = updated.filter(x => !x.movId || idsSheets.has(x.movId));
+      const idsLS    = new Set(filtered.map(x => x.movId).filter(Boolean));
+      const nuevos   = res.ingresos.filter(x => x.movId && !idsLS.has(x.movId));
+      const clean    = [...filtered, ...nuevos];
+      lsSave('radar_ingresos', clean);
+      ingresos = clean.filter(x => !x.fecha || x.fecha.startsWith(mesISO()));
+      renderIngresos();
+    }
+    renderSemaforo();
+}
+
+// ─────────────────────────────────────────────
+// SINCRONIZAR MOVIMIENTOS DESDE SHEETS
+// Trae todos los movimientos del mes desde Sheets
+// y los fusiona con localStorage sin duplicar.
+// Esto resuelve el problema de multi-dispositivo.
+// ─────────────────────────────────────────────
+function sincronizarMovimientosDesdeSheets() {
+  const syncLabel = document.getElementById('syncStatus');
+  if (syncLabel) { syncLabel.textContent = 'Sincronizando…'; syncLabel.style.display = 'block'; }
+
+  backendCall('getMovimientos', { mes: mesISO() })
+    .then(res => {
+      if (syncLabel) { syncLabel.textContent = ''; syncLabel.style.display = 'none'; }
+      if (!res || !res.ok || !res.movimientos) return;
+      procesarSyncMovimientos(res);
+    })
+    .catch(() => {
+      if (syncLabel) { syncLabel.textContent = ''; syncLabel.style.display = 'none'; }
+      kaxSay('Sin conexion con Sheets. Intenta de nuevo.', 'alert', 4000);
+    });
+}
+
+function procesarSyncMovimientos(res) {
+  const porFecha = {};
+  res.movimientos.forEach(m => {
+    if (!porFecha[m.fechaMov]) porFecha[m.fechaMov] = [];
+    porFecha[m.fechaMov].push(m);
+  });
+
+  const fechasLS = new Set();
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('radar_today_')) {
+      const fecha = key.replace('radar_today_', '');
+      if (fecha.startsWith(mesISO())) fechasLS.add(fecha);
+    }
+  }
+  Object.keys(porFecha).forEach(f => fechasLS.add(f));
+
+  let nuevos = 0, borrados = 0;
+  fechasLS.forEach(fecha => {
+    const lsKey      = 'radar_today_' + fecha;
+    const lsMovs     = lsLoad(lsKey, []);
+    const movsSheets = porFecha[fecha] || [];
+    const idsSheetsFecha = new Set(movsSheets.map(m => m.movId).filter(Boolean));
+
+    const filtrados  = lsMovs.filter(m => !m.movId || idsSheetsFecha.has(m.movId));
+    borrados += lsMovs.length - filtrados.length;
+
+    const merged = filtrados.map(lsMov => {
+      if (!lsMov.movId) return lsMov;
+      const s = movsSheets.find(x => x.movId === lsMov.movId);
+      if (!s) return lsMov;
+      return { ...lsMov,
+        amount: s.amount ?? lsMov.amount, description: s.description || lsMov.description,
+        type: s.type || lsMov.type, subcat: s.subcat !== undefined ? s.subcat : lsMov.subcat,
+        account: s.account || lsMov.account, project: s.project !== undefined ? s.project : lsMov.project,
+        fechaMov: s.fechaMov || lsMov.fechaMov };
+    });
+
+    const idsLocales = new Set(merged.map(m => m.movId).filter(Boolean));
+    const agregar    = movsSheets.filter(m => m.movId && !idsLocales.has(m.movId));
+    nuevos += agregar.length;
+    lsSave(lsKey, [...merged, ...agregar]);
+  });
+
+  setViewDate(viewDate);
+  renderHistorial(currentPeriod);
+  renderSemaforo();
+  const msg = [];
+  if (nuevos   > 0) msg.push(`${nuevos} nuevo${nuevos === 1 ? '' : 's'}`);
+  if (borrados > 0) msg.push(`${borrados} eliminado${borrados === 1 ? '' : 's'}`);
+  kaxSay(msg.length ? `Sincronizado: ${msg.join(', ')}. 📡` : 'Todo al dia. 📡', 'idle', 3000);
+}
+
+function renderCajaChica() {
+  // Calcular desde datos locales
+  const ccRecibida  = ingresos.filter(i => i.tipoDeposito === 'caja_chica').reduce((a,b) => a + b.monto, 0);
+  const movMes      = getAllMovesForPeriod('mes');
+  const ccEjecutada = movMes.filter(m => m.type === 'Hot and Cold').reduce((a,b) => a + b.amount, 0);
+  const ccDisp      = ccRecibida - ccEjecutada;
+
+  const elTotal = document.getElementById('sheets-cc-total');
+  const elEjec  = document.getElementById('sheets-cc-ejecutada');
+  const elDisp  = document.getElementById('sheets-cc-disp2');
+  const elDisp2 = document.getElementById('sheets-cc-disponible');
+  if (elTotal) elTotal.textContent = money(ccRecibida);
+  if (elEjec)  elEjec.textContent  = money(ccEjecutada);
+  if (elDisp)  { elDisp.textContent = money(ccDisp); elDisp.style.color = ccDisp >= 0 ? 'var(--good)' : 'var(--bad)'; }
+  if (elDisp2) elDisp2.textContent = money(ccDisp);
+
+  // Alertar si caja chica se está agotando
+  if (ccRecibida > 0 && ccDisp < ccRecibida * 0.2) {
+    kaxSay(`Caja chica HC: quedan ${money(ccDisp)} de ${money(ccRecibida)}. Pide reposicion si necesitas.`, 'alert', 6000);
+  }
+}
+// ─────────────────────────────────────────────
+function calcSemaforo() {
+  const mesActual = new Date().toLocaleString('es-PE', { month:'long' }).toLowerCase();
+  const hayUni    = MESES_UNI.some(m => mesActual.includes(m));
+
+  // Solo honorarios y otros ingresos personales — NO caja chica (es dinero del proyecto)
+  const ingresosPersonales = ingresos.filter(i =>
+    i.tipoDeposito !== 'caja_chica' && i.fuente !== 'hotandcold' ||
+    (i.fuente === 'hotandcold' && i.tipoDeposito === 'honorario')
+  );
+  const totalIn    = ingresosPersonales.reduce((a,b) => a + b.monto, 0);
+  const cajaChica  = ingresos.filter(i => i.tipoDeposito === 'caja_chica').reduce((a,b) => a + b.monto, 0);
+
+  const totalFijos  = fijos.reduce((a,b) => a + b.monto, 0) || (Number(RESUMEN['TOTAL FIJOS MES']) || 0);
+  const movMes      = getAllMovesForPeriod('mes');
+  const totalGastos = movMes.filter(m => m.type === 'Personal').reduce((a,b) => a + b.amount, 0);
+  const excedente   = totalIn - totalFijos - totalGastos;
+
+  let estado = 'verde', msg = '';
+  if (!hayUni && totalIn < 1500) { estado = 'rojo';     msg = 'Mes sin universidad. Solo entra HC. Enfocate en cerrar proyectos.'; }
+  else if (excedente < 0)        { estado = 'rojo';     msg = 'Gastos + fijos superando ingresos este mes.'; }
+  else if (excedente < 500 || !hayUni) { estado = 'amarillo'; msg = !hayUni ? 'Mes sin sueldo de universidad. Administra con cuidado.' : 'Margen ajustado este mes.'; }
+  else { msg = 'Tus ingresos cubren bien tus compromisos y gastos este mes.'; }
+  return { estado, msg, excedente, totalIn, totalGastos, totalFijos, cajaChica };
+}
+
+function renderSemaforo() {
+  const { estado, msg, excedente, totalIn, cajaChica } = calcSemaforo();
+  const box = document.getElementById('semaforoBox');
+  if (box) box.innerHTML = `<div class="semaforo ${estado}"><div class="dot ${estado}"></div><div><strong>${estado.charAt(0).toUpperCase() + estado.slice(1)}</strong> · ${msg}</div></div>`;
+  const el = document.getElementById('totalIngresos');
+  if (el) el.textContent = money(totalIn);
+  const lbl = document.getElementById('totalIngresosLabel');
+  if (lbl) lbl.textContent = cajaChica > 0 ? `+ Caja chica HC: ${money(cajaChica)} (no personal)` : 'Honorarios + Universidad';
+  const ex = document.getElementById('excedente');
+  if (ex) { ex.textContent = money(excedente); ex.style.color = excedente >= 0 ? 'var(--good)' : 'var(--bad)'; }
+  renderOportunidades(excedente);
+  renderCajaChica();
+  if (estado === 'rojo') setTimeout(() => kaxSay('Jhunior, gastos + fijos superando ingresos este mes. Revisa.', 'alert', 5000), 4500);
+  else if (estado === 'verde' && excedente > 800) setTimeout(() => kaxSay(`Bien! Tienes ${money(excedente)} de excedente. Guarda algo para tu meta.`, 'celebrate', 5000), 4500);
+}
+
+// ─────────────────────────────────────────────
+// OPORTUNIDADES
+// ─────────────────────────────────────────────
+function renderOportunidades(excedente) {
+  const box     = document.getElementById('oportunidadBox');
+  const activas = METAS.filter(m => excedente >= m.min && excedente < m.max);
+  box.innerHTML = !activas.length
+    ? '<div class="tiny muted">Cuando tengas excedente, Kax te mostrará oportunidades de crecimiento.</div>'
+    : activas.map(m => `<div class="oportunidad"><span class="ico">${m.ico}</span><span>${m.msg}</span></div>`).join('');
+}
+
+// ─────────────────────────────────────────────
+// HISTORIAL SEMANAL / MENSUAL
+// ─────────────────────────────────────────────
+document.querySelectorAll('.period-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentPeriod = btn.dataset.period;
+    renderHistorial(currentPeriod);
+  });
+});
+
+function renderHistorial(period) {
+  const moves   = getAllMovesForPeriod(period);
+  const subcats = {comida:0,transporte:0,cafe:0,farmacia:0,ropa:0,ocio:0,mercado:0,salud:0,otros:0};
+  let totalP = 0, totalHC = 0;
+
+  moves.forEach(m => {
+    if (m.type === 'Personal') totalP += m.amount;
+    else totalHC += m.amount;
+    // Subcats cuentan para todos — refleja hábitos reales de gasto
+    if (m.subcat && subcats[m.subcat] !== undefined) subcats[m.subcat] += m.amount;
+  });
+
+  // Subcategorías
+  const subNames = {comida:'🍽️ Comida',transporte:'🚕 Transp.',cafe:'☕ Café',farmacia:'💊 Farmac.',ropa:'👗 Ropa',ocio:'💑 Ocio',mercado:'🛒 Mercado',salud:'🏋️ Salud',otros:'❓ Otros'};
+  const subcatsEl = document.getElementById('histSubcats');
+  if (subcatsEl) {
+    subcatsEl.innerHTML = Object.entries(subcats)
+      .map(([k,v]) => `<div class="subcat"><div class="tiny muted">${subNames[k]}</div><strong>${money(v)}</strong></div>`)
+      .join('');
+  }
+
+  // Resumen total del período
+  const resEl = document.getElementById('histResumen');
+  if (resEl) {
+    const total = totalP + totalHC;
+    resEl.innerHTML = `
+      <div class="pill">🧾 Total: <strong style="margin-left:4px;color:var(--text)">${money(total)}</strong></div>
+      <div class="pill">👤 Personal: <strong style="margin-left:4px;color:var(--warn)">${money(totalP)}</strong></div>
+      <div class="pill">🏢 Hot&amp;Cold: <strong style="margin-left:4px;color:var(--accent)">${money(totalHC)}</strong></div>
+      <div class="pill">📅 ${moves.length} movimiento${moves.length === 1 ? '' : 's'}</div>
+    `;
+  }
+
+  // Lista de movimientos del período (con fecha)
+  const movList = document.getElementById('histMoves');
+  if (movList) {
+    if (!moves.length) { movList.innerHTML = '<div class="tiny muted">Sin movimientos en este período.</div>'; return; }
+    // Ordenar por fecha desc, y dentro del mismo día más reciente primero (por índice inverso)
+    const sorted = [...moves].reverse().sort((a,b) => b.fechaMov.localeCompare(a.fechaMov));
+    movList.innerHTML = '';
+    sorted.forEach((m, idx) => {
+      const div = document.createElement('div');
+      div.className = 'move';
+      div.style.animationDelay = idx * 0.03 + 's';
+      div.innerHTML = `<div>
+        <span class="tag ${m.type === 'Hot and Cold' ? 'hc' : 'personal'}">${m.type}</span>${m.description}${m.project && m.project !== 'Sin proyecto' && m.project !== 'Personal' ? ` — <strong>${m.project}</strong>` : ''}
+        <div class="move-meta">${m.fechaMov} · ${m.account}${m.subcat ? ' · ' + m.subcat : ''}</div>
+      </div><strong>${money(m.amount)}</strong>`;
+      movList.appendChild(div);
+    });
+  }
+}
+
+// ─────────────────────────────────────────────
+// FIJOS
+// ─────────────────────────────────────────────
+document.getElementById('addFijoBtn').addEventListener('click', async () => {
+  const nombre = document.getElementById('fijoNombre').value.trim();
+  const monto  = Number(document.getElementById('fijoMonto').value);
+  const dia    = Number(document.getElementById('fijoDia').value) || 1;
+  if (!nombre || !monto) return;
+
+  const newFijo = { nombre, monto, dia, movId: null };
+
+  // Guardar en Sheets (tipo='fijo', dia en tipo_deposito)
+  try {
+    const res = await backendCall('guardarMovimiento', {
+      action:'guardarMovimiento', fecha:todayISO(),
+      descripcion:nombre, categoria:'fijo', tipo:'fijo',
+      monto:String(monto), etiqueta:'personal', proyecto:'',
+      tipo_deposito:String(dia), banco:'mensual', notas:''
+    });
+    if (res && res.ok) newFijo.movId = res.movId || null;
+  } catch(e) {}
+
+  fijos.push(newFijo);
+  lsSave('radar_fijos', fijos);
+  document.getElementById('fijoNombre').value = '';
+  document.getElementById('fijoMonto').value  = '';
+  document.getElementById('fijoDia').value    = '';
+  renderFijos();
+  renderSemaforo();
+});
+
+function renderFijos() {
+  const list  = document.getElementById('fijoList');
+  const total = fijos.reduce((a,b) => a + b.monto, 0);
+  document.getElementById('totalFijosDisplay').textContent = money(total);
+  document.getElementById('totalFijosMes').textContent     = money(total);
+
+  if (!fijos.length) { list.innerHTML = '<div class="tiny muted">Sin compromisos fijos registrados aún.</div>'; return; }
+
+  const proximos = fijos.filter(f => daysUntil(f.dia) <= 3);
+  const badge    = document.getElementById('fijoBadge');
+  badge.style.display = proximos.length ? 'inline-block' : 'none';
+  badge.textContent   = proximos.length;
+
+  list.innerHTML = fijos.map((f, i) => {
+    const dias    = daysUntil(f.dia);
+    const urgente = dias <= 3;
+    return `<div class="fijo-item">
+      <div><strong>${f.nombre}</strong><div class="tiny muted">Vence el día ${f.dia} · ${dias <= 0 ? '¡Hoy!' : dias === 1 ? 'Mañana' : dias + ' días'}</div></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <strong style="color:${urgente ? 'var(--bad)' : 'var(--warn)'}">${money(f.monto)}</strong>
+        <button class="btn sec" style="padding:.4rem .8rem;font-size:.8rem" onclick="removeFijo(${i})">×</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Proyección meses críticos
+  const proj = document.getElementById('proyeccionBox');
+  proj.innerHTML = ['Enero','Febrero','Marzo','Setiembre'].map(m => {
+    const cubre = 1000 >= total;
+    return `<div class="fijo-item">
+      <div><strong>${m}</strong><div class="tiny muted">Solo entra Hot and Cold (~S/1,000)</div></div>
+      <div style="color:${cubre ? 'var(--warn)' : 'var(--bad)'}">
+        <strong>${cubre ? 'Ajustado' : 'En riesgo'}</strong>
+        <div class="tiny">${money(total)} en fijos vs S/ 1,000 est.</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  if (proximos.length) kaxSay(`⚠️ En ${daysUntil(proximos[0].dia)} día${daysUntil(proximos[0].dia) === 1 ? '' : 's'} vence ${proximos[0].nombre} (${money(proximos[0].monto)}).`, 'alert', 7000);
+}
+
+window.removeFijo = function(i) {
+  const fijo = fijos.splice(i, 1)[0];
+  lsSave('radar_fijos', fijos);
+  renderFijos(); renderSemaforo();
+
+  scheduleDelete({
+    label: `Fijo "${fijo.nombre}" eliminado`,
+    restore: () => {
+      fijos.splice(i, 0, fijo);
+      lsSave('radar_fijos', fijos);
+      renderFijos(); renderSemaforo();
+    },
+    confirm: async () => {
+      if (fijo && fijo.movId) {
+        try { await backendCall('eliminarMovimiento', { movId:fijo.movId }); } catch(e) {}
+      }
+    }
+  });
+};
+
+// ─────────────────────────────────────────────
+// CONSEJOS DE HÁBITO
+// ─────────────────────────────────────────────
+function renderConsejos(subcats) {
+  const box = document.getElementById('consejoBox');
+  box.innerHTML = '';
+  let found = false;
+  CONSEJOS_RULES.forEach((r, idx) => {
+    if ((subcats[r.subcat] || 0) > r.threshold) {
+      found = true;
+      const d = document.createElement('div');
+      d.className = 'consejo';
+      d.style.animationDelay = idx * 0.08 + 's';
+      d.innerHTML = `<span class="ico">${r.ico}</span><span>${r.msg}</span>`;
+      box.appendChild(d);
+    }
+  });
+  if (!found) {
+    const d = document.createElement('div');
+    d.className = 'consejo good';
+    d.innerHTML = '<span class="ico">✅</span><span>Tus gastos personales del día están dentro de lo esperado.</span>';
+    box.appendChild(d);
+  }
+}
+
+// ─────────────────────────────────────────────
+// PRÉSTAMOS
+// ─────────────────────────────────────────────
+document.getElementById('addPrestamoBtn').addEventListener('click', async () => {
+  const persona = document.getElementById('prestamoPersona').value.trim();
+  const monto   = Number(document.getElementById('prestamoMonto').value);
+  if (!persona || !monto) return;
+
+  const newPrestamo = { persona, monto, fecha: todayLabel(), movId: null };
+
+  try {
+    const res = await backendCall('guardarMovimiento', {
+      action:'guardarMovimiento', fecha:todayISO(),
+      descripcion:persona, categoria:'prestamo', tipo:'prestamo',
+      monto:String(monto), etiqueta:'personal', proyecto:'',
+      tipo_deposito:'', banco:'', notas:'prestamo recibido'
+    });
+    if (res && res.ok) newPrestamo.movId = res.movId || null;
+  } catch(e) {}
+
+  prestamos.push(newPrestamo);
+  lsSave('radar_prestamos', prestamos);
+  document.getElementById('prestamoPersona').value = '';
+  document.getElementById('prestamoMonto').value   = '';
+  renderPrestamos();
+  renderSemaforo();
+  kaxSay(`Anotado. Le debes ${money(monto)} a ${persona}. Te avisaré cuando sea buen momento para devolver.`, 'idle', 5000);
+});
+
+function renderPrestamos() {
+  const list  = document.getElementById('prestamoList');
+  const total = prestamos.reduce((a,b) => a + b.monto, 0);
+  if (!prestamos.length) { list.innerHTML = '<div class="tiny muted">Sin préstamos registrados.</div>'; return; }
+  list.innerHTML = prestamos.map((p, i) => `
+    <div class="deuda-item">
+      <div><strong>${p.persona}</strong><div class="tiny muted">Desde ${p.fecha}</div></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <strong style="color:var(--bad)">${money(p.monto)}</strong>
+        <button class="btn sec" style="padding:.4rem .8rem;font-size:.8rem" onclick="saldarPrestamo(${i})">Saldar</button>
+      </div>
+    </div>`).join('');
+  document.getElementById('prestamoConsejo').textContent = total > 0
+    ? `Le debes un total de ${money(total)}. Kax te sugerirá cuándo devolver sin afectar tus gastos.`
+    : 'Sin deudas pendientes. ¡Bien!';
+}
+
+window.saldarPrestamo = function(i) {
+  const p = prestamos.splice(i, 1)[0];
+  lsSave('radar_prestamos', prestamos);
+  renderPrestamos(); renderSemaforo();
+
+  scheduleDelete({
+    label: `Prestamo de ${p.persona} saldado`,
+    restore: () => {
+      prestamos.splice(i, 0, p);
+      lsSave('radar_prestamos', prestamos);
+      renderPrestamos(); renderSemaforo();
+    },
+    confirm: async () => {
+      if (p && p.movId) {
+        try { await backendCall('eliminarMovimiento', { movId:p.movId }); } catch(e) {}
+      }
+      kaxSay(`Prestamo de ${p.persona} saldado. Todo al dia. 🙌`, 'celebrate', 4000);
+    }
+  });
+};
+
+// ─────────────────────────────────────────────
+// INGRESOS
+// ─────────────────────────────────────────────
+document.getElementById('ingresoFecha').value = todayISO();
+
+// Mostrar/ocultar fila de proyecto HC
+window.toggleIngresoProyecto = function() {
+  const fuente = document.getElementById('ingresoFuente').value;
+  const row    = document.getElementById('ingresoHCRow');
+  if (row) row.style.display = fuente === 'hotandcold' ? 'grid' : 'none';
+  const sel = document.getElementById('ingresoProyecto');
+  if (sel) {
+    sel.innerHTML = '<option value="">Sin proyecto</option>' +
+      proyectos.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
+  }
+};
+
+document.getElementById('addIngresoBtn').addEventListener('click', async () => {
+  const btn    = document.getElementById('addIngresoBtn');
+  const fuente = document.getElementById('ingresoFuente').value;
+  const monto  = Number(document.getElementById('ingresoMonto').value);
+  const desc   = document.getElementById('ingresoDesc').value.trim() || fuente;
+  const fecha  = document.getElementById('ingresoFecha').value;
+  const proyecto    = fuente === 'hotandcold' ? (document.getElementById('ingresoProyecto').value || '') : '';
+  const tipoDeposito = fuente === 'hotandcold' ? (document.getElementById('ingresoTipoHC').value || 'honorario') : '';
+  const banco       = document.getElementById('ingresoBanco').value || 'efectivo';
+  if (!monto) return;
+
+  btn.textContent = 'Guardando…'; btn.disabled = true;
+
+  const newIngreso = { fuente, monto, desc, fecha, proyecto, tipoDeposito, banco, movId: null };
+
+  try {
+    const res = await backendCall('guardarMovimiento', {
+      action:'guardarMovimiento', fecha, descripcion: desc || fuente,
+      categoria:'ingreso', tipo:'ingreso',
+      monto:String(monto),
+      etiqueta: fuente === 'hotandcold' ? 'negocio' : 'personal',
+      proyecto, tipo_deposito: tipoDeposito, banco, notas: fuente
+    });
+    if (res && res.ok) {
+      newIngreso.movId = res.movId || null;
+      kaxSay(`Ingreso de ${money(monto)} guardado en Sheets. 🚀`, 'celebrate', 4000);
+    }
+  } catch(e) {}
+
+  const allIngresos = lsLoad('radar_ingresos', []);
+  allIngresos.push(newIngreso);
+  lsSave('radar_ingresos', allIngresos);
+  ingresos.push(newIngreso);
+
+  document.getElementById('ingresoMonto').value = '';
+  document.getElementById('ingresoDesc').value  = '';
+  btn.textContent = 'Registrar ingreso'; btn.disabled = false;
+  renderIngresos();
+  renderSemaforo();
+});
+
+function renderIngresos() {
+  const list = document.getElementById('ingresoList');
+  if (!ingresos.length) { list.innerHTML = '<div class="tiny muted">Sin ingresos registrados aún.</div>'; return; }
+  list.innerHTML = ingresos.map((ing, i) => {
+    const fuente   = ing.fuente === 'hotandcold' ? '🏢 HC' : ing.fuente === 'universidad' ? '🎓 Uni' : '💰 Otro';
+    const detalle  = [
+      ing.proyecto || null,
+      ing.tipoDeposito ? ing.tipoDeposito.replace('_',' ') : null,
+      ing.banco && ing.banco !== 'efectivo' ? ing.banco : null,
+      ing.fecha || null
+    ].filter(Boolean).join(' · ');
+    return `<div class="move">
+      <div><span class="tag ingreso">${fuente}</span> ${ing.desc}
+        <div class="move-meta">${detalle}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <strong style="color:var(--good)">${money(ing.monto)}</strong>
+        <button onclick="deleteIngreso(${i})" title="Eliminar" style="background:none;border:none;cursor:pointer;color:var(--bad);font-size:1rem;padding:2px 4px">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.deleteIngreso = function(i) {
+  const ing = ingresos.splice(i, 1)[0];
+  const allI = lsLoad('radar_ingresos', []);
+  const cleanI = ing.movId ? allI.filter(x => x.movId !== ing.movId) : allI.filter((_,idx) => idx !== i);
+  lsSave('radar_ingresos', cleanI);
+  renderIngresos(); renderSemaforo();
+
+  scheduleDelete({
+    label: `Ingreso "${ing.desc}" eliminado`,
+    restore: () => {
+      ingresos.splice(i, 0, ing);
+      const all = lsLoad('radar_ingresos', []);
+      all.splice(i, 0, ing);
+      lsSave('radar_ingresos', all);
+      renderIngresos(); renderSemaforo();
+    },
+    confirm: async () => {
+      if (ing && ing.movId) {
+        try { await backendCall('eliminarMovimiento', { movId: ing.movId }); } catch(e) {}
+      }
+    }
+  });
+};
+// ─────────────────────────────────────────────
+document.getElementById('parseBtn').addEventListener('click', () => {
+  const text = document.getElementById('entry').value.trim();
+  if (!text) { alert('Escribe o dicta algo primero.'); return; }
+  pendingMoves = splitMoves(text);
+  renderPending();
+  if (!pendingMoves.length) {
+    document.getElementById('saveStatus').textContent = '⚠️ No encontré montos en el texto. Incluye números.';
+  } else {
+    document.getElementById('saveStatus').textContent = '';
+  }
+});
+
+const SR       = window.SpeechRecognition || window.webkitSpeechRecognition;
+const voiceBtn = document.getElementById('voiceBtn');
+if (SR) {
+  let recognition, listening = false, accumulated = '', shouldRestart = false;
+  function buildR() {
+    const r = new SR();
+    r.lang = 'es-PE'; r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
+    r.onstart  = () => {
+      listening = true;
+      voiceBtn.textContent = '⏹️ Detener';
+      voiceBtn.style.background = 'var(--bad)';
+      kaxSay('Te escucho. Habla con calma.', 'idle', 3000);
+    };
+    r.onresult = (e) => {
+      let fin = '', interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) fin += t + ' ';
+        else interim += t;
+      }
+      if (fin) accumulated += fin;
+      document.getElementById('entry').value = (accumulated + interim).trim();
+    };
+    r.onerror = (e) => {
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        // Apps Script iframe bloquea el mic — abrir en nueva ventana
+        kaxSay('El microfono no funciona en este contexto. Usa la app desde Chrome directamente.', 'alert', 6000);
+        voiceBtn.textContent = '🎙️ Dictar con Chrome';
+        voiceBtn.style.background = '';
+        listening = false; shouldRestart = false;
+      }
+      if (e.error === 'no-speech' || e.error === 'network') return;
+    };
+    r.onend = () => {
+      if (shouldRestart && listening) {
+        recognition = buildR();
+        setTimeout(() => { try { recognition.start(); } catch(e) {} }, 80);
+      } else {
+        listening = false;
+        voiceBtn.textContent   = '🎙️ Dictar con Chrome';
+        voiceBtn.style.background = '';
+      }
+    };
+    return r;
+  }
+  voiceBtn.addEventListener('click', () => {
+    if (!listening) {
+      accumulated = document.getElementById('entry').value.trim();
+      if (accumulated) accumulated += ' ';
+      shouldRestart = true;
+      recognition   = buildR();
+      try { recognition.start(); } catch(e) {
+        kaxSay('No se pudo activar el microfono. Verifica los permisos en Chrome.', 'alert', 5000);
+      }
+    } else {
+      shouldRestart = false;
+      listening     = false;
+      try { recognition.stop(); } catch(e) {}
+      voiceBtn.textContent      = '🎙️ Dictar con Chrome';
+      voiceBtn.style.background = '';
+    }
+  });
+} else {
+  voiceBtn.disabled    = true;
+  voiceBtn.textContent = 'Mic no disponible';
+  voiceBtn.style.opacity = '0.5';
+}
+
+// ─────────────────────────────────────────────
+// PROYECTOS
+// ─────────────────────────────────────────────
+function renderProjectList() {
+  const list = document.getElementById('projectList');
+  if (!proyectos.length) {
+    list.innerHTML = '<div class="tiny muted">Sin proyectos activos. Agrega uno arriba para poder clasificar gastos e ingresos.</div>';
+    return;
+  }
+  list.innerHTML = proyectos.map((p, i) => `
+    <div class="project">
+      <div><strong>${p.nombre}</strong><div class="tiny muted">Activo · ID: ${p.id || 'local'}</div></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="pill">Proyecto</span>
+        <button class="btn sec" style="padding:.3rem .7rem;font-size:.75rem" onclick="removeProject(${i})">× Eliminar</button>
+      </div>
+    </div>`).join('');
+}
+
+document.getElementById('addProjectBtn').addEventListener('click', async () => {
+  const val = document.getElementById('newProject').value.trim();
+  if (!val) return;
+  const btn = document.getElementById('addProjectBtn');
+  btn.textContent = 'Guardando…'; btn.disabled = true;
+
+  let id = null;
+  try {
+    const res = await backendCall('guardarProyecto', { nombre: val });
+    if (res && res.ok) id = res.id;
+  } catch(e) {}
+
+  const newProj = { nombre: val, id: id || ('local-' + Date.now()) };
+  proyectos.push(newProj);
+  lsSave('radar_proyectos', proyectos);
+  document.getElementById('newProject').value = '';
+  btn.textContent = 'Agregar'; btn.disabled = false;
+  renderProjectList();
+  kaxSay(`Proyecto "${val}" guardado${id ? ' en Sheets' : ' localmente'}. Ya clasifico gastos e ingresos de este proyecto.`, 'idle', 4000);
+});
+
+window.removeProject = function(i) {
+  const p = proyectos.splice(i, 1)[0];
+  lsSave('radar_proyectos', proyectos);
+  renderProjectList();
+
+  scheduleDelete({
+    label: `Proyecto "${p.nombre}" eliminado`,
+    restore: () => {
+      proyectos.splice(i, 0, p);
+      lsSave('radar_proyectos', proyectos);
+      renderProjectList();
+    },
+    confirm: async () => {
+      if (p.id && !p.id.startsWith('local-')) {
+        try { await backendCall('eliminarProyecto', { id: p.id }); } catch(e) {}
+      }
+    }
+  });
+};
+
+// ─────────────────────────────────────────────
+// INFORME EXPORTABLE
+// ─────────────────────────────────────────────
+function renderInformeCompleto() {
+  const savedToday = getSavedToday();
+  const movMes     = getAllMovesForPeriod('mes');
+  const { excedente, totalIn, totalFijos } = calcSemaforo();
+  const totalHoy   = savedToday.reduce((a,b) => a + b.amount, 0);
+  const totalMes   = movMes.reduce((a,b) => a + b.amount, 0);
+  const subcats    = {comida:0,transporte:0,cafe:0,farmacia:0,ropa:0,ocio:0,mercado:0,salud:0,otros:0};
+  savedToday.forEach(m => { if (m.subcat && subcats[m.subcat] !== undefined) subcats[m.subcat] += m.amount; });
+  const consejoTexts = CONSEJOS_RULES.filter(r => (subcats[r.subcat] || 0) > r.threshold).map(r => '• ' + r.msg);
+  const projectMax   = {};
+  movMes.forEach(m => { if (m.type === 'Hot and Cold') projectMax[m.project] = (projectMax[m.project]||0) + m.amount; });
+  const topProject   = Object.entries(projectMax).sort((a,b) => b[1]-a[1])[0];
+
+  renderConstancia();
+
+  const informe = !savedToday.length && !movMes.length
+    ? 'Radar aún no tiene suficiente información.'
+    : `INFORME RADAR — ${new Date().toLocaleDateString('es-PE')}
+
+GASTOS DE HOY: ${money(totalHoy)} (${savedToday.length} movimientos)
+GASTOS DEL MES: ${money(totalMes)} (${movMes.length} movimientos)
+INGRESOS DEL MES: ${money(totalIn)}
+COMPROMISOS FIJOS: ${money(totalFijos)}
+EXCEDENTE REAL: ${money(excedente)}
+PROYECTO CON MÁS GASTO: ${topProject ? topProject[0] + ' — ' + money(topProject[1]) : 'Sin datos'}
+
+SUBCATEGORÍAS DE HOY:
+${Object.entries(subcats).filter(([,v]) => v > 0).map(([k,v]) => `  ${k}: ${money(v)}`).join('\n') || '  Sin gastos personales hoy.'}
+
+CONSEJOS DE HÁBITO:
+${consejoTexts.length ? consejoTexts.join('\n') : '  Sin alertas. Buen día.'}
+
+DIAGNÓSTICO:
+Revisa si la separación automática personal/Hot and Cold es correcta.`;
+
+  document.getElementById('exportReport').textContent = informe;
+}
+
+document.getElementById('copyReport').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(document.getElementById('exportReport').textContent); alert('Informe copiado.'); }
+  catch(e) { alert('No se pudo copiar automáticamente.'); }
+});
+
+// ─────────────────────────────────────────────
+// GOOGLE CALENDAR via JSONP
+// ─────────────────────────────────────────────
+function parseEventMinutes(horaStr) {
+  const s = (horaStr || '').trim();
+  const m = s.match(/(\d{1,2}):(\d{2})\s*(a\.?\s*m\.?|p\.?\s*m\.?)/i);
+  if (m) {
+    let h = parseInt(m[1]), min = parseInt(m[2]);
+    const pm = /p/i.test(m[3]);
+    if (pm && h !== 12) h += 12;
+    if (!pm && h === 12) h = 0;
+    return h * 60 + min;
+  }
+  const m2 = s.match(/(\d{1,2}):(\d{2})/);
+  if (m2) return parseInt(m2[1]) * 60 + parseInt(m2[2]);
+  return -1;
+}
+
+function calendarCallback(eventos) {
+  const box = document.getElementById('calendarEvents');
+  if (!box) return;
+  if (!eventos || !eventos.length) {
+    box.textContent = 'Sin eventos para hoy.';
+    actualizarRecomendacion([]);
+    return;
+  }
+  const ahora       = new Date();
+  const minutosAhora = ahora.getHours() * 60 + ahora.getMinutes();
+  const parseados   = eventos.map(ev => ({ ...ev, mins: parseEventMinutes(ev.hora) })).sort((a,b) => a.mins - b.mins);
+  const futuros     = parseados.filter(ev => ev.mins < 0 || ev.mins > minutosAhora);
+  const pasados     = parseados.filter(ev => ev.mins >= 0 && ev.mins <= minutosAhora);
+
+  let html = '';
+  if (futuros.length) {
+    html += futuros.map(ev => `<div style="padding:5px 0;border-top:1px solid var(--line)"><strong>${ev.hora}</strong> — ${ev.titulo}</div>`).join('');
+  }
+  if (pasados.length) {
+    if (futuros.length) html += `<div class="tiny muted" style="margin-top:8px;margin-bottom:2px">Ya realizados</div>`;
+    html += pasados.map(ev => `<div style="padding:4px 0;border-top:1px solid var(--line);opacity:.38"><span style="text-decoration:line-through"><strong>${ev.hora}</strong> — ${ev.titulo}</span></div>`).join('');
+  }
+  if (!html) html = '<div class="tiny muted">No quedan eventos para el resto del día.</div>';
+  box.innerHTML = html;
+  actualizarRecomendacion(futuros);
+}
+
+function actualizarRecomendacion(futuros) {
+  const rec   = document.getElementById('recommendation');
+  const pills = document.getElementById('recommendPills');
+  if (!rec) return;
+  const ahora       = new Date();
+  const minutosAhora = ahora.getHours() * 60 + ahora.getMinutes();
+  if (!futuros.length) {
+    rec.textContent  = 'No tienes más compromisos hoy. Cierra el día: registra lo que gastaste y revisa cómo quedó tu semáforo.';
+    pills.innerHTML  = '<span class="pill">Cierre del día</span><span class="pill">Registrar gastos</span>';
+    return;
+  }
+  const consejos = [], pillasTags = new Set();
+  futuros.forEach((ev, i) => {
+    const titulo    = (ev.titulo || '').toLowerCase();
+    const esUni     = /clase|lab|laboratorio|docencia|universidad|facultad|curso|layer|h\d{2}/i.test(titulo);
+    const esReunion = /reuni[oó]n|meeting|visita|cliente|proyecto|obra|gestion|despacho/i.test(titulo);
+    const hora      = ev.hora;
+    if (esUni)     pillasTags.add('Universidad');
+    if (esReunion) pillasTags.add('Reunión');
+    const minsPrev = i === 0 ? minutosAhora : futuros[i-1].mins;
+    const hueco    = ev.mins >= 0 ? ev.mins - minsPrev : 0;
+    if (hueco >= 90 && hueco < 240) {
+      if (esUni || esReunion) { consejos.push(`Tienes ${hueco >= 120 ? 'más de 2 horas' : 'casi 2 horas'} antes de ${ev.titulo} (${hora}). Ese espacio suele terminar en comida cara afuera. ¿Llevas algo preparado?`); pillasTags.add('Hueco libre'); pillasTags.add('Llevar comida'); }
+      else { consejos.push(`Hay un espacio de ${Math.round(hueco/60*10)/10}h antes de ${ev.titulo}. Buen momento para adelantar algo sin gastar en salir.`); pillasTags.add('Tiempo libre'); }
+    } else if (hueco >= 240) {
+      consejos.push(`Tienes más de ${Math.floor(hueco/60)} horas hasta ${ev.titulo} (${hora}). Bloque largo — si no llevas almuerzo prepárate para gastar en la calle.`); pillasTags.add('Bloque largo'); pillasTags.add('Llevar almuerzo');
+    }
+    if (esUni && i === 0 && hueco < 90) { consejos.push(`Tu próxima clase es ${ev.titulo} a las ${hora}. Lleva termo — el café afuera suma S/ 5–8 que se repiten todos los días.`); pillasTags.add('Llevar termo'); }
+    if (esReunion && i === 0 && hueco < 90) { consejos.push(`Reunión: ${ev.titulo} a las ${hora}. Confirma qué materiales o documentos necesitas llevar.`); }
+  });
+  if (futuros.length >= 3) { consejos.push(`Día cargado con ${futuros.length} compromisos. Cuando el día está lleno tendemos a gastar más en comida y transporte rápido. Prevenlo ahora.`); pillasTags.add('Día cargado'); }
+  if (!consejos.length) { const sig = futuros[0]; consejos.push(`Próximo: ${sig.titulo} a las ${sig.hora}. Parece un día tranquilo, buen momento para evitar gastos hormiga.`); pillasTags.add('Agenda del día'); }
+  rec.textContent  = consejos[0];
+  pills.innerHTML  = [...pillasTags].map(p => `<span class="pill">${p}</span>`).join('');
+  if (consejos.length > 1) {
+    let idx = 0;
+    setInterval(() => {
+      idx = (idx + 1) % consejos.length;
+      rec.style.opacity = '0';
+      setTimeout(() => { rec.textContent = consejos[idx]; rec.style.opacity = '1'; }, 300);
+    }, 8000);
+    rec.style.transition = 'opacity 0.3s ease';
+  }
+}
+
+function cargarCalendar() {
+  const hoy = todayISO();
+  backendCall('getCalendar', { fecha: hoy })
+    .then(eventos => calendarCallback(eventos || []))
+    .catch(() => { const box = document.getElementById('calendarEvents'); if (box) box.textContent = 'Sin eventos para hoy.'; });
+}
+cargarCalendar();
+
+// ─────────────────────────────────────────────
+// EDIT / DELETE MOVIMIENTOS
+// ─────────────────────────────────────────────
+window.deleteMove = function(dateStr, idx) {
+  const moves   = lsLoad('radar_today_' + dateStr, []);
+  const removed = moves.splice(idx, 1)[0];
+  lsSave('radar_today_' + dateStr, moves);
+  renderSavedToday();
+  renderHistorial(currentPeriod);
+
+  scheduleDelete({
+    label: `Gasto "${removed.description}" eliminado`,
+    restore: () => {
+      const m = lsLoad('radar_today_' + dateStr, []);
+      m.splice(idx, 0, removed);
+      lsSave('radar_today_' + dateStr, m);
+      renderSavedToday();
+      renderHistorial(currentPeriod);
+    },
+    confirm: async () => {
+      if (removed && removed.movId) {
+        try { await backendCall('eliminarMovimiento', { movId: removed.movId }); } catch(e) {}
+      }
+    }
+  });
+};
+
+window.openEditModal = function(dateStr, idx) {
+  const moves = lsLoad('radar_today_' + dateStr, []);
+  const m = moves[idx];
+  if (!m) return;
+  document.getElementById('editIdx').value      = idx;
+  document.getElementById('editDateKey').value  = dateStr;
+  document.getElementById('editDesc').value     = m.description || '';
+  document.getElementById('editMonto').value    = m.amount || '';
+  document.getElementById('editTipo').value     = m.type || 'Personal';
+  document.getElementById('editSubcat').value   = m.subcat || 'otros';
+  document.getElementById('editCuenta').value   = m.account || 'efectivo';
+  document.getElementById('editProyecto').value = (m.project !== 'Personal' && m.project !== 'Sin proyecto') ? (m.project || '') : '';
+  document.getElementById('editModal').classList.add('open');
+};
+
+document.getElementById('saveEditBtn').addEventListener('click', async () => {
+  const btn    = document.getElementById('saveEditBtn');
+  const status = document.getElementById('editStatus');
+  btn.textContent      = 'Guardando…';
+  btn.disabled         = true;
+  status.style.display = 'block';
+  const idx     = parseInt(document.getElementById('editIdx').value);
+  const dateStr = document.getElementById('editDateKey').value;
+  const moves   = lsLoad('radar_today_' + dateStr, []);
+  if (!moves[idx]) return;
+  const tipo = document.getElementById('editTipo').value;
+  const updated = {
+    ...moves[idx],
+    description: document.getElementById('editDesc').value.trim(),
+    amount:      Number(document.getElementById('editMonto').value),
+    type:        tipo,
+    subcat:      tipo === 'Personal' ? document.getElementById('editSubcat').value : null,
+    account:     document.getElementById('editCuenta').value,
+    project:     tipo === 'Hot and Cold' ? (document.getElementById('editProyecto').value.trim() || 'Sin proyecto') : 'Personal'
+  };
+  moves[idx] = updated;
+  lsSave('radar_today_' + dateStr, moves);
+  // NO cerramos el modal aquí — lo cerramos después de la respuesta de Sheets
+
+  // Sincronizar con Sheets si tenemos movId
+  if (updated.movId) {
+    try {
+      await backendCall('actualizarMovimiento', {
+        movId:       updated.movId,
+        fecha:       dateStr,
+        descripcion: updated.description,
+        categoria:   updated.subcat || '',
+        monto:       String(updated.amount),
+        etiqueta:    updated.type === 'Hot and Cold' ? 'negocio' : 'personal',
+        proyecto:    updated.project !== 'Sin proyecto' && updated.project !== 'Personal' ? updated.project : '',
+        banco:       updated.account || 'efectivo',
+        notas:       ''
+      });
+      kaxSay('Actualizado en Sheets. ✏️', 'celebrate', 3000);
+    } catch(e) {
+      kaxSay('Actualizado localmente. Sin conexión.', 'idle', 3000);
+    }
+  } else {
+    kaxSay('Actualizado. (Sin ID de Sheets)', 'idle', 3000);
+  }
+
+  document.getElementById('editStatus').style.display = 'none';
+  document.getElementById('editModal').classList.remove('open');
+  btn.textContent      = 'Guardar cambios';
+  btn.disabled         = false;
+  status.style.display = 'none';
+  setViewDate(dateStr);   // navega a la fecha editada y re-renderiza
+  renderHistorial(currentPeriod);
+});
+
+document.getElementById('cancelEditBtn').addEventListener('click', () => {
+  document.getElementById('editModal').classList.remove('open');
+});
+document.getElementById('editModal').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+});
+
+// ─────────────────────────────────────────────
+// AGREGAR GASTO EN FECHA PASADA (modal)
+// ─────────────────────────────────────────────
+document.getElementById('addPastMoveBtn').addEventListener('click', () => {
+  document.getElementById('addPastTitle').textContent = `Agregar gasto — ${formatDateLabel(viewDate)}`;
+  document.getElementById('addPastModal').classList.add('open');
+});
+
+document.getElementById('saveAddPastBtn').addEventListener('click', async () => {
+  const btn    = document.getElementById('saveAddPastBtn');
+  const status = document.getElementById('addPastStatus');
+  btn.textContent      = 'Guardando…';
+  btn.disabled         = true;
+  status.style.display = 'block';
+
+  const desc   = document.getElementById('apDesc').value.trim();
+  const monto  = Number(document.getElementById('apMonto').value);
+  const tipo   = document.getElementById('apTipo').value;
+  const subcat = document.getElementById('apSubcat').value;
+  const cuenta = document.getElementById('apCuenta').value;
+  const proj   = document.getElementById('apProyecto').value.trim();
+  if (!desc || !monto) {
+    btn.textContent = 'Guardar'; btn.disabled = false; status.style.display = 'none';
+    alert('Completa descripción y monto.'); return;
+  }
+
+  const newMove = {
+    description: desc, amount: monto, type: tipo,
+    subcat:   tipo === 'Personal' ? subcat : null,
+    account:  cuenta,
+    project:  tipo === 'Hot and Cold' ? (proj || 'Sin proyecto') : 'Personal',
+    movId:    null   // se llena si Sheets responde ok
+  };
+
+  // Guardar en Sheets y capturar rowNumber
+  try {
+    const res = await backendCall('guardarMovimiento', {
+      action:'guardarMovimiento', fecha:viewDate, descripcion:desc,
+      categoria: subcat, tipo:'gasto', monto:String(monto),
+      etiqueta: tipo === 'Hot and Cold' ? 'negocio' : 'personal',
+      proyecto: proj, tipo_deposito:'', banco: cuenta || 'efectivo', notas:''
+    });
+    if (res && res.ok) newMove.movId = res.movId || null;
+  } catch(e) {}
+
+  // Guardar en localStorage
+  const saved = getSavedForDate(viewDate);
+  saved.push(newMove);
+  lsSave('radar_today_' + viewDate, saved);
+
+  document.getElementById('apDesc').value     = '';
+  document.getElementById('apMonto').value    = '';
+  document.getElementById('apProyecto').value = '';
+  status.style.display = 'none';
+  document.getElementById('addPastModal').classList.remove('open');
+  btn.textContent = 'Guardar';
+  btn.disabled    = false;
+  const savedDate = viewDate;
+  setViewDate(savedDate);        // navega a la fecha guardada y re-renderiza
+  renderHistorial(currentPeriod);
+  kaxSay(`Guardado: ${money(monto)} en ${desc} (${formatDateLabel(savedDate)}). ✅`, 'celebrate', 4000);
+});
+
+document.getElementById('cancelAddPastBtn').addEventListener('click', () => {
+  const apStatus = document.getElementById('addPastStatus');
+  if (apStatus) apStatus.style.display = 'none';
+  document.getElementById('addPastModal').classList.remove('open');
+});
+document.getElementById('addPastModal').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+});
+
+// ─────────────────────────────────────────────
+// DATE NAVIGATOR EVENTS
+// ─────────────────────────────────────────────
+const picker = document.getElementById('viewDatePicker');
+picker.value = todayISO();
+picker.max   = todayISO();
+picker.addEventListener('change', () => setViewDate(picker.value));
+document.getElementById('prevDayBtn').addEventListener('click', () => shiftDate(-1));
+document.getElementById('nextDayBtn').addEventListener('click', () => shiftDate(+1));
+document.getElementById('goTodayBtn').addEventListener('click', () => setViewDate(todayISO()));
+
+// ─────────────────────────────────────────────
+// GRÁFICO POR CATEGORÍAS (mes actual vs anterior)
+// ─────────────────────────────────────────────
+function getAllMovesForMonth(monthOffset) {
+  const now    = new Date();
+  const target = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
+  // Calcular prefijo YYYY-MM del mes objetivo usando fecha local
+  const mesTarget = target.getFullYear() + '-' +
+    String(target.getMonth() + 1).padStart(2, '0');
+  const result = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith('radar_today_')) continue;
+    const dateStr = key.replace('radar_today_', '');
+    if (dateStr.startsWith(mesTarget)) {
+      lsLoad(key, []).forEach(m => result.push(m));
+    }
+  }
+  return result;
+}
+
+function renderCategoryChart() {
+  const box    = document.getElementById('categoryChart');
+  if (!box) return;
+
+  const now    = new Date();
+  const curMov = getAllMovesForMonth(0);
+  const preMov = getAllMovesForMonth(-1);
+
+  const subcatKeys  = ['comida','transporte','cafe','farmacia','ropa','ocio','mercado','salud','otros'];
+  const subcatLabel = ['🍽 Comida','🚕 Transp.','☕ Café','💊 Farmac.','👗 Ropa','💑 Ocio','🛒 Mercado','🏋 Salud','❓ Otros'];
+
+  const sumSubcats = (moves) => {
+    const s = {};
+    subcatKeys.forEach(k => s[k] = 0);
+    moves.forEach(m => { if (m.type === 'Personal' && m.subcat && s[m.subcat] !== undefined) s[m.subcat] += m.amount; });
+    return s;
+  };
+
+  const cur = sumSubcats(curMov);
+  const pre = sumSubcats(preMov);
+  const maxVal = Math.max(...subcatKeys.map(k => Math.max(cur[k], pre[k])), 1);
+
+  // Labels de meses
+  const months = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const mCur   = months[now.getMonth()];
+  const mPre   = months[(now.getMonth() + 11) % 12];
+  const lblCur = document.getElementById('labelMesActual');
+  const lblPre = document.getElementById('labelMesAnterior');
+  if (lblCur) lblCur.textContent = mCur;
+  if (lblPre) lblPre.textContent = mPre;
+
+  // SVG horizontal bar chart
+  // Filtrar solo categorías con datos en algún mes
+  const subcatsConDatos = subcatKeys.filter(k => cur[k] > 0 || pre[k] > 0);
+  const subcatLabelFilt = subcatsConDatos.map(k => subcatLabel[subcatKeys.indexOf(k)]);
+
+  const rowH   = 38;
+  const labelW = 78;
+  const barMax = 140;
+  const totalW = labelW + barMax + 75;
+  const totalH = (subcatsConDatos.length || 1) * rowH + 10;
+
+  let rows = '';
+  subcatsConDatos.forEach((k, i) => {
+    const y    = i * rowH + 8;
+    const cW   = Math.max((cur[k] / maxVal) * barMax, cur[k] > 0 ? 3 : 0);
+    const pW   = Math.max((pre[k] / maxVal) * barMax, pre[k] > 0 ? 3 : 0);
+    const diff = cur[k] - pre[k];
+    const diffColor = diff > 0 ? '#d96b76' : diff < 0 ? '#82c66f' : '#9aa3a0';
+    const diffText  = diff !== 0 ? (diff > 0 ? '↑' : '↓') + money(Math.abs(diff)).replace('S/ ','') : '';
+
+    rows += `
+      <text x="0" y="${y + 10}" fill="#9aa3a0" font-size="11" dominant-baseline="middle">${subcatLabelFilt[i]}</text>
+      <rect x="${labelW}" y="${y}" width="${pW}" height="9" rx="3" fill="#252828"/>
+      <rect x="${labelW}" y="${y + 12}" width="${cW}" height="11" rx="3" fill="#5cc0b1" opacity=".9"/>
+      <text x="${labelW + Math.max(cW, pW) + 6}" y="${y + 12}" fill="#eef1ef" font-size="11" dominant-baseline="hanging">${cur[k] > 0 ? money(cur[k]) : ''}</text>
+      ${diffText ? `<text x="${labelW + barMax + 46}" y="${y + 6}" fill="${diffColor}" font-size="10" text-anchor="end">${diffText}</text>` : ''}
+    `;
+  });
+
+  box.innerHTML = `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+    <svg viewBox="0 0 ${totalW} ${totalH}" width="${totalW}" height="${totalH}" style="max-width:100%;display:block">
+      <style>text{font-family:'Satoshi',system-ui,sans-serif}</style>
+      ${rows}
+    </svg>
+  </div>`;
+
+  // Si no hay datos
+  const hasCur = curMov.filter(m => m.type === 'Personal').length > 0;
+  if (!hasCur) box.innerHTML = '<div class="tiny muted">Sin datos de gastos personales este mes.</div>';
+}
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+initState();
+setViewDate(todayISO());
+
+// Cargar datos inyectados por Apps Script (sin async)
+let datosInyectados = false;
+if (INITIAL_DATA && INITIAL_DATA.movimientos && INITIAL_DATA.movimientos.ok) {
+  procesarSyncMovimientos(INITIAL_DATA.movimientos);
+  datosInyectados = true;
+}
+if (INITIAL_DATA && INITIAL_DATA.fijosData && INITIAL_DATA.fijosData.ok) {
+  procesarSyncFijosYPrestamos(INITIAL_DATA.fijosData);
+  datosInyectados = true;
+}
+if (INITIAL_DATA && INITIAL_DATA.proyectos && INITIAL_DATA.proyectos.ok && INITIAL_DATA.proyectos.proyectos) {
+  proyectos = INITIAL_DATA.proyectos.proyectos.map(function(p){ return {nombre:p.nombre, id:p.id}; });
+  lsSave('radar_proyectos', proyectos);
+  datosInyectados = true;
+}
+if (INITIAL_DATA && INITIAL_DATA.resumen) {
+  cargarResumenSheets(INITIAL_DATA.resumen);
+}
+
+// Forzar re-render completo siempre
+renderSemaforo();
+renderPrestamos();
+renderIngresos();
+renderFijos();
+renderProjectList();
+renderConstancia();
+// Re-renderizar vista actual para asegurarse de mostrar los datos
+setViewDate(viewDate);
+
+// Si no hubo datos inyectados (corriendo desde Netlify o template falló),
+// usar sync async como fallback
+if (!datosInyectados) {
+  sincronizarMovimientosDesdeSheets();
+  cargarFijosYPrestamosDesdeSheets();
+  cargarProyectosDesdeSheets();
+} else {
+  // Datos inyectados OK — sync en segundo plano para traer cambios recientes
+  setTimeout(function() {
+    sincronizarMovimientosDesdeSheets();
+    cargarFijosYPrestamosDesdeSheets();
+    cargarProyectosDesdeSheets();
+  }, 2000);
+}
+
+// ─────────────────────────────────────────────
+// SYNC PROYECTOS DESDE SHEETS
+// ─────────────────────────────────────────────
+function cargarProyectosDesdeSheets() {
+  backendCall('getProyectos', {})
+    .then(res => {
+      if (!res || !res.ok) return;
+      if (res.proyectos) {
+        proyectos = res.proyectos.map(p => ({ nombre: p.nombre, id: p.id }));
+        lsSave('radar_proyectos', proyectos);
+        renderProjectList();
+        if (pendingMoves.length > 0) {
+          pendingMoves = pendingMoves.map(m => {
+            if (m.type === 'Hot and Cold' && (m.project === 'Sin proyecto' || m.project === 'Gastos internos')) {
+              return { ...m, project: detectProject(m.description) };
+            }
+            return m;
+          });
+          renderPending();
+        }
+        if (typeof toggleIngresoProyecto === 'function') toggleIngresoProyecto();
+      }
+    })
+    .catch(() => {});
+}
+
+// Sincronizar todo al cargar
+sincronizarMovimientosDesdeSheets();
+cargarFijosYPrestamosDesdeSheets();
+cargarProyectosDesdeSheets();
+
+document.getElementById('syncBtn').addEventListener('click', () => {
+  sincronizarMovimientosDesdeSheets();
+  cargarFijosYPrestamosDesdeSheets();
+  cargarProyectosDesdeSheets();
+  kaxSay('Sincronizando con Sheets… 📡', 'idle', 3000);
+});
+</script>
+</body>
+</html>
