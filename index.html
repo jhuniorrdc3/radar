@@ -175,9 +175,8 @@
       <button class="tab" data-tab="fijos">Fijos <span class="alert-badge" id="fijoBadge" style="display:none">!</span></button>
       <button class="tab" data-tab="informe">Informe</button>
       <button class="tab" data-tab="proyectos">Proyectos</button>
-      <button class="btn sec" id="syncBtn" title="Sincronizar con Sheets" style="border-radius:999px;padding:.6rem .9rem;font-size:1rem">📡</button>
     </div>
-    <span id="syncStatus" style="display:none;font-size:.78rem;color:var(--muted);margin-left:4px">Sincronizando…</span>
+    <span id="syncStatus" style="display:none;font-size:.78rem;color:var(--muted);margin-top:4px">Sincronizando…</span>
   </div>
 
   <!-- HOY -->
@@ -543,6 +542,9 @@
   <div class="undo-bar" id="undoBar" style="width:100%;min-width:60px"></div>
   <button class="undo-btn" id="undoBtnEl">↩ Deshacer</button>
 </div>
+
+<!-- SYNC BUTTON — fijo arriba de Kax -->
+<button id="syncBtn" title="Sincronizar con Sheets" style="position:fixed;bottom:104px;right:24px;z-index:99;background:var(--panel);border:1px solid var(--line);border-radius:999px;width:42px;height:42px;font-size:1.1rem;cursor:pointer;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center">📡</button>
 
 <div class="kax-wrap" id="kaxWrap">
   <div class="kax-bubble" id="kaxBubble">¡Hola Jhunior! Soy Kax. Estoy listo para ayudarte a registrar tu día. 🦊</div>
@@ -2397,3 +2399,4 @@ document.getElementById('syncBtn').addEventListener('click', () => {
 </script>
 </body>
 </html>
+    
