@@ -798,10 +798,17 @@ function animateValue(id, target) {
 // ─────────────────────────────────────────────
 // DETECCIÓN AUTOMÁTICA
 // ─────────────────────────────────────────────
+function normalizarTexto(t) {
+  return t.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // quita tildes
+}
+
 function detectProject(t) {
-  const l = t.toLowerCase();
-  for (const p of knownProjectNames()) { if (l.includes(p)) return p.charAt(0).toUpperCase() + p.slice(1); }
-  if (/intern[ao]|oficina|extensi[oó]n para la oficina/.test(l)) return 'Gastos internos';
+  const l = normalizarTexto(t);
+  for (const p of knownProjectNames()) {
+    if (l.includes(normalizarTexto(p))) return p.charAt(0).toUpperCase() + p.slice(1);
+  }
+  if (/intern[ao]|oficina|extension para la oficina/.test(l)) return 'Gastos internos';
   if (/obra|cliente|proveedor|proyecto/.test(l)) return 'Gastos internos';
   return 'Sin proyecto';
 }
@@ -1840,13 +1847,31 @@ function renderProjectList() {
   }
   list.innerHTML = proyectos.map((p, i) => `
     <div class="project">
-      <div><strong>${p.nombre}</strong><div class="tiny muted">Activo · ID: ${p.id || 'local'}</div></div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <span class="pill">Proyecto</span>
-        <button class="btn sec" style="padding:.3rem .7rem;font-size:.75rem" onclick="removeProject(${i})">× Eliminar</button>
+      <div><strong>${p.nombre}</strong><div class="tiny muted">Activo</div></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn sec" style="padding:.3rem .65rem;font-size:.75rem" onclick="editProjectName(${i})">✏️</button>
+        <button class="btn sec" style="padding:.3rem .65rem;font-size:.75rem" onclick="removeProject(${i})">×</button>
       </div>
     </div>`).join('');
 }
+
+window.editProjectName = function(i) {
+  const p = proyectos[i];
+  const nuevoNombre = prompt('Nuevo nombre para "' + p.nombre + '":', p.nombre);
+  if (!nuevoNombre || nuevoNombre.trim() === p.nombre) return;
+  const nombreFinal = nuevoNombre.trim();
+  // Eliminar viejo de Sheets y crear nuevo
+  if (p.id && !p.id.startsWith('local-')) {
+    jsonpPost({ action:'eliminarProyecto', id: p.id }).catch(()=>{});
+    backendCall('guardarProyecto', { nombre: nombreFinal })
+      .then(res => { if (res && res.ok) proyectos[i].id = res.id; lsSave('radar_proyectos', proyectos); })
+      .catch(()=>{});
+  }
+  proyectos[i].nombre = nombreFinal;
+  lsSave('radar_proyectos', proyectos);
+  renderProjectList();
+  kaxSay('Proyecto renombrado a "' + nombreFinal + '".', 'idle', 3000);
+};
 
 document.getElementById('addProjectBtn').addEventListener('click', async () => {
   const val = document.getElementById('newProject').value.trim();
