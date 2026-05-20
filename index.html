@@ -172,7 +172,7 @@
     <div class="tabs">
       <button class="tab active" data-tab="hoy">Hoy</button>
       <button class="tab" data-tab="finanzas">Finanzas</button>
-      <button class="tab" data-tab="fijos">Fijos <span class="alert-badge" id="fijoBadge" style="display:none">!</span></button>
+      <button class="tab" data-tab="fijos">Compromisos <span class="alert-badge" id="fijoBadge" style="display:none">!</span></button>
       <button class="tab" data-tab="informe">Informe</button>
       <button class="tab" data-tab="proyectos">Proyectos</button>
     </div>
@@ -246,6 +246,9 @@
           <div class="subcat"><div class="tiny muted">💑 Ocio</div><strong id="sc-ocio">S/ 0</strong></div>
           <div class="subcat"><div class="tiny muted">🛒 Mercado</div><strong id="sc-mercado">S/ 0</strong></div>
           <div class="subcat"><div class="tiny muted">🏋️ Salud</div><strong id="sc-salud">S/ 0</strong></div>
+          <div class="subcat"><div class="tiny muted">📱 Tecnol.</div><strong id="sc-tecnologia">S/ 0</strong></div>
+          <div class="subcat"><div class="tiny muted">🔔 Suscr.</div><strong id="sc-suscripciones">S/ 0</strong></div>
+          <div class="subcat"><div class="tiny muted">💈 Cuidado</div><strong id="sc-cuidado">S/ 0</strong></div>
           <div class="subcat"><div class="tiny muted">❓ Otros</div><strong id="sc-otros">S/ 0</strong></div>
         </div>
       </div>
@@ -256,7 +259,7 @@
   <section class="view" id="finanzas">
     <div class="grid col3">
       <div class="card kpi"><div class="muted tiny">Ingresos del mes</div><strong id="totalIngresos">S/ 0</strong><div class="tiny muted" id="totalIngresosLabel">Honorarios + Universidad</div></div>
-      <div class="card kpi"><div class="muted tiny">Compromisos fijos</div><strong id="totalFijosMes" style="color:var(--warn)">S/ 0</strong><div class="tiny muted">Lo que sale sí o sí</div></div>
+      <div class="card kpi"><div class="muted tiny">Compromisos fijos</div><strong id="totalFijosMes" style="color:var(--warn)">S/ 0</strong><div class="tiny muted">Estimado mensual</div></div>
       <div class="card kpi"><div class="muted tiny">Excedente real</div><strong id="excedente">S/ 0</strong><div class="tiny muted">Ingresos − fijos − gastos</div></div>
     </div>
 
@@ -350,19 +353,25 @@
   <!-- FIJOS -->
   <section class="view" id="fijos">
     <div class="card" style="margin-bottom:14px">
-      <h2>Compromisos fijos del mes</h2>
+      <h2>Compromisos del mes</h2>
       <div class="tiny muted" style="margin-bottom:14px">Kax te avisará antes de que venzan y te alertará en meses sin universidad.</div>
       <div class="form-row">
         <div><label>Nombre</label><input class="form-input" id="fijoNombre" placeholder="Alquiler, Luz, Perplexity…"/></div>
-        <div><label>Monto (S/)</label><input class="form-input" type="number" id="fijoMonto" placeholder="600"/></div>
+        <div><label>Monto estimado (S/)</label><input class="form-input" type="number" id="fijoMonto" placeholder="600"/></div>
+        <div><label>Monto real este mes</label><input class="form-input" type="number" id="fijoMontoReal" placeholder="Dejar vacío si no llegó"/></div>
         <div><label>Día que vence</label><input class="form-input" type="number" id="fijoDia" placeholder="5" min="1" max="31"/></div>
         <div style="display:flex;align-items:flex-end"><button class="btn" id="addFijoBtn">Agregar</button></div>
       </div>
-      <div id="fijoList"><div class="tiny muted">Sin compromisos fijos registrados aún.</div></div>
+      <div id="fijoList"><div class="tiny muted">Sin compromisos registrados aún.</div></div>
+      <div class="section-label" style="margin-top:16px">Tipo de cambio USD → S/</div>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:6px">
+        <input class="form-input" type="number" id="tipoCambio" step="0.01" style="width:120px" placeholder="3.70"/>
+        <span class="tiny muted">S/ por dólar (para convertir pagos en USD)</span>
+      </div>
     </div>
     <div class="grid col2eq">
       <div class="card">
-        <h2>Total fijos del mes</h2>
+        <h2>Total compromisos</h2>
         <strong id="totalFijosDisplay" style="font-size:2rem;font-variant-numeric:tabular-nums;color:var(--warn)">S/ 0</strong>
         <div class="tiny muted" style="margin-top:6px">Lo mínimo que necesitas cubrir antes de cualquier otro gasto.</div>
       </div>
@@ -441,12 +450,7 @@
       <div><label>Monto (S/)</label><input class="form-input" type="number" id="editMonto" style="width:100%"/></div>
     </div>
     <div class="modal-row">
-      <div><label>Tipo</label>
-        <select class="form-input" id="editTipo" style="width:100%">
-          <option value="Personal">Personal</option>
-          <option value="Hot and Cold">Hot and Cold</option>
-        </select>
-      </div>
+      <div><label>Fecha</label><input class="form-input" type="date" id="editFecha" style="width:100%"/></div>
       <div><label>Subcategoría</label>
         <select class="form-input" id="editSubcat" style="width:100%">
           <option value="comida">Comida</option>
@@ -462,6 +466,12 @@
       </div>
     </div>
     <div class="modal-row">
+      <div><label>Tipo</label>
+        <select class="form-input" id="editTipo" style="width:100%">
+          <option value="Personal">Personal</option>
+          <option value="Hot and Cold">Hot and Cold</option>
+        </select>
+      </div>
       <div><label>Cuenta</label>
         <select class="form-input" id="editCuenta" style="width:100%">
           <option value="efectivo">Efectivo</option>
@@ -764,7 +774,7 @@ function kaxSay(msg, mood = 'idle', duration = 5000) {
   kaxTimer = setTimeout(() => { kaxBubble.classList.remove('show'); kaxAvatar.className = 'kax-avatar idle'; }, duration);
 }
 function kaxTap() {
-  const msgs = ["¡Aquí estoy! ¿Qué pasó hoy?","Recuerda registrar cada gasto, aunque sea pequeño.","Mañana revisa tus fijos para no quedarte en cero.","¡Cada sol registrado es un paso hacia tu meta! 🚀"];
+  const msgs = ["¡Aquí estoy! ¿Qué pasó hoy?","Recuerda registrar cada gasto, aunque sea pequeño.","Mañana revisa tus compromisos para no quedarte en cero.","¡Cada sol registrado es un paso hacia tu meta! 🚀"];
   kaxSay(msgs[Math.floor(Math.random() * msgs.length)], 'idle', 4000);
 }
 setTimeout(() => kaxSay('¡Hola Jhunior! Soy Kax. Registra tu día cuando estés listo. 🦊', 'idle', 5000), 1200);
@@ -815,6 +825,9 @@ function detectProject(t) {
 function detectSubcat(t) {
   const l = t.toLowerCase();
   if (/café|cafe|cappuccino|americano/.test(l))         return 'cafe';
+  if (/suscripci[oó]n|perplexity|claude|chatgpt|netflix|spotify|amazon|prime|youtube|premium|adobe|canva|notion|figma|dropbox|icloud|plan\s*mensual/.test(l)) return 'suscripciones';
+  if (/audifon|auricular|cargador|cable\s*usb|mouse|teclado|celular|laptop|computadora|tablet|foco|extensi[oó]n|pilas|bateria|tecnolog/.test(l)) return 'tecnologia';
+  if (/barberia|barbero|peluquer|corte\s*de\s*cabello|spa|manicur|pedicur|depilac|cosm[eé]tico|perfume|shampoo|cuidado\s*personal/.test(l)) return 'cuidado';
   if (/almuerz|men[uú]|comida|cena|desayuno|pollería|pollerio|restaurante|snack|ceviche|cebiche|lomo\s*saltado|causa|chifa|pizza|hamburgues|sushi|pollo\s*a\s*la\s*brasa|anticucho|chicharr[oó]n|tamal|pan\s*con|sanguchería|sanguch|arroz\s*con|seco\s*de|tallarin|pasta|fideos|jugo|refresco|gaseosa|lonche/.test(l)) return 'comida';
   if (/taxi|uber|cabify|didi|bus\b|combi|pasaje|transporte|micro|mototaxi|metro|tren|colectivo|beat/.test(l)) return 'transporte';
   if (/farmacia|botica|medicina|pastilla/.test(l))      return 'farmacia';
@@ -884,16 +897,22 @@ function splitMoves(text) {
   return result.filter(x => x.amount > 0);
 }
 function parseSingle(text, forcedAmount = null) {
-  const nums   = text.match(/\d+(?:\.\d+)?/g) || [];
-  const amount = forcedAmount ? Number(forcedAmount) : Number(nums[0] || 0);
-  const type   = detectType(text);
+  const l       = text.toLowerCase();
+  const esDolar = /\$\s*\d|\bdolar(es)?\b|\busd\b/.test(l);
+  const nums    = text.match(/\d+(?:\.\d+)?/g) || [];
+  let amount    = forcedAmount ? Number(forcedAmount) : Number(nums[0] || 0);
+  if (esDolar && amount > 0) {
+    const tc = Number(document.getElementById('tipoCambio')?.value) || 3.70;
+    amount   = Math.round(amount * tc * 100) / 100;
+  }
+  const type = detectType(text);
   return {
     type,
-    project: type === 'Hot and Cold' ? detectProject(text) : 'Personal',
-    subcat:  detectSubcat(text),  // siempre detectar subcat, sea HC o Personal
-    description: detectDesc(text),
+    project:     type === 'Hot and Cold' ? detectProject(text) : 'Personal',
+    subcat:      detectSubcat(text),
+    description: detectDesc(text) + (esDolar ? ' (USD>S/)' : ''),
     amount,
-    account: detectAccount(text)
+    account:     detectAccount(text)
   };
 }
 
@@ -956,7 +975,7 @@ function renderSavedToday() {
   const list = document.getElementById('movementList');
   list.innerHTML = '';
 
-  const subcats = {comida:0,transporte:0,cafe:0,farmacia:0,ropa:0,ocio:0,mercado:0,salud:0,otros:0};
+  const subcats = {comida:0,transporte:0,cafe:0,farmacia:0,ropa:0,ocio:0,mercado:0,salud:0,tecnologia:0,suscripciones:0,cuidado:0,otros:0};
   let total = 0, hc = 0, personal = 0, tc = 0;
   const byProject = {};
 
@@ -1416,7 +1435,7 @@ document.querySelectorAll('.period-tab').forEach(btn => {
 
 function renderHistorial(period) {
   const moves   = getAllMovesForPeriod(period);
-  const subcats = {comida:0,transporte:0,cafe:0,farmacia:0,ropa:0,ocio:0,mercado:0,salud:0,otros:0};
+  const subcats = {comida:0,transporte:0,cafe:0,farmacia:0,ropa:0,ocio:0,mercado:0,salud:0,tecnologia:0,suscripciones:0,cuidado:0,otros:0};
   let totalP = 0, totalHC = 0;
 
   moves.forEach(m => {
@@ -1427,7 +1446,7 @@ function renderHistorial(period) {
   });
 
   // Subcategorías
-  const subNames = {comida:'🍽️ Comida',transporte:'🚕 Transp.',cafe:'☕ Café',farmacia:'💊 Farmac.',ropa:'👗 Ropa',ocio:'💑 Ocio',mercado:'🛒 Mercado',salud:'🏋️ Salud',otros:'❓ Otros'};
+  const subNames = {comida:'🍽️ Comida',transporte:'🚕 Transp.',cafe:'☕ Café',farmacia:'💊 Farmac.',ropa:'👗 Ropa',ocio:'💑 Ocio',mercado:'🛒 Mercado',salud:'🏋️ Salud',tecnologia:'📱 Tecnol.',suscripciones:'🔔 Suscr.',cuidado:'💈 Cuidado',otros:'❓ Otros'};
   const subcatsEl = document.getElementById('histSubcats');
   if (subcatsEl) {
     subcatsEl.innerHTML = Object.entries(subcats)
@@ -1471,12 +1490,13 @@ function renderHistorial(period) {
 // FIJOS
 // ─────────────────────────────────────────────
 document.getElementById('addFijoBtn').addEventListener('click', async () => {
-  const nombre = document.getElementById('fijoNombre').value.trim();
-  const monto  = Number(document.getElementById('fijoMonto').value);
-  const dia    = Number(document.getElementById('fijoDia').value) || 1;
+  const nombre    = document.getElementById('fijoNombre').value.trim();
+  const monto     = Number(document.getElementById('fijoMonto').value);
+  const montoReal = Number(document.getElementById('fijoMontoReal').value) || null;
+  const dia       = Number(document.getElementById('fijoDia').value) || 1;
   if (!nombre || !monto) return;
 
-  const newFijo = { nombre, monto, dia, movId: null };
+  const newFijo = { nombre, monto, montoReal, dia, movId: null };
 
   // Guardar en Sheets (tipo='fijo', dia en tipo_deposito)
   try {
@@ -1491,20 +1511,22 @@ document.getElementById('addFijoBtn').addEventListener('click', async () => {
 
   fijos.push(newFijo);
   lsSave('radar_fijos', fijos);
-  document.getElementById('fijoNombre').value = '';
-  document.getElementById('fijoMonto').value  = '';
-  document.getElementById('fijoDia').value    = '';
+  document.getElementById('fijoNombre').value    = '';
+  document.getElementById('fijoMonto').value     = '';
+  document.getElementById('fijoMontoReal').value = '';
+  document.getElementById('fijoDia').value       = '';
   renderFijos();
   renderSemaforo();
 });
 
 function renderFijos() {
   const list  = document.getElementById('fijoList');
-  const total = fijos.reduce((a,b) => a + b.monto, 0);
+  // Usar monto real si existe, sino estimado
+  const total = fijos.reduce((a,b) => a + (b.montoReal || b.monto), 0);
   document.getElementById('totalFijosDisplay').textContent = money(total);
   document.getElementById('totalFijosMes').textContent     = money(total);
 
-  if (!fijos.length) { list.innerHTML = '<div class="tiny muted">Sin compromisos fijos registrados aún.</div>'; return; }
+  if (!fijos.length) { list.innerHTML = '<div class="tiny muted">Sin compromisos registrados aún.</div>'; return; }
 
   const proximos = fijos.filter(f => daysUntil(f.dia) <= 3);
   const badge    = document.getElementById('fijoBadge');
@@ -1512,13 +1534,24 @@ function renderFijos() {
   badge.textContent   = proximos.length;
 
   list.innerHTML = fijos.map((f, i) => {
-    const dias    = daysUntil(f.dia);
-    const urgente = dias <= 3;
+    const dias      = daysUntil(f.dia);
+    const urgente   = dias <= 3;
+    const montoMost = f.montoReal || f.monto;
+    const tieneReal = f.montoReal && f.montoReal !== f.monto;
     return `<div class="fijo-item">
-      <div><strong>${f.nombre}</strong><div class="tiny muted">Vence el día ${f.dia} · ${dias <= 0 ? '¡Hoy!' : dias === 1 ? 'Mañana' : dias + ' días'}</div></div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <strong style="color:${urgente ? 'var(--bad)' : 'var(--warn)'}">${money(f.monto)}</strong>
-        <button class="btn sec" style="padding:.4rem .8rem;font-size:.8rem" onclick="removeFijo(${i})">×</button>
+      <div>
+        <strong>${f.nombre}</strong>
+        <div class="tiny muted">Vence día ${f.dia} · ${dias <= 0 ? 'Hoy' : dias === 1 ? 'Mañana' : dias + ' días'}</div>
+        ${tieneReal ? `<div class="tiny" style="color:var(--muted)">Estimado: ${money(f.monto)}</div>` : ''}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="text-align:right">
+          <strong style="color:${urgente ? 'var(--bad)' : 'var(--warn)'}">${money(montoMost)}</strong>
+          <div class="tiny muted" style="cursor:pointer;text-decoration:underline" onclick="editMontoReal(${i})">
+            ${f.montoReal ? 'Editar real' : '+ Monto real'}
+          </div>
+        </div>
+        <button class="btn sec" style="padding:.35rem .7rem;font-size:.8rem" onclick="removeFijo(${i})">×</button>
       </div>
     </div>`;
   }).join('');
@@ -1531,13 +1564,23 @@ function renderFijos() {
       <div><strong>${m}</strong><div class="tiny muted">Solo entra Hot and Cold (~S/1,000)</div></div>
       <div style="color:${cubre ? 'var(--warn)' : 'var(--bad)'}">
         <strong>${cubre ? 'Ajustado' : 'En riesgo'}</strong>
-        <div class="tiny">${money(total)} en fijos vs S/ 1,000 est.</div>
+        <div class="tiny">${money(total)} en compromisos vs S/ 1,000 est.</div>
       </div>
     </div>`;
   }).join('');
 
-  if (proximos.length) kaxSay(`⚠️ En ${daysUntil(proximos[0].dia)} día${daysUntil(proximos[0].dia) === 1 ? '' : 's'} vence ${proximos[0].nombre} (${money(proximos[0].monto)}).`, 'alert', 7000);
+  if (proximos.length) kaxSay(`En ${daysUntil(proximos[0].dia)} dia${daysUntil(proximos[0].dia) === 1 ? '' : 's'} vence ${proximos[0].nombre} (${money(proximos[0].montoReal || proximos[0].monto)}).`, 'alert', 7000);
 }
+
+window.editMontoReal = function(i) {
+  const f = fijos[i];
+  const val = prompt(`Monto real de "${f.nombre}" este mes (estimado: ${money(f.monto)}):`, f.montoReal || f.monto);
+  if (val === null) return;
+  fijos[i].montoReal = Number(val) || f.monto;
+  lsSave('radar_fijos', fijos);
+  renderFijos();
+  renderSemaforo();
+};
 
 window.removeFijo = function(i) {
   const fijo = fijos.splice(i, 1)[0];
@@ -2100,6 +2143,7 @@ window.openEditModal = function(dateStr, idx) {
   document.getElementById('editDateKey').value  = dateStr;
   document.getElementById('editDesc').value     = m.description || '';
   document.getElementById('editMonto').value    = m.amount || '';
+  document.getElementById('editFecha').value    = dateStr;
   document.getElementById('editTipo').value     = m.type || 'Personal';
   document.getElementById('editSubcat').value   = m.subcat || 'otros';
   document.getElementById('editCuenta').value   = m.account || 'efectivo';
@@ -2115,9 +2159,10 @@ document.getElementById('saveEditBtn').addEventListener('click', async () => {
   btn.textContent      = 'Guardando…';
   btn.disabled         = true;
   status.style.display = 'block';
-  const idx     = parseInt(document.getElementById('editIdx').value);
-  const dateStr = document.getElementById('editDateKey').value;
-  const moves   = lsLoad('radar_today_' + dateStr, []);
+  const idx      = parseInt(document.getElementById('editIdx').value);
+  const dateStr  = document.getElementById('editDateKey').value;
+  const newDate  = document.getElementById('editFecha').value || dateStr;
+  const moves    = lsLoad('radar_today_' + dateStr, []);
   if (!moves[idx]) return;
   const tipo = document.getElementById('editTipo').value;
   const updated = {
@@ -2125,20 +2170,29 @@ document.getElementById('saveEditBtn').addEventListener('click', async () => {
     description: document.getElementById('editDesc').value.trim(),
     amount:      Number(document.getElementById('editMonto').value),
     type:        tipo,
-    subcat:      tipo === 'Personal' ? document.getElementById('editSubcat').value : null,
+    subcat:      document.getElementById('editSubcat').value,
     account:     document.getElementById('editCuenta').value,
     project:     tipo === 'Hot and Cold' ? (document.getElementById('editProyecto').value || 'Sin proyecto') : 'Personal'
   };
-  moves[idx] = updated;
-  lsSave('radar_today_' + dateStr, moves);
-  // NO cerramos el modal aquí — lo cerramos después de la respuesta de Sheets
+
+  // Si cambió la fecha, mover a la nueva fecha
+  if (newDate !== dateStr) {
+    moves.splice(idx, 1);
+    lsSave('radar_today_' + dateStr, moves);
+    const newDayMoves = lsLoad('radar_today_' + newDate, []);
+    newDayMoves.push(updated);
+    lsSave('radar_today_' + newDate, newDayMoves);
+  } else {
+    moves[idx] = updated;
+    lsSave('radar_today_' + dateStr, moves);
+  }
 
   // Sincronizar con Sheets si tenemos movId
   if (updated.movId) {
     try {
       await backendCall('actualizarMovimiento', {
         movId:       updated.movId,
-        fecha:       dateStr,
+        fecha:       newDate,
         descripcion: updated.description,
         categoria:   updated.subcat || '',
         monto:       String(updated.amount),
@@ -2160,7 +2214,7 @@ document.getElementById('saveEditBtn').addEventListener('click', async () => {
   btn.textContent      = 'Guardar cambios';
   btn.disabled         = false;
   status.style.display = 'none';
-  setViewDate(dateStr);   // navega a la fecha editada y re-renderiza
+  setViewDate(newDate); // navega a la fecha final (nueva o misma)
   renderHistorial(currentPeriod);
 });
 
@@ -2283,8 +2337,8 @@ function renderCategoryChart() {
   const curMov = getAllMovesForMonth(0);
   const preMov = getAllMovesForMonth(-1);
 
-  const subcatKeys  = ['comida','transporte','cafe','farmacia','ropa','ocio','mercado','salud','otros'];
-  const subcatLabel = ['🍽 Comida','🚕 Transp.','☕ Café','💊 Farmac.','👗 Ropa','💑 Ocio','🛒 Mercado','🏋 Salud','❓ Otros'];
+  const subcatKeys  = ['comida','transporte','cafe','farmacia','ropa','ocio','mercado','salud','tecnologia','suscripciones','cuidado','otros'];
+  const subcatLabel = ['🍽 Comida','🚕 Transp.','☕ Café','💊 Farmac.','👗 Ropa','💑 Ocio','🛒 Mercado','🏋 Salud','📱 Tecnol.','🔔 Suscr.','💈 Cuidado','❓ Otros'];
 
   const sumSubcats = (moves) => {
     const s = {};
@@ -2352,6 +2406,13 @@ function renderCategoryChart() {
 // ─────────────────────────────────────────────
 initState();
 setViewDate(todayISO());
+
+// Cargar tipo de cambio guardado
+const savedTC = lsLoad('radar_tipocambio', null);
+if (savedTC) { const el = document.getElementById('tipoCambio'); if (el) el.value = savedTC; }
+document.getElementById('tipoCambio')?.addEventListener('change', (e) => {
+  lsSave('radar_tipocambio', e.target.value);
+});
 
 // Cargar datos inyectados por Apps Script (sin async)
 let datosInyectados = false;
