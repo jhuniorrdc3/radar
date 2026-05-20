@@ -826,7 +826,7 @@ function detectSubcat(t) {
   const l = t.toLowerCase();
   if (/café|cafe|cappuccino|americano/.test(l))         return 'cafe';
   if (/suscripci[oó]n|perplexity|claude|chatgpt|netflix|spotify|amazon|prime|youtube|premium|adobe|canva|notion|figma|dropbox|icloud|plan\s*mensual/.test(l)) return 'suscripciones';
-  if (/audifon|auricular|cargador|cable\s*usb|mouse|teclado|celular|laptop|computadora|tablet|foco|extensi[oó]n|pilas|bateria|tecnolog/.test(l)) return 'tecnologia';
+  if (/audif[oó]n|auricular|cargador|cable\s*usb|mouse|teclado|celular|laptop|computadora|tablet|foco|extensi[oó]n|pilas|bateria|tecnolog/.test(l)) return 'tecnologia';
   if (/barberia|barbero|peluquer|corte\s*de\s*cabello|spa|manicur|pedicur|depilac|cosm[eé]tico|perfume|shampoo|cuidado\s*personal/.test(l)) return 'cuidado';
   if (/almuerz|men[uú]|comida|cena|desayuno|pollería|pollerio|restaurante|snack|ceviche|cebiche|lomo\s*saltado|causa|chifa|pizza|hamburgues|sushi|pollo\s*a\s*la\s*brasa|anticucho|chicharr[oó]n|tamal|pan\s*con|sanguchería|sanguch|arroz\s*con|seco\s*de|tallarin|pasta|fideos|jugo|refresco|gaseosa|lonche/.test(l)) return 'comida';
   if (/taxi|uber|cabify|didi|bus\b|combi|pasaje|transporte|micro|mototaxi|metro|tren|colectivo|beat/.test(l)) return 'transporte';
@@ -1378,7 +1378,10 @@ function calcSemaforo() {
     i.tipoDeposito !== 'caja_chica' && i.fuente !== 'hotandcold' ||
     (i.fuente === 'hotandcold' && i.tipoDeposito === 'honorario')
   );
-  const totalIn    = ingresosPersonales.reduce((a,b) => a + b.monto, 0);
+  const totalIngresos = ingresosPersonales.reduce((a,b) => a + b.monto, 0);
+  // Préstamos recibidos también son liquidez real disponible
+  const totalPrestamos = prestamos.reduce((a,b) => a + b.monto, 0);
+  const totalIn = totalIngresos + totalPrestamos;
   const cajaChica  = ingresos.filter(i => i.tipoDeposito === 'caja_chica').reduce((a,b) => a + b.monto, 0);
 
   const totalFijos  = fijos.reduce((a,b) => a + b.monto, 0) || (Number(RESUMEN['TOTAL FIJOS MES']) || 0);
@@ -1391,17 +1394,21 @@ function calcSemaforo() {
   else if (excedente < 0)        { estado = 'rojo';     msg = 'Gastos + fijos superando ingresos este mes.'; }
   else if (excedente < 500 || !hayUni) { estado = 'amarillo'; msg = !hayUni ? 'Mes sin sueldo de universidad. Administra con cuidado.' : 'Margen ajustado este mes.'; }
   else { msg = 'Tus ingresos cubren bien tus compromisos y gastos este mes.'; }
-  return { estado, msg, excedente, totalIn, totalGastos, totalFijos, cajaChica };
+  return { estado, msg, excedente, totalIn, totalGastos, totalFijos, cajaChica, totalPrestamos };
 }
 
 function renderSemaforo() {
-  const { estado, msg, excedente, totalIn, cajaChica } = calcSemaforo();
+  const { estado, msg, excedente, totalIn, cajaChica, totalPrestamos } = calcSemaforo();
   const box = document.getElementById('semaforoBox');
   if (box) box.innerHTML = `<div class="semaforo ${estado}"><div class="dot ${estado}"></div><div><strong>${estado.charAt(0).toUpperCase() + estado.slice(1)}</strong> · ${msg}</div></div>`;
   const el = document.getElementById('totalIngresos');
   if (el) el.textContent = money(totalIn);
   const lbl = document.getElementById('totalIngresosLabel');
-  if (lbl) lbl.textContent = cajaChica > 0 ? `+ Caja chica HC: ${money(cajaChica)} (no personal)` : 'Honorarios + Universidad';
+  if (lbl) lbl.textContent = cajaChica > 0
+    ? `+ Caja chica HC: ${money(cajaChica)} (no personal)`
+    : totalPrestamos > 0
+      ? `Incluye prestamo: ${money(totalPrestamos)}`
+      : 'Honorarios + Universidad';
   const ex = document.getElementById('excedente');
   if (ex) { ex.textContent = money(excedente); ex.style.color = excedente >= 0 ? 'var(--good)' : 'var(--bad)'; }
   renderOportunidades(excedente);
