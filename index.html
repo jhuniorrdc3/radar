@@ -474,7 +474,11 @@
           <option value="Plin">Plin</option>
         </select>
       </div>
-      <div><label>Proyecto (si HC)</label><input class="form-input" id="editProyecto" style="width:100%" placeholder="Pajaten, Viviana…"/></div>
+      <div><label>Proyecto (si HC)</label>
+        <select class="form-input" id="editProyecto" style="width:100%">
+          <option value="">Sin proyecto</option>
+        </select>
+      </div>
     </div>
     <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
       <button class="btn" id="saveEditBtn" style="flex:1">Guardar cambios</button>
@@ -2060,6 +2064,13 @@ window.openEditModal = function(dateStr, idx) {
   const moves = lsLoad('radar_today_' + dateStr, []);
   const m = moves[idx];
   if (!m) return;
+
+  // Poblar selector de proyectos
+  const sel = document.getElementById('editProyecto');
+  sel.innerHTML = '<option value="">Sin proyecto</option>' +
+    proyectos.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('') +
+    '<option value="Gastos internos">Gastos internos</option>';
+
   document.getElementById('editIdx').value      = idx;
   document.getElementById('editDateKey').value  = dateStr;
   document.getElementById('editDesc').value     = m.description || '';
@@ -2067,7 +2078,9 @@ window.openEditModal = function(dateStr, idx) {
   document.getElementById('editTipo').value     = m.type || 'Personal';
   document.getElementById('editSubcat').value   = m.subcat || 'otros';
   document.getElementById('editCuenta').value   = m.account || 'efectivo';
-  document.getElementById('editProyecto').value = (m.project !== 'Personal' && m.project !== 'Sin proyecto') ? (m.project || '') : '';
+  // Setear proyecto después de poblar el select
+  const projVal = (m.project !== 'Personal' && m.project !== 'Sin proyecto') ? (m.project || '') : '';
+  sel.value = projVal;
   document.getElementById('editModal').classList.add('open');
 };
 
@@ -2089,7 +2102,7 @@ document.getElementById('saveEditBtn').addEventListener('click', async () => {
     type:        tipo,
     subcat:      tipo === 'Personal' ? document.getElementById('editSubcat').value : null,
     account:     document.getElementById('editCuenta').value,
-    project:     tipo === 'Hot and Cold' ? (document.getElementById('editProyecto').value.trim() || 'Sin proyecto') : 'Personal'
+    project:     tipo === 'Hot and Cold' ? (document.getElementById('editProyecto').value || 'Sin proyecto') : 'Personal'
   };
   moves[idx] = updated;
   lsSave('radar_today_' + dateStr, moves);
@@ -2399,4 +2412,3 @@ document.getElementById('syncBtn').addEventListener('click', () => {
 </script>
 </body>
 </html>
-    
