@@ -57,14 +57,21 @@
     .kax-wrap{position:fixed;bottom:24px;right:24px;z-index:100;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
     .kax-bubble{background:var(--panel);border:1px solid var(--line);border-radius:16px 16px 4px 16px;padding:12px 14px;max-width:240px;font-size:.88rem;line-height:1.45;box-shadow:var(--shadow);opacity:0;transform:translateY(8px) scale(.96);transition:opacity .3s,transform .3s;pointer-events:none}
     .kax-bubble.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
-    .kax-avatar{width:64px;height:64px;cursor:pointer;filter:drop-shadow(0 4px 10px rgba(227,66,52,.3));transition:transform .2s}
+    .kax-avatar{width:72px;height:auto;cursor:pointer;filter:drop-shadow(0 4px 12px rgba(227,66,52,.35));transition:transform .2s,opacity .18s ease}
     .kax-avatar:hover{transform:scale(1.08)}
-    @keyframes kax-idle{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
-    @keyframes kax-celebrate{0%,100%{transform:rotate(0)}25%{transform:rotate(-10deg)}75%{transform:rotate(10deg)}}
-    @keyframes kax-alert{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+    .kax-avatar.kax-switching{opacity:0}
+    @keyframes kax-idle{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+    @keyframes kax-celebrate{0%,100%{transform:rotate(0) scale(1)}25%{transform:rotate(-12deg) scale(1.05)}75%{transform:rotate(12deg) scale(1.05)}}
+    @keyframes kax-alert{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+    @keyframes kax-thinking{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-3px) rotate(-4deg)}}
+    @keyframes kax-sad{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}
+    @keyframes kax-excited{0%,100%{transform:translateY(0) scale(1)}30%{transform:translateY(-8px) scale(1.08)}60%{transform:translateY(-4px) scale(1.04)}}
     .kax-avatar.idle{animation:kax-idle 3s ease-in-out infinite}
-    .kax-avatar.celebrate{animation:kax-celebrate .5s ease-in-out 3}
+    .kax-avatar.celebrate,.kax-avatar.happy{animation:kax-celebrate .5s ease-in-out 3}
     .kax-avatar.alert{animation:kax-alert .2s ease-in-out 4}
+    .kax-avatar.thinking{animation:kax-thinking 2s ease-in-out infinite}
+    .kax-avatar.sad{animation:kax-sad 2.5s ease-in-out infinite}
+    .kax-avatar.excited{animation:kax-excited .6s ease-in-out 3}
     @keyframes fadeSlideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
     .move{animation:fadeSlideUp .25s ease both}
     .consejo{animation:fadeSlideUp .3s ease both}
@@ -568,34 +575,13 @@
 
 <div class="kax-wrap" id="kaxWrap">
   <div class="kax-bubble" id="kaxBubble">¡Hola Jhunior! Soy Kax. Estoy listo para ayudarte a registrar tu día. 🦊</div>
-  <svg class="kax-avatar idle" id="kaxAvatar" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg" onclick="kaxTap()">
-    <ellipse cx="50" cy="80" rx="28" ry="30" fill="#E34234"/>
-    <ellipse cx="50" cy="85" rx="16" ry="18" fill="#F5F0EA"/>
-    <polygon points="22,30 14,5 35,22" fill="#E34234"/>
-    <polygon points="24,28 18,10 33,23" fill="#8B1A0E" opacity=".5"/>
-    <polygon points="78,30 86,5 65,22" fill="#E34234"/>
-    <polygon points="76,28 82,10 67,23" fill="#8B1A0E" opacity=".5"/>
-    <ellipse cx="50" cy="42" rx="28" ry="26" fill="#E34234"/>
-    <ellipse cx="50" cy="50" rx="18" ry="14" fill="#F5F0EA"/>
-    <circle cx="42" cy="38" r="4" fill="#1a0a0a"/>
-    <circle cx="58" cy="38" r="4" fill="#1a0a0a"/>
-    <circle cx="43.5" cy="36.5" r="1.2" fill="white"/>
-    <circle cx="59.5" cy="36.5" r="1.2" fill="white"/>
-    <ellipse cx="50" cy="47" rx="2.5" ry="1.8" fill="#8B1A0E"/>
-    <path d="M43 52 Q50 58 57 52" stroke="#8B1A0E" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-    <rect x="45" y="52" width="4" height="3.5" rx="1" fill="white"/>
-    <rect x="51" y="52" width="4" height="3.5" rx="1" fill="white"/>
-    <ellipse cx="24" cy="76" rx="7" ry="12" fill="#E34234" transform="rotate(-20,24,76)"/>
-    <ellipse cx="20" cy="86" rx="5" ry="4" fill="#F5F0EA"/>
-    <ellipse cx="76" cy="76" rx="7" ry="12" fill="#E34234" transform="rotate(20,76,76)"/>
-    <ellipse cx="80" cy="86" rx="5" ry="4" fill="#F5F0EA"/>
-    <ellipse cx="38" cy="108" rx="10" ry="6" fill="#8B1A0E"/>
-    <ellipse cx="38" cy="106" rx="8" ry="5" fill="#E34234"/>
-    <ellipse cx="62" cy="108" rx="10" ry="6" fill="#8B1A0E"/>
-    <ellipse cx="62" cy="106" rx="8" ry="5" fill="#E34234"/>
-    <path d="M78 95 Q95 80 88 65" stroke="#E34234" stroke-width="8" fill="none" stroke-linecap="round"/>
-    <path d="M78 95 Q95 80 88 65" stroke="#F5F0EA" stroke-width="3" fill="none" stroke-linecap="round"/>
-  </svg>
+  <img
+    class="kax-avatar idle"
+    id="kaxAvatar"
+    src="kax/Kax_Pose_1_IDLE.png"
+    alt="Kax"
+    onclick="kaxTap()"
+  />
 </div>
 
 <script>
@@ -772,12 +758,44 @@ document.getElementById('undoBtnEl').addEventListener('click', () => {
 const kaxBubble = document.getElementById('kaxBubble');
 const kaxAvatar = document.getElementById('kaxAvatar');
 let kaxTimer = null;
+
+// ─── MAPA DE POSES ────────────────────────────
+const KAX_POSES = {
+  idle:      'kax/Kax_Pose_1_IDLE.png',
+  happy:     'kax/Kax_Pose_2_HAPPY.png',
+  celebrate: 'kax/Kax_Pose_2_HAPPY.png',
+  alert:     'kax/Kax_Pose_3_ALERT.png',
+  sad:       'kax/Kax_Pose_4_SAD.png',
+  thinking:  'kax/Kax_Pose_5_THINKING.png',
+  excited:   'kax/Kax_Pose_6_EXCITED_Clean.png',
+};
+
 function kaxSay(msg, mood = 'idle', duration = 5000) {
   clearTimeout(kaxTimer);
+
+  // — Cambiar pose con fade suave si la imagen es distinta
+  const newSrc = KAX_POSES[mood] || KAX_POSES.idle;
+  if (!kaxAvatar.src.endsWith(newSrc)) {
+    kaxAvatar.classList.add('kax-switching');
+    setTimeout(() => {
+      kaxAvatar.src = newSrc;
+      kaxAvatar.classList.remove('kax-switching');
+    }, 180);
+  }
+
+  // — Aplicar animación CSS según mood
+  kaxAvatar.className = 'kax-avatar ' + mood;
+
+  // — Burbuja de texto
   kaxBubble.textContent = msg;
   kaxBubble.classList.add('show');
-  kaxAvatar.className = 'kax-avatar ' + mood;
-  kaxTimer = setTimeout(() => { kaxBubble.classList.remove('show'); kaxAvatar.className = 'kax-avatar idle'; }, duration);
+
+  kaxTimer = setTimeout(() => {
+    kaxBubble.classList.remove('show');
+    // Volver a idle cuando cierra la burbuja
+    kaxAvatar.src = KAX_POSES.idle;
+    kaxAvatar.className = 'kax-avatar idle';
+  }, duration);
 }
 function kaxTap() {
   const msgs = ["¡Aquí estoy! ¿Qué pasó hoy?","Recuerda registrar cada gasto, aunque sea pequeño.","Mañana revisa tus compromisos para no quedarte en cero.","¡Cada sol registrado es un paso hacia tu meta! 🚀"];
@@ -1350,7 +1368,7 @@ function procesarSyncMovimientos(res) {
   const msg = [];
   if (nuevos   > 0) msg.push(`${nuevos} nuevo${nuevos === 1 ? '' : 's'}`);
   if (borrados > 0) msg.push(`${borrados} eliminado${borrados === 1 ? '' : 's'}`);
-  kaxSay(msg.length ? `Sincronizado: ${msg.join(', ')}. 📡` : 'Todo al dia. 📡', 'idle', 3000);
+  kaxSay(msg.length ? `Sincronizado: ${msg.join(', ')}. 📡` : 'Todo al dia. 📡', 'happy', 3000);
 }
 
 function renderCajaChica() {
@@ -1749,7 +1767,7 @@ document.getElementById('addIngresoBtn').addEventListener('click', async () => {
     });
     if (res && res.ok) {
       newIngreso.movId = res.movId || null;
-      kaxSay(`Ingreso de ${money(monto)} guardado en Sheets. 🚀`, 'celebrate', 4000);
+      kaxSay(`Ingreso de ${money(monto)} guardado en Sheets. 🚀`, 'excited', 4000);
     }
   } catch(e) {}
 
@@ -1835,7 +1853,7 @@ if (SR) {
       listening = true;
       voiceBtn.textContent = '⏹️ Detener';
       voiceBtn.style.background = 'var(--bad)';
-      kaxSay('Te escucho. Habla con calma.', 'idle', 3000);
+      kaxSay('Te escucho. Habla con calma.', 'thinking', 3000);
     };
     r.onresult = (e) => {
       let fin = '', interim = '';
@@ -2506,7 +2524,7 @@ document.getElementById('syncBtn').addEventListener('click', () => {
   sincronizarMovimientosDesdeSheets();
   cargarFijosYPrestamosDesdeSheets();
   cargarProyectosDesdeSheets();
-  kaxSay('Sincronizando con Sheets… 📡', 'idle', 3000);
+  kaxSay('Sincronizando con Sheets… 📡', 'thinking', 3000);
 });
 </script>
 </body>
