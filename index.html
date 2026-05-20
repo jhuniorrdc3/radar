@@ -23,16 +23,18 @@
       --xl:clamp(1.4rem,1.2rem + .8vw,1.9rem);
     }
     *,*::before,*::after{box-sizing:border-box}
-    html{-webkit-font-smoothing:antialiased} html,body{margin:0;overflow-x:hidden}
+    html{-webkit-font-smoothing:antialiased} html,body{margin:0}
     body{font-family:'Satoshi',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:var(--base)}
     button,input,textarea,select{font:inherit}
-    .app{max-width:1160px;margin:auto;padding:16px}
+    /* overflow-x aquí y NO en body — body con overflow-x:hidden rompe position:fixed en Chrome mobile */
+    .app{max-width:1160px;margin:auto;padding:16px;overflow-x:hidden}
     .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
     .brand{display:flex;gap:12px;align-items:center}
     .logo{width:42px;height:42px;border-radius:50%;background:radial-gradient(circle at 38% 38%,rgba(92,192,177,.4),transparent 60%),#15201f;border:1px solid var(--line);display:grid;place-items:center;flex-shrink:0}
     .logo:before{content:'';width:18px;height:18px;border:2px solid var(--accent);border-radius:50%;box-shadow:0 0 0 6px rgba(92,192,177,.08)}
     h1{font-size:clamp(1.5rem,2vw,2rem);margin:0} .sub{color:var(--muted);font-size:.9rem}
-    .tabs{display:flex;gap:6px;flex-wrap:nowrap;align-items:center;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    /* min-width:0 necesario para que flex item pueda encogerse debajo de su contenido */
+    .tabs{display:flex;gap:6px;flex-wrap:nowrap;align-items:center;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;min-width:0}
     .tabs::-webkit-scrollbar{display:none}
     .tab{background:var(--panel);border:1px solid var(--line);color:var(--muted);padding:.55rem .85rem;border-radius:999px;cursor:pointer;transition:all .2s;white-space:nowrap;font-size:clamp(.78rem,.7rem + .3vw,.92rem)}
     .tab.active{background:var(--accent);color:#082320;border-color:transparent;font-weight:700}
@@ -54,8 +56,9 @@
     .btn.sec{background:var(--panel-2);color:var(--text);border:1px solid var(--line)}
     .btn.sec:hover{background:var(--panel-3)}
     .btn.danger{background:var(--bad-dim);color:var(--bad);border:1px solid rgba(217,107,118,.3)}
-    .kax-wrap{position:fixed;bottom:24px;right:24px;z-index:100;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
-    .kax-bubble{background:var(--panel);border:1px solid var(--line);border-radius:16px 16px 4px 16px;padding:12px 14px;max-width:240px;font-size:.88rem;line-height:1.45;box-shadow:var(--shadow);opacity:0;transform:translateY(8px) scale(.96);transition:opacity .3s,transform .3s;pointer-events:none}
+    /* kax-wrap: solo syncBtn + avatar en el flujo flex; burbuja flota absolute */
+    .kax-wrap{position:fixed;bottom:24px;right:24px;z-index:100;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+    .kax-bubble{position:absolute;bottom:calc(100% + 6px);right:0;background:var(--panel);border:1px solid var(--line);border-radius:16px 16px 4px 16px;padding:12px 14px;max-width:220px;font-size:.88rem;line-height:1.45;box-shadow:var(--shadow);opacity:0;transform:translateY(8px) scale(.96);transition:opacity .3s,transform .3s;pointer-events:none;white-space:normal;z-index:101}
     .kax-bubble.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
     .kax-avatar{width:72px;height:auto;cursor:pointer;filter:drop-shadow(0 4px 12px rgba(227,66,52,.35));transition:transform .2s,opacity .18s ease}
     .kax-avatar:hover{transform:scale(1.08)}
@@ -150,7 +153,11 @@
       .col2,.col2eq,.col3,.col4,.form-row{grid-template-columns:1fr}
       .col4kpi{grid-template-columns:repeat(2,1fr)} /* siempre 2x2 en móvil */
       .top{flex-direction:column;align-items:flex-start}
+      /* tabs ocupa todo el ancho disponible en móvil */
+      .tabs{width:100%;max-width:100%}
       .kax-wrap{bottom:16px;right:16px}
+      /* Kax más pequeño en móvil para no tapar contenido */
+      .kax-avatar{width:58px}
       .subcat-grid{grid-template-columns:repeat(3,1fr)} /* forzar siempre 3 cols */
     }
     /* Undo toast */
@@ -572,7 +579,7 @@
 
 <!-- SYNC BUTTON + KAX — agrupados, el botón siempre encima del personaje -->
 <div class="kax-wrap" id="kaxWrap">
-  <button id="syncBtn" title="Sincronizar con Sheets" style="background:var(--panel);border:1px solid var(--line);border-radius:999px;width:42px;height:42px;font-size:1.1rem;cursor:pointer;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;align-self:flex-end;margin-bottom:8px;flex-shrink:0">📡</button>
+  <button id="syncBtn" title="Sincronizar con Sheets" style="background:var(--panel);border:1px solid var(--line);border-radius:999px;width:42px;height:42px;font-size:1.1rem;cursor:pointer;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;flex-shrink:0">📡</button>
   <div class="kax-bubble" id="kaxBubble">¡Hola Jhunior! Soy Kax. Estoy listo para ayudarte a registrar tu día. 🦊</div>
   <img
     class="kax-avatar idle"
