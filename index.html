@@ -288,8 +288,37 @@
       </div>
       <div id="histSubcats" class="subcat-grid"></div>
       <div id="histResumen" style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"></div>
-      <div class="section-label" style="margin-top:14px">Movimientos del período</div>
-      <div class="list-wrap" style="max-height:280px;margin-top:6px" id="histMoves"><div class="tiny muted">Sin datos.</div></div>
+      <div style="margin-top:14px">
+        <button
+          id="toggleMovBtn"
+          onclick="toggleMovimientos()"
+          style="background:none;border:1px solid var(--line);border-radius:999px;color:var(--muted);padding:.4rem 1rem;font-size:.82rem;cursor:pointer;display:flex;align-items:center;gap:6px;transition:color .2s,border-color .2s"
+        >
+          <span id="toggleMovIcon">▶</span>
+          <span>Ver movimientos del período</span>
+          <span id="toggleMovCount" style="color:var(--accent);font-weight:700"></span>
+        </button>
+        <div id="movAccordion" style="display:none;margin-top:8px">
+          <div class="list-wrap" style="max-height:320px" id="histMoves"><div class="tiny muted">Sin datos.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal drill-down por categoría -->
+    <div id="drillModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.7);padding:16px;align-items:flex-end">
+      <div style="background:var(--panel);border:1px solid var(--line);border-radius:var(--r);width:100%;max-width:520px;margin:auto;max-height:85vh;display:flex;flex-direction:column;box-shadow:var(--shadow)">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 16px 0">
+          <div>
+            <div id="drillTitle" style="font-weight:700;font-size:1.05rem"></div>
+            <div id="drillTotal" style="font-size:.85rem;color:var(--muted);margin-top:2px"></div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button id="drillSortBtn" onclick="toggleDrillSort()" style="background:var(--panel-2);border:1px solid var(--line);border-radius:999px;color:var(--muted);padding:.3rem .8rem;font-size:.78rem;cursor:pointer">📅 Por fecha</button>
+            <button onclick="closeDrill()" style="background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1;padding:0 4px">×</button>
+          </div>
+        </div>
+        <div id="drillList" style="overflow-y:auto;padding:12px 16px 16px;flex:1;margin-top:8px"></div>
+      </div>
     </div>
 
     <!-- Gráfico por categorías: mes actual vs anterior -->
@@ -860,7 +889,7 @@ function detectSubcat(t) {
   if (/barberia|barbero|peluquer|corte\s*de\s*cabello|spa|manicur|pedicur|depilac|cosm[eé]tico|perfume|shampoo|cuidado\s*personal/.test(l)) return 'cuidado';
   // FIX 4: abarrotes antes que comida para que bodega/palta/fideos no caigan en comida
   if (/abarrotes|bodega|minimarket|market|palta|fideos\b|arroz\b|az[uú]car|aceite\b|harina|leche\b|huevo|papa\b|cebolla|ajo\b|tomate|fruta|verdura|detergente|jab[oó]n|papel\s*higi[eé]nico|servilleta|mercado|supermercado|plaza\s*vea|wong|tottus|limpieza/.test(l)) return 'mercado';
-  if (/almuerz|men[uú]|comida|cena|desayuno|pollerí|pollerio|restaurante|snack|ceviche|cebiche|lomo\s*saltado|causa|chifa|pizza|hamburgues|sushi|pollo\s*a\s*la\s*brasa|anticucho|chicharr[oó]n|tamal|pan\s*con|sanguchería|sanguch|arroz\s*con|seco\s*de|tallarin|pasta|jugo|refresco|gaseosa|lonche/.test(l)) return 'comida';
+  if (/almuerz|men[uú]|comida|cena|desayuno|pollerí|pollerio|restaurante|snack|ceviche|cebiche|lomo\s*saltado|causa|chifa|pizza|hamburgues|sushi|pollo\s*a\s*la\s*brasa|anticucho|chicharr[oó]n|tamal|panader[ií]a|\bpan\b|pan\s*con|s[aá]ndwich|sanguchería|sanguch|sanguche|sangwiche|empanada|arroz\s*con|seco\s*de|tallarin|pasta|jugo|refresco|gaseosa|lonche/.test(l)) return 'comida';
   if (/taxi|uber|cabify|didi|bus\b|combi|pasaje|transporte|micro|mototaxi|metro|tren|colectivo|beat/.test(l)) return 'transporte';
   if (/farmacia|botica|medicina|pastilla/.test(l))      return 'farmacia';
   if (/ropa|polo|zapatilla|camisa|pantalón|falabella|ripley/.test(l)) return 'ropa';
@@ -894,17 +923,19 @@ function detectAccount(t) {
 }
 function detectDesc(t) {
   const l = t.toLowerCase();
-  if (/taxi.*ida/i.test(l))    return 'Taxi ida';
-  if (/taxi.*vuelta/i.test(l)) return 'Taxi vuelta';
-  if (/taxi/i.test(l))         return 'Taxi';
-  if (/almuerz|men[uú]/i.test(l)) return 'Almuerzo';
-  if (/desayuno/i.test(l))     return 'Desayuno';
-  if (/café|cafe/i.test(l))    return 'Café';
-  if (/material/i.test(l))     return 'Materiales';
-  if (/extensi[oó]n/i.test(l)) return 'Extensión';
-  if (/farmacia/i.test(l))     return 'Farmacia';
-  if (/ropa|zapatill/i.test(l)) return 'Ropa';
-  if (/cine|salida/i.test(l))  return 'Salida/ocio';
+  // \bida\b = palabra completa — evita falso positivo con "universidad"
+  // regresando / de vuelta / de regreso → vuelta
+  if (/\btaxi\b/.test(l) && /\b(vuelta|regresando|regreso|de\s*vuelta|volviendo)\b/.test(l)) return 'Taxi vuelta';
+  if (/\btaxi\b/.test(l) && /\bida\b/.test(l))  return 'Taxi ida';
+  if (/\btaxi\b/.test(l))                        return 'Taxi';
+  if (/almuerz|men[uú]/i.test(l))                return 'Almuerzo';
+  if (/desayuno/i.test(l))                       return 'Desayuno';
+  if (/café|cafe/i.test(l))                      return 'Café';
+  if (/material/i.test(l))                       return 'Materiales';
+  if (/extensi[oó]n/i.test(l))                   return 'Extensión';
+  if (/farmacia/i.test(l))                       return 'Farmacia';
+  if (/ropa|zapatill/i.test(l))                  return 'Ropa';
+  if (/cine|salida/i.test(l))                    return 'Salida/ocio';
   return t.replace(/\d+(?:\.\d+)?\s*soles?/gi, '').trim().slice(0, 55) || 'Gasto';
 }
 
@@ -931,9 +962,10 @@ function splitMoves(text) {
     .replace(/\n/g, ' ')
     .replace(/(\d)\.\s+(\d)/g, '$1.$2');
 
-  // FIX 2: Cuenta global — si el usuario dice "yape" / "TC" una vez para todo el texto,
-  // se propaga a cada fragmento que no tenga su propia cuenta declarada
-  const cuentaGlobal = detectAccount(c);
+  // Cuenta global: SOLO si hay expresión explícita de "todo con X" / "todos yape" etc.
+  // Si un ítem no menciona cuenta, es efectivo — no hereda de otros ítems.
+  const globalMatch = c.match(/\b(todo|todos|ambos|cada uno|cada compra)\s*(con\s*)?(yape|plin|tc|tarjeta|bcp|interbank|bbva|efectivo)\b/i);
+  const cuentaGlobal = globalMatch ? detectAccount(globalMatch[0]) : null;
 
   c = c
     // FIX 1: "suma" y signo "+" como separadores
@@ -945,6 +977,10 @@ function splitMoves(text) {
     .replace(/,?\s*\by\s+(?=gasté|compré|pagué|tomé|almorcé|compra|fui|comí|bebí)/gi, '|||')
     .replace(/,\s*(y\s+)?(?=gasté|compré|pagué|tomé|almorcé)/gi, '|||')
     .replace(/\by\s+(?=\d)/gi, '|||')
+    // FIX COMA: coma seguida de cualquier contenido = nuevo gasto
+    // Cubre: "cafe 2, pan 4" y "cafe 2 yape, pan 4 yape"
+    // Los decimales ya fueron normalizados arriba ("14. 90" → "14.90") así que no hay colisión
+    .replace(/,\s*(?=\S)/g, '|||')
     // Punto final de oración (no punto decimal — el artefacto ya fue normalizado arriba)
     .replace(/\.(?=\s|$)/g, '|||');
 
@@ -980,14 +1016,15 @@ function parseSingle(text, forcedAmount = null, cuentaGlobal = null) {
     amount   = Math.round(amount * tc * 100) / 100;
   }
 
-  const type         = detectType(text);
-  const cuentaLocal  = detectAccount(text);
+  const type        = detectType(text);
+  const cuentaLocal = detectAccount(text);
 
-  // FIX 2: usar cuenta global si la local cayó al default "efectivo"
-  // (significa que este fragmento no tenía mención de cuenta propia)
-  const account = (cuentaLocal !== 'efectivo' || !cuentaGlobal || cuentaGlobal === 'efectivo')
-                  ? cuentaLocal
-                  : cuentaGlobal;
+  // Regla: cada ítem tiene su propia cuenta.
+  // Si no menciona ninguna → efectivo.
+  // Excepción: "todo con yape" / "todos yape" → cuentaGlobal propaga a todos.
+  const account = cuentaLocal !== 'efectivo'
+    ? cuentaLocal
+    : (cuentaGlobal || 'efectivo');
 
   return {
     type,
@@ -1559,7 +1596,7 @@ function renderHistorial(period) {
   // Lista de movimientos del período (con fecha)
   const movList = document.getElementById('histMoves');
   if (movList) {
-    if (!moves.length) { movList.innerHTML = '<div class="tiny muted">Sin movimientos en este período.</div>'; return; }
+    if (!moves.length) { movList.innerHTML = '<div class="tiny muted">Sin movimientos en este período.</div>'; updateMovToggleCount(0); return; }
     // Ordenar por fecha desc, y dentro del mismo día más reciente primero (por índice inverso)
     const sorted = [...moves].reverse().sort((a,b) => b.fechaMov.localeCompare(a.fechaMov));
     movList.innerHTML = '';
@@ -1573,6 +1610,7 @@ function renderHistorial(period) {
       </div><strong>${money(m.amount)}</strong>`;
       movList.appendChild(div);
     });
+    updateMovToggleCount(sorted.length);
   }
 }
 
@@ -2420,6 +2458,85 @@ function getAllMovesForMonth(monthOffset) {
 }
 
 function renderCategoryChart() {
+// ─── ACORDEÓN MOVIMIENTOS ────────────────────────────────────
+function toggleMovimientos() {
+  const acc  = document.getElementById('movAccordion');
+  const icon = document.getElementById('toggleMovIcon');
+  const btn  = document.getElementById('toggleMovBtn');
+  const open = acc.style.display === 'block';
+  acc.style.display  = open ? 'none' : 'block';
+  icon.textContent   = open ? '▶' : '▼';
+  btn.style.color    = open ? 'var(--muted)' : 'var(--text)';
+  btn.style.borderColor = open ? 'var(--line)' : 'var(--accent)';
+}
+
+// Actualizar contador en el botón cuando se renderizan los movimientos
+function updateMovToggleCount(n) {
+  const el = document.getElementById('toggleMovCount');
+  if (el) el.textContent = n > 0 ? `(${n})` : '';
+}
+
+// ─── DRILL-DOWN POR CATEGORÍA ────────────────────────────────
+let _drillMoves = [];
+let _drillSort  = 'date'; // 'date' | 'amount'
+
+function openDrill(subcatKey, subcatLabel) {
+  const moves = getAllMovesForMonth(0)
+    .filter(m => m.type === 'Personal' && m.subcat === subcatKey);
+
+  _drillMoves = moves;
+  _drillSort  = 'date';
+
+  document.getElementById('drillTitle').textContent = subcatLabel;
+  const total = moves.reduce((s, m) => s + m.amount, 0);
+  document.getElementById('drillTotal').textContent =
+    `${moves.length} movimiento${moves.length !== 1 ? 's' : ''} · ${money(total)} este mes`;
+  document.getElementById('drillSortBtn').textContent = '📅 Por fecha';
+  renderDrillList();
+  const modal = document.getElementById('drillModal');
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDrill() {
+  document.getElementById('drillModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function toggleDrillSort() {
+  _drillSort = _drillSort === 'date' ? 'amount' : 'date';
+  document.getElementById('drillSortBtn').textContent =
+    _drillSort === 'date' ? '📅 Por fecha' : '💰 Por monto';
+  renderDrillList();
+}
+
+function renderDrillList() {
+  const sorted = [..._drillMoves].sort((a, b) =>
+    _drillSort === 'amount'
+      ? b.amount - a.amount
+      : b.fechaMov.localeCompare(a.fechaMov)
+  );
+  const list = document.getElementById('drillList');
+  if (!sorted.length) {
+    list.innerHTML = '<div class="tiny muted">Sin movimientos.</div>';
+    return;
+  }
+  list.innerHTML = sorted.map(m => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)">
+      <div>
+        <div style="font-size:.9rem">${m.description}</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:2px">${m.fechaMov} · ${m.account}</div>
+      </div>
+      <div style="font-weight:700;flex-shrink:0;margin-left:12px">${money(m.amount)}</div>
+    </div>
+  `).join('');
+}
+
+// Cerrar modal al tocar el fondo
+document.getElementById('drillModal')?.addEventListener('click', (e) => {
+  if (e.target === document.getElementById('drillModal')) closeDrill();
+});
+
   const box    = document.getElementById('categoryChart');
   if (!box) return;
 
@@ -2469,13 +2586,18 @@ function renderCategoryChart() {
     const diff = cur[k] - pre[k];
     const diffColor = diff > 0 ? '#d96b76' : diff < 0 ? '#82c66f' : '#9aa3a0';
     const diffText  = diff !== 0 ? (diff > 0 ? '↑' : '↓') + money(Math.abs(diff)).replace('S/ ','') : '';
+    const lbl = subcatLabelFilt[i];
 
     rows += `
-      <text x="0" y="${y + 10}" fill="#9aa3a0" font-size="11" dominant-baseline="middle">${subcatLabelFilt[i]}</text>
-      <rect x="${labelW}" y="${y}" width="${pW}" height="9" rx="3" fill="#252828"/>
-      <rect x="${labelW}" y="${y + 12}" width="${cW}" height="11" rx="3" fill="#5cc0b1" opacity=".9"/>
-      <text x="${labelW + Math.max(cW, pW) + 6}" y="${y + 12}" fill="#eef1ef" font-size="11" dominant-baseline="hanging">${cur[k] > 0 ? money(cur[k]) : ''}</text>
-      ${diffText ? `<text x="${labelW + barMax + 46}" y="${y + 6}" fill="${diffColor}" font-size="10" text-anchor="end">${diffText}</text>` : ''}
+      <g class="chart-row" style="cursor:pointer" onclick="openDrill('${k}','${lbl}')"
+         onmouseenter="this.style.opacity='.75'" onmouseleave="this.style.opacity='1'">
+        <rect x="0" y="${y - 2}" width="${totalW}" height="${rowH - 2}" rx="4" fill="transparent"/>
+        <text x="0" y="${y + 10}" fill="#9aa3a0" font-size="11" dominant-baseline="middle">${lbl}</text>
+        <rect x="${labelW}" y="${y}" width="${pW}" height="9" rx="3" fill="#252828"/>
+        <rect x="${labelW}" y="${y + 12}" width="${cW}" height="11" rx="3" fill="#5cc0b1" opacity=".9"/>
+        <text x="${labelW + Math.max(cW, pW) + 6}" y="${y + 12}" fill="#eef1ef" font-size="11" dominant-baseline="hanging">${cur[k] > 0 ? money(cur[k]) : ''}</text>
+        ${diffText ? `<text x="${labelW + barMax + 46}" y="${y + 6}" fill="${diffColor}" font-size="10" text-anchor="end">${diffText}</text>` : ''}
+      </g>
     `;
   });
 
