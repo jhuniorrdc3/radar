@@ -304,24 +304,7 @@
       </div>
     </div>
 
-    <!-- Modal drill-down por categoría -->
-    <div id="drillModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.7);padding:16px;align-items:flex-end">
-      <div style="background:var(--panel);border:1px solid var(--line);border-radius:var(--r);width:100%;max-width:520px;margin:auto;max-height:85vh;display:flex;flex-direction:column;box-shadow:var(--shadow)">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 16px 0">
-          <div>
-            <div id="drillTitle" style="font-weight:700;font-size:1.05rem"></div>
-            <div id="drillTotal" style="font-size:.85rem;color:var(--muted);margin-top:2px"></div>
-          </div>
-          <div style="display:flex;gap:8px;align-items:center">
-            <button id="drillSortBtn" onclick="toggleDrillSort()" style="background:var(--panel-2);border:1px solid var(--line);border-radius:999px;color:var(--muted);padding:.3rem .8rem;font-size:.78rem;cursor:pointer">📅 Por fecha</button>
-            <button onclick="closeDrill()" style="background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1;padding:0 4px">×</button>
-          </div>
-        </div>
-        <div id="drillList" style="overflow-y:auto;padding:12px 16px 16px;flex:1;margin-top:8px"></div>
-      </div>
-    </div>
-
-    <!-- Gráfico por categorías: mes actual vs anterior -->
+    <!-- Detalle inline de categoría (se muestra debajo del gráfico al tocar una barra) -->
     <div class="card" style="margin-top:14px">
       <div class="topline">
         <h2>¿En qué estás gastando más?</h2>
@@ -331,6 +314,21 @@
         </div>
       </div>
       <div id="categoryChart"><div class="tiny muted">Sin datos suficientes para graficar.</div></div>
+
+      <!-- Panel inline de detalle — aparece debajo del gráfico al tocar una barra -->
+      <div id="drillPanel" style="display:none;margin-top:12px;border-top:1px solid var(--line);padding-top:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div>
+            <span id="drillTitle" style="font-weight:700;font-size:.95rem"></span>
+            <span id="drillTotal" style="font-size:.8rem;color:var(--muted);margin-left:8px"></span>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <button id="drillSortBtn" onclick="toggleDrillSort()" style="background:var(--panel-2);border:1px solid var(--line);border-radius:999px;color:var(--muted);padding:.25rem .7rem;font-size:.75rem;cursor:pointer">📅 Fecha</button>
+            <button onclick="closeDrill()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;line-height:1;padding:0">×</button>
+          </div>
+        </div>
+        <div id="drillList"></div>
+      </div>
     </div>
 
     <div class="grid col2eq" style="margin-top:14px">
@@ -2482,7 +2480,7 @@ let _drillSort  = 'date'; // 'date' | 'amount'
 
 function openDrill(subcatKey, subcatLabel) {
   const moves = getAllMovesForMonth(0)
-    .filter(m => m.type === 'Personal' && m.subcat === subcatKey);
+    .filter(m => m.subcat === subcatKey);
 
   _drillMoves = moves;
   _drillSort  = 'date';
@@ -2490,23 +2488,24 @@ function openDrill(subcatKey, subcatLabel) {
   document.getElementById('drillTitle').textContent = subcatLabel;
   const total = moves.reduce((s, m) => s + m.amount, 0);
   document.getElementById('drillTotal').textContent =
-    `${moves.length} movimiento${moves.length !== 1 ? 's' : ''} · ${money(total)} este mes`;
-  document.getElementById('drillSortBtn').textContent = '📅 Por fecha';
+    `${moves.length} movimiento${moves.length !== 1 ? 's' : ''} · ${money(total)}`;
+  document.getElementById('drillSortBtn').textContent = '📅 Fecha';
   renderDrillList();
-  const modal = document.getElementById('drillModal');
-  modal.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
+
+  const panel = document.getElementById('drillPanel');
+  panel.style.display = 'block';
+  // Scroll suave al panel
+  setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
 }
 
 function closeDrill() {
-  document.getElementById('drillModal').style.display = 'none';
-  document.body.style.overflow = '';
+  document.getElementById('drillPanel').style.display = 'none';
 }
 
 function toggleDrillSort() {
   _drillSort = _drillSort === 'date' ? 'amount' : 'date';
   document.getElementById('drillSortBtn').textContent =
-    _drillSort === 'date' ? '📅 Por fecha' : '💰 Por monto';
+    _drillSort === 'date' ? '📅 Fecha' : '💰 Monto';
   renderDrillList();
 }
 
@@ -2531,11 +2530,6 @@ function renderDrillList() {
     </div>
   `).join('');
 }
-
-// Cerrar modal al tocar el fondo
-document.getElementById('drillModal')?.addEventListener('click', (e) => {
-  if (e.target === document.getElementById('drillModal')) closeDrill();
-});
 
   const box    = document.getElementById('categoryChart');
   if (!box) return;
