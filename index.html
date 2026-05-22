@@ -2455,20 +2455,17 @@ function getAllMovesForMonth(monthOffset) {
   return result;
 }
 
-function renderCategoryChart() {
 // ─── ACORDEÓN MOVIMIENTOS ────────────────────────────────────
 function toggleMovimientos() {
   const acc  = document.getElementById('movAccordion');
   const icon = document.getElementById('toggleMovIcon');
   const btn  = document.getElementById('toggleMovBtn');
   const open = acc.style.display === 'block';
-  acc.style.display  = open ? 'none' : 'block';
-  icon.textContent   = open ? '▶' : '▼';
-  btn.style.color    = open ? 'var(--muted)' : 'var(--text)';
+  acc.style.display     = open ? 'none' : 'block';
+  icon.textContent      = open ? '▶' : '▼';
+  btn.style.color       = open ? 'var(--muted)' : 'var(--text)';
   btn.style.borderColor = open ? 'var(--line)' : 'var(--accent)';
 }
-
-// Actualizar contador en el botón cuando se renderizan los movimientos
 function updateMovToggleCount(n) {
   const el = document.getElementById('toggleMovCount');
   if (el) el.textContent = n > 0 ? `(${n})` : '';
@@ -2476,39 +2473,31 @@ function updateMovToggleCount(n) {
 
 // ─── DRILL-DOWN POR CATEGORÍA ────────────────────────────────
 let _drillMoves = [];
-let _drillSort  = 'date'; // 'date' | 'amount'
+let _drillSort  = 'date';
 
 function openDrill(subcatKey, subcatLabel) {
-  const moves = getAllMovesForMonth(0)
-    .filter(m => m.subcat === subcatKey);
-
+  const moves = getAllMovesForMonth(0).filter(m => m.subcat === subcatKey);
   _drillMoves = moves;
   _drillSort  = 'date';
-
   document.getElementById('drillTitle').textContent = subcatLabel;
   const total = moves.reduce((s, m) => s + m.amount, 0);
   document.getElementById('drillTotal').textContent =
     `${moves.length} movimiento${moves.length !== 1 ? 's' : ''} · ${money(total)}`;
   document.getElementById('drillSortBtn').textContent = '📅 Fecha';
   renderDrillList();
-
   const panel = document.getElementById('drillPanel');
   panel.style.display = 'block';
-  // Scroll suave al panel
   setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
 }
-
 function closeDrill() {
   document.getElementById('drillPanel').style.display = 'none';
 }
-
 function toggleDrillSort() {
   _drillSort = _drillSort === 'date' ? 'amount' : 'date';
   document.getElementById('drillSortBtn').textContent =
     _drillSort === 'date' ? '📅 Fecha' : '💰 Monto';
   renderDrillList();
 }
-
 function renderDrillList() {
   const sorted = [..._drillMoves].sort((a, b) =>
     _drillSort === 'amount'
@@ -2516,10 +2505,7 @@ function renderDrillList() {
       : b.fechaMov.localeCompare(a.fechaMov)
   );
   const list = document.getElementById('drillList');
-  if (!sorted.length) {
-    list.innerHTML = '<div class="tiny muted">Sin movimientos.</div>';
-    return;
-  }
+  if (!sorted.length) { list.innerHTML = '<div class="tiny muted">Sin movimientos.</div>'; return; }
   list.innerHTML = sorted.map(m => `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)">
       <div>
@@ -2527,10 +2513,10 @@ function renderDrillList() {
         <div style="font-size:.78rem;color:var(--muted);margin-top:2px">${m.fechaMov} · ${m.account}</div>
       </div>
       <div style="font-weight:700;flex-shrink:0;margin-left:12px">${money(m.amount)}</div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
+function renderCategoryChart() {
   const box    = document.getElementById('categoryChart');
   if (!box) return;
 
