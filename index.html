@@ -619,17 +619,72 @@
 
 <script>
 // ─────────────────────────────────────────────
-// TABS
+// TABS — con swipe horizontal en móvil
 // ─────────────────────────────────────────────
-document.querySelectorAll('.tab').forEach(btn => btn.addEventListener('click', () => {
-  if (!btn.dataset.tab) return; // ignorar botones sin tab asignado
+const TAB_ORDER = ['hoy','finanzas','fijos','informe','proyectos'];
+
+function switchTab(tabId) {
   document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  const btn = document.querySelector(`.tab[data-tab="${tabId}"]`);
+  if (btn) {
+    btn.classList.add('active');
+    // Scroll la barra de tabs para que el botón activo sea visible
+    btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.getElementById(btn.dataset.tab).classList.add('active');
-  if (btn.dataset.tab === 'finanzas') { renderHistorial(currentPeriod); renderCategoryChart(); }
-  if (btn.dataset.tab === 'informe')  renderInformeCompleto();
+  const view = document.getElementById(tabId);
+  if (view) view.classList.add('active');
+  if (tabId === 'finanzas') { renderHistorial(currentPeriod); renderCategoryChart(); }
+  if (tabId === 'informe')  renderInformeCompleto();
+}
+
+document.querySelectorAll('.tab').forEach(btn => btn.addEventListener('click', () => {
+  if (!btn.dataset.tab) return;
+  switchTab(btn.dataset.tab);
 }));
+
+// ─── SWIPE HORIZONTAL ──────────────────────────
+;(function() {
+  let startX = 0, startY = 0, startTime = 0;
+  const THRESHOLD   = 55;  // px mínimos horizontales para contar como swipe
+  const MAX_VERT    = 80;  // px verticales máximos (evita swipe al hacer scroll)
+  const MAX_MS      = 400; // ms máximos para que sea gesto rápido
+
+  // El área de swipe es el contenido principal, no la barra de tabs
+  const swipeArea = document.querySelector('.app') || document.body;
+
+  swipeArea.addEventListener('touchstart', e => {
+    const t = e.touches[0];
+    startX    = t.clientX;
+    startY    = t.clientY;
+    startTime = Date.now();
+  }, { passive: true });
+
+  swipeArea.addEventListener('touchend', e => {
+    const t    = e.changedTouches[0];
+    const dx   = t.clientX - startX;
+    const dy   = t.clientY - startY;
+    const dt   = Date.now() - startTime;
+
+    // Ignorar si es más vertical que horizontal o demasiado lento
+    if (Math.abs(dy) > MAX_VERT) return;
+    if (Math.abs(dx) < THRESHOLD) return;
+    if (dt > MAX_MS) return;
+
+    // Detectar tab activa
+    const activeTab = document.querySelector('.tab.active');
+    if (!activeTab) return;
+    const currentIdx = TAB_ORDER.indexOf(activeTab.dataset.tab);
+    if (currentIdx === -1) return;
+
+    // Swipe izquierda → siguiente tab | derecha → anterior
+    const nextIdx = dx < 0
+      ? Math.min(currentIdx + 1, TAB_ORDER.length - 1)
+      : Math.max(currentIdx - 1, 0);
+
+    if (nextIdx !== currentIdx) switchTab(TAB_ORDER[nextIdx]);
+  }, { passive: true });
+})();
 
 // ─────────────────────────────────────────────
 // CONSTANTES Y ESTADO
