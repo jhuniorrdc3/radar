@@ -1476,15 +1476,33 @@ function procesarSyncFijosYPrestamos(res) {
 // y los fusiona con localStorage sin duplicar.
 // Esto resuelve el problema de multi-dispositivo.
 // ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// SYNC — trae TODOS los meses con datos desde Sheets
+// ─────────────────────────────────────────────
 function sincronizarMovimientosDesdeSheets() {
   const syncLabel = document.getElementById('syncStatus');
   if (syncLabel) { syncLabel.textContent = 'Sincronizando…'; syncLabel.style.display = 'block'; }
 
-  backendCall('getMovimientos', { mes: mesISO() })
-    .then(res => {
+  // Determinar qué meses pedir: mes actual + meses anteriores hasta donde haya datos
+  // Pedimos los últimos 6 meses para cubrir historial reciente
+  const meses = [];
+  const hoy = new Date();
+  for (let i = 0; i < 6; i++) {
+    const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+    const iso = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    meses.push(iso);
+  }
+
+  // Lanzar todas las peticiones en paralelo
+  Promise.all(meses.map(mes => backendCall('getMovimientos', { mes }).catch(() => null)))
+    .then(resultados => {
       if (syncLabel) { syncLabel.textContent = ''; syncLabel.style.display = 'none'; }
-      if (!res || !res.ok || !res.movimientos) return;
-      procesarSyncMovimientos(res);
+      // Combinar todos los movimientos en una sola respuesta
+      const todos = [];
+      resultados.forEach(res => {
+        if (res && res.ok && res.movimientos) todos.push(...res.movimientos);
+      });
+      procesarSyncMovimientos({ ok: true, movimientos: todos });
     })
     .catch(() => {
       if (syncLabel) { syncLabel.textContent = ''; syncLabel.style.display = 'none'; }
@@ -1499,12 +1517,12 @@ function procesarSyncMovimientos(res) {
     porFecha[m.fechaMov].push(m);
   });
 
+  // Recoger TODAS las fechas en localStorage (no solo mes actual)
   const fechasLS = new Set();
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key && key.startsWith('radar_today_')) {
-      const fecha = key.replace('radar_today_', '');
-      if (fecha.startsWith(mesISO())) fechasLS.add(fecha);
+      fechasLS.add(key.replace('radar_today_', ''));
     }
   }
   Object.keys(porFecha).forEach(f => fechasLS.add(f));
