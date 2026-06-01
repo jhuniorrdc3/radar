@@ -341,6 +341,10 @@
             <span class="tiny muted">🏢 Caja chica</span>
             <strong id="kpiIngresoHC" style="color:var(--accent);font-size:1rem">S/ 0</strong>
           </div>
+          <div style="border-top:1px solid var(--line);margin-top:3px;padding-top:3px;display:flex;justify-content:space-between;align-items:center">
+            <span class="tiny muted">💸 Gastos personales</span>
+            <strong id="kpiGastosMes" style="color:var(--bad);font-size:1rem">S/ 0</strong>
+          </div>
         </div>
         <div style="display:none"><span id="totalIngresos"></span></div>
       </div>
@@ -355,6 +359,8 @@
         <div class="period-tabs">
           <button class="period-tab active" data-period="semana">7 días</button>
           <button class="period-tab" data-period="mes">Este mes</button>
+          <button class="period-tab" data-period="mesanterior">Mes anterior</button>
+          <button class="period-tab" data-period="todo">Todo</button>
         </div>
       </div>
       <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
@@ -866,6 +872,12 @@ function getAllMovesForPeriod(period) {
     let include = false;
     if (period === 'mes') {
       include = dateStr.startsWith(mesStr);
+    } else if (period === 'mesanterior') {
+      const d = new Date(); d.setMonth(d.getMonth()-1);
+      const mesAnt = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+      include = dateStr.startsWith(mesAnt);
+    } else if (period === 'todo') {
+      include = true;
     } else {
       include = last7.has(dateStr);
     }
@@ -1740,7 +1752,7 @@ function calcSemaforo() {
   const totalIngresos = ingresosPersonales.reduce((a,b) => a + b.monto, 0);
   // Préstamos recibidos también son liquidez real disponible
   const totalPrestamos = prestamos.reduce((a,b) => a + b.monto, 0);
-  const totalIn = totalIngresos + totalPrestamos;
+  const totalIn = totalIngresos; // Solo ingresos reales, no préstamos
   const cajaChica  = ingresos.filter(i => i.tipoDeposito === 'caja_chica').reduce((a,b) => a + b.monto, 0);
 
   const totalFijos  = fijos.reduce((a,b) => a + b.monto, 0) || (Number(RESUMEN['TOTAL FIJOS MES']) || 0);
@@ -1771,6 +1783,8 @@ function renderSemaforo() {
   const totalIngP = ingresosPersonales.reduce((a,b) => a+b.monto, 0);
   if (kpiP) kpiP.textContent = money(totalIngP);
   if (kpiH) kpiH.textContent = money(cajaChica);
+  const kpiG = document.getElementById('kpiGastosMes');
+  if (kpiG) kpiG.textContent = money(totalGastos);
   const ex = document.getElementById('excedente');
   if (ex) { ex.textContent = money(excedente); ex.style.color = excedente >= 0 ? 'var(--good)' : 'var(--bad)'; }
   renderOportunidades(excedente);
