@@ -204,6 +204,17 @@
     .proy-card-saldo{font-size:1.3rem;font-weight:700;font-variant-numeric:tabular-nums}
     .proy-card-saldo.ok{color:var(--good)}.proy-card-saldo.warn{color:var(--warn)}.proy-card-saldo.over{color:var(--bad)}
     .proy-card-meta{font-size:.75rem;color:var(--muted);margin-bottom:8px}
+    /* BARRA BICOLOR GASTADO/DISPONIBLE */
+    .split-bar-wrap{margin:8px 0 4px}
+    .split-bar-labels{display:flex;justify-content:space-between;margin-bottom:3px;font-size:.72rem}
+    .split-bar-labels .lbl-gast{color:var(--warn)}
+    .split-bar-labels .lbl-disp{color:var(--good)}
+    .split-bar-track{height:14px;background:var(--panel-3);border-radius:999px;overflow:hidden;position:relative;display:flex}
+    .split-bar-gast{height:100%;border-radius:999px 0 0 999px;transition:width .7s cubic-bezier(.4,0,.2,1)}
+    .split-bar-gast.ok{background:var(--accent)}
+    .split-bar-gast.warn{background:var(--warn)}
+    .split-bar-gast.over{background:var(--bad)}
+    .split-bar-disp{height:100%;border-radius:0 999px 999px 0;background:var(--good);opacity:.7;transition:width .7s cubic-bezier(.4,0,.2,1)}
   </style>
 </head>
 <body>
@@ -2310,6 +2321,22 @@ function getAllHCMoves() {
   return all.sort((a,b) => (b.fechaMov||'').localeCompare(a.fechaMov||''));
 }
 
+function splitBar(ccExec, ccRec, cls) {
+  if (ccRec <= 0) return '<div class="tiny muted" style="margin:4px 0">Sin caja chica registrada.</div>';
+  const pctGast = Math.min((ccExec/ccRec)*100, 100);
+  const pctDisp = Math.max(100 - pctGast, 0);
+  const ccDisp  = ccRec - ccExec;
+  return '<div class="split-bar-wrap">'
+    + '<div class="split-bar-labels">'
+    + '<span class="lbl-gast">Gastado: ' + money(ccExec) + '</span>'
+    + '<span class="lbl-disp">Disponible: ' + money(ccDisp) + '</span>'
+    + '</div>'
+    + '<div class="split-bar-track">'
+    + '<div class="split-bar-gast ' + cls + '" style="width:' + pctGast.toFixed(1) + '%"></div>'
+    + '<div class="split-bar-disp" style="width:' + pctDisp.toFixed(1) + '%"></div>'
+    + '</div></div>';
+}
+
 function renderProyectosHC() {
   const hcMovs    = getAllHCMoves();
   window._hcMovsCache = hcMovs;
@@ -2317,14 +2344,14 @@ function renderProyectosHC() {
   const container = document.getElementById('proyCardsContainer');
   if (!container) return;
 
-  // Agrupar ingresos de caja chica por proyecto
+  // Ingresos de caja chica por proyecto
   const ccPorProy = {};
   ingresos.filter(i => i.tipoDeposito === 'caja_chica').forEach(i => {
-    const proy = (i.proyecto || 'Sin proyecto').toLowerCase();
+    const proy = (i.proyecto || 'sin proyecto').toLowerCase();
     ccPorProy[proy] = (ccPorProy[proy] || 0) + i.monto;
   });
 
-  // Agrupar gastos HC por proyecto (solo proyectos reales)
+  // Gastos HC por proyecto (reales, no internos)
   const gastosPorProy = {};
   hcMovs.filter(m => m.project && m.project !== 'Gastos internos' && m.project !== 'Sin proyecto')
     .forEach(m => {
@@ -2333,69 +2360,95 @@ function renderProyectosHC() {
       gastosPorProy[proy].push(m);
     });
 
-  // Unión de proyectos conocidos (con CC o con gastos)
+  // Gastos internos
+  const internos     = hcMovs.filter(m => !m.project || m.project === 'Gastos internos' || m.project === 'Sin proyecto');
+  const totalInternos = internos.reduce((a,b) => a+b.amount, 0);
+
   const todosProyectos = new Set([...Object.keys(ccPorProy), ...Object.keys(gastosPorProy)]);
 
-  if (!todosProyectos.size) {
-    container.innerHTML = '<div class="card"><div class="tiny muted">Sin proyectos con caja chica registrada.</div></div>';
-  } else {
-    container.innerHTML = [...todosProyectos].map(proy => {
-      const ccRec  = ccPorProy[proy] || 0;
-      const movs   = gastosPorProy[proy] || [];
-      const ccExec = movs.reduce((a,b) => a+b.amount, 0);
-      const ccDisp = ccRec - ccExec;
-      const pct    = ccRec > 0 ? Math.min((ccExec/ccRec)*100, 100) : 0;
-      const cls    = pct < 70 ? 'ok' : pct < 90 ? 'warn' : 'over';
+  // ── Función para generar un card (proyecto o internos) ──
+  function buildCard(nombre, ccRec, movs, idKey, isInternal) {
+    const ccExec = movs.reduce((a,b) => a+b.amount, 0);
+    const ccDisp = ccRec - ccExec;
+    const pct    = ccRec > 0 ? Math.min((ccExec/ccRec)*100,100) : 0;
+    const cls    = pct < 70 ? 'ok' : pct < 90 ? 'warn' : 'over';
+    const icon   = isInternal ? '⚙️' : '📁';
+    const saldoColor = isInternal ? 'color:var(--warn)' : ('color:var(--' + (cls==='ok'?'good':cls==='warn'?'warn':'bad') + ')');
 
-      // Barras gastado/disponible
-      const barras = ccRec > 0
-        ? '<div class="cc-bar-row"><span class="cc-bar-label">Gastado</span><div class="cc-bar-track"><div class="cc-bar-fill' + (pct>=90?' bad':'') + '" style="width:' + pct.toFixed(0) + '%"></div></div><span class="cc-bar-val">' + money(ccExec) + '</span></div>'
-        + '<div class="cc-bar-row"><span class="cc-bar-label">Disponible</span><div class="cc-bar-track"><div class="cc-bar-fill good" style="width:' + (100-pct).toFixed(0) + '%"></div></div><span class="cc-bar-val">' + money(ccDisp) + '</span></div>'
-        : '<div class="tiny muted" style="margin:4px 0">Sin caja chica registrada para este proyecto.</div>';
+    // Barra bicolor
+    const barra = splitBar(ccExec, ccRec, cls);
 
-      // Desglose por subcategoría
-      const bySubcat = {};
-      movs.forEach(m => { bySubcat[m.subcat||'otros'] = (bySubcat[m.subcat||'otros']||0) + m.amount; });
-      const sortedSC = Object.entries(bySubcat).sort((a,b) => b[1]-a[1]);
-      const maxV = Math.max(...sortedSC.map(([,v]) => v), 1);
-      const subcatHtml = sortedSC.length
-        ? '<div style="margin-top:10px;border-top:1px solid var(--line);padding-top:8px">'
-          + '<div class="tiny muted" style="margin-bottom:6px">Desglose por subcategoría</div>'
-          + sortedSC.map(([k,v]) =>
-              '<div class="cc-bar-row" style="cursor:pointer" onclick="showCCDetailProy(\'' + proy + '\',\'' + k + '\')">'
-              + '<span class="cc-bar-label">' + k + '</span>'
-              + '<div class="cc-bar-track"><div class="cc-bar-fill' + (v===sortedSC[0][1]?' bad':'') + '" style="width:' + ((v/maxV)*100).toFixed(0) + '%"></div></div>'
-              + '<span class="cc-bar-val">' + money(v) + ' ▸</span></div>'
-            ).join('')
-          + '<div id="drill-' + proy + '" style="display:none;margin-top:8px;border-top:1px solid var(--line);padding-top:8px"></div>'
-          + '</div>'
-        : '';
+    // Desglose por subcategoría (colapsado, expandible)
+    const bySubcat = {};
+    movs.forEach(m => { bySubcat[m.subcat||'otros'] = (bySubcat[m.subcat||'otros']||0) + m.amount; });
+    const sortedSC = Object.entries(bySubcat).sort((a,b) => b[1]-a[1]);
+    const maxV = Math.max(...sortedSC.map(([,v]) => v), 1);
 
-      return '<div class="proy-card">'
-        + '<div class="proy-card-header">'
-        + '<span class="proy-card-name">📁 ' + proy.charAt(0).toUpperCase() + proy.slice(1) + '</span>'
-        + '<span class="proy-card-saldo ' + cls + '">' + money(ccDisp) + '</span>'
+    const desgloseBtns = sortedSC.length
+      ? '<div id="desg-' + idKey + '" style="display:none;margin-top:8px;border-top:1px solid var(--line);padding-top:8px">'
+        + '<div class="tiny muted" style="margin-bottom:6px">Desglose por subcategoría</div>'
+        + sortedSC.map(([k,v]) =>
+            '<div class="cc-bar-row" style="cursor:pointer" onclick="showCCDetailProy(\'' + idKey + '\',\'' + k + '\')">'
+            + '<span class="cc-bar-label">' + k + '</span>'
+            + '<div class="cc-bar-track"><div class="cc-bar-fill' + (v===sortedSC[0][1]?' bad':'') + '" style="width:' + ((v/maxV)*100).toFixed(0) + '%"></div></div>'
+            + '<span class="cc-bar-val">' + money(v) + ' ▸</span></div>'
+          ).join('')
+        + '<div id="drill-' + idKey + '" style="display:none;margin-top:6px"></div>'
         + '</div>'
-        + '<div class="proy-card-meta">Gastado ' + money(ccExec) + ' de ' + money(ccRec) + ' (' + pct.toFixed(0) + '%)</div>'
-        + barras + subcatHtml + '</div>';
-    }).join('');
+        + '<button onclick="toggleDesglose(\'' + idKey + '\')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.75rem;margin-top:6px;padding:2px 0">▸ Ver desglose (' + sortedSC.length + ' categorías)</button>'
+      : '';
+
+    return '<div class="proy-card">'
+      + '<div class="proy-card-header" style="cursor:pointer" onclick="toggleDesglose(\'' + idKey + '\')">'
+      + '<span class="proy-card-name">' + icon + ' ' + nombre.charAt(0).toUpperCase() + nombre.slice(1) + '</span>'
+      + '<span class="proy-card-saldo" style="' + saldoColor + '">' + (isInternal ? money(ccExec) : money(ccDisp)) + '</span>'
+      + '</div>'
+      + '<div class="proy-card-meta">' + (isInternal
+          ? movs.length + ' gastos adelantados · pendiente de reembolso'
+          : 'Gastado ' + money(ccExec) + ' de ' + money(ccRec) + ' (' + pct.toFixed(0) + '%)') + '</div>'
+      + (isInternal ? '' : barra)
+      + desgloseBtns
+      + '</div>';
   }
 
-  // Gastos internos
-  const giList  = document.getElementById('gastosInternosList');
-  const giCount = document.getElementById('giCount');
+  let html = '';
+
+  // Cards de proyectos reales
+  if (!todosProyectos.size && !internos.length) {
+    html = '<div class="card"><div class="tiny muted">Sin proyectos con caja chica registrada.</div></div>';
+  } else {
+    [...todosProyectos].forEach(proy => {
+      const ccRec = ccPorProy[proy] || 0;
+      const movs  = gastosPorProy[proy] || [];
+      html += buildCard(proy, ccRec, movs, 'proy-' + proy, false);
+    });
+    // Card de gastos internos al final
+    if (internos.length) {
+      html += buildCard('Gastos internos HC', 0, internos, 'internos', true);
+    }
+  }
+
+  container.innerHTML = html;
+
+  // Gastos internos también en la lista separada (mantener compatibilidad)
+  const giList    = document.getElementById('gastosInternosList');
+  const giCount   = document.getElementById('giCount');
   const giTotalEl = document.getElementById('giTotal');
-  const internos  = hcMovs.filter(m => !m.project || m.project === 'Gastos internos' || m.project === 'Sin proyecto');
-  if (giCount) giCount.textContent = internos.length + ' gastos';
-  if (giTotalEl) giTotalEl.textContent = money(internos.reduce((a,b) => a+b.amount, 0));
+  if (giCount)   giCount.textContent   = internos.length + ' gastos';
+  if (giTotalEl) giTotalEl.textContent = money(totalInternos);
   if (giList) {
     giList.innerHTML = internos.length
       ? [...internos].sort((a,b) => b.fechaMov.localeCompare(a.fechaMov)).map(m =>
           '<div class="gi-row"><div><span style="font-weight:600">' + m.description + '</span>'
           + '<div class="tiny muted">' + m.fechaMov + ' · ' + (m.account||'efectivo') + ' · ' + (m.subcat||'otros') + '</div></div>'
           + '<strong style="color:var(--accent)">' + money(m.amount) + '</strong></div>').join('')
-      : '<div class="tiny muted">Sin gastos internos este mes.</div>';
+      : '<div class="tiny muted">Sin gastos internos.</div>';
   }
+}
+
+function toggleDesglose(idKey) {
+  const el = document.getElementById('desg-' + idKey);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
 
