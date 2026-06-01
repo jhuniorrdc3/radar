@@ -23,12 +23,12 @@
       --xl:clamp(1.4rem,1.2rem + .8vw,1.9rem);
     }
     *,*::before,*::after{box-sizing:border-box}
-    html{-webkit-font-smoothing:antialiased} html,body{margin:0;overflow:hidden}
+    html{-webkit-font-smoothing:antialiased} html,body{margin:0}
     body{font-family:'Satoshi',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:var(--base)}
     button,input,textarea,select{font:inherit}
     /* overflow-x aquí y NO en body — body con overflow-x:hidden rompe position:fixed en Chrome mobile */
     .app{max-width:1160px;margin:auto;padding:16px;overflow-x:hidden}
-    .top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:nowrap;position:sticky;top:0;z-index:100;background:var(--bg);padding:6px 16px;border-bottom:1px solid var(--line);margin-bottom:0}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:nowrap;position:fixed;top:0;left:0;right:0;z-index:100;background:var(--bg);padding:6px 16px;border-bottom:1px solid var(--line);margin-bottom:0}
     .brand{display:flex;gap:12px;align-items:center}
     .logo{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 38% 38%,rgba(92,192,177,.4),transparent 60%),#15201f;border:1px solid var(--line);display:grid;place-items:center;flex-shrink:0}
     .logo:before{content:'';width:18px;height:18px;border:2px solid var(--accent);border-radius:50%;box-shadow:0 0 0 6px rgba(92,192,177,.08)}
@@ -278,6 +278,7 @@
     <span id="syncStatus" style="display:none;font-size:.78rem;color:var(--muted);margin-top:4px">Sincronizando…</span>
   </div>
 
+  <div style="height:52px"></div>
   <!-- HOY -->
   <section class="view active" id="hoy">
     <div class="grid col2">
@@ -3436,6 +3437,5 @@ document.getElementById('syncBtn').addEventListener('click', () => {
   kaxSay('Sincronizando con Sheets… 📡', 'thinking', 3000);
 });
 </script>
-  </div><!-- /mainScroll -->
 </body>
 </html>
