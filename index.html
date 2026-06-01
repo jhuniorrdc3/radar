@@ -1766,7 +1766,7 @@ function calcSemaforo() {
 }
 
 function renderSemaforo() {
-  const { estado, msg, excedente, totalIn, cajaChica, totalPrestamos } = calcSemaforo();
+  const { estado, msg, excedente, totalIn, totalGastos, totalFijos, cajaChica, totalPrestamos } = calcSemaforo();
   const ingresosPersonales = ingresos.filter(i =>
     i.tipoDeposito !== 'caja_chica' && i.fuente !== 'hotandcold' ||
     (i.fuente === 'hotandcold' && i.tipoDeposito === 'honorario')
