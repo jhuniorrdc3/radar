@@ -249,6 +249,14 @@
         </div>
         <div class="tiny muted" style="margin-top:8px">Puedes mezclar gastos personales y de Hot and Cold en el mismo texto.</div>
       </div>
+      <div class="daily-budget-wrap" id="dailyBudgetWrap" style="margin-top:0">
+        <div class="db-header">
+          <span class="db-label">🎮 Presupuesto del día</span>
+          <span class="db-nums"><strong id="dbGastado">S/ 0</strong><span style="color:var(--muted)"> / S/ 51</span></span>
+        </div>
+        <div class="db-track"><div class="db-fill ok" id="dbFill" style="width:0%"></div></div>
+        <div class="db-msg" id="dbMsg">Registra gastos para ver cómo vas hoy.</div>
+      </div>
       <div class="card">
         <h2>Recomendación del día</h2>
         <div class="recommend" id="recommendation">Cargando tu agenda del día…</div>
@@ -265,15 +273,6 @@
       <div class="card kpi"><div class="muted tiny">Hot and Cold</div><strong id="totalHC">S/ 0</strong><div class="tiny muted">Proyectos + internos</div></div>
       <div class="card kpi"><div class="muted tiny">Personal</div><strong id="totalPersonal">S/ 0</strong><div class="tiny muted">Tus gastos propios</div></div>
       <div class="card kpi"><div class="muted tiny">TC usada hoy</div><strong id="totalTC">S/ 0</strong><div class="tiny muted">Controlar mezcla</div></div>
-    </div>
-    <!-- BARRA PRESUPUESTO DIARIO -->
-    <div class="daily-budget-wrap" id="dailyBudgetWrap">
-      <div class="db-header">
-        <span class="db-label">🎮 Presupuesto del día</span>
-        <span class="db-nums"><strong id="dbGastado">S/ 0</strong> <span style="color:var(--muted)">/ S/ 51</span></span>
-      </div>
-      <div class="db-track"><div class="db-fill ok" id="dbFill" style="width:0%"></div></div>
-      <div class="db-msg" id="dbMsg">Registra gastos para ver cómo vas hoy.</div>
     </div>
     <div class="grid col2eq" style="margin-top:14px">
       <div class="card">
@@ -330,8 +329,13 @@
           <button class="period-tab" data-period="mes">Este mes</button>
         </div>
       </div>
+      <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+        <button class="period-tab active" id="filtTodo" onclick="setHistFilter('todo')">Todo</button>
+        <button class="period-tab" id="filtPersonal" onclick="setHistFilter('personal')">Personal</button>
+        <button class="period-tab" id="filtHC" onclick="setHistFilter('hc')">Hot &amp; Cold</button>
+      </div>
+      <div id="histResumen" style="margin-bottom:10px;display:flex;gap:10px;flex-wrap:wrap"></div>
       <div id="histSubcats" class="subcat-grid"></div>
-      <div id="histResumen" style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"></div>
       <div style="margin-top:14px">
         <button
           id="toggleMovBtn"
@@ -348,42 +352,15 @@
       </div>
     </div>
 
-    <!-- Detalle inline de categoría (se muestra debajo del gráfico al tocar una barra) -->
-    <div class="card" style="margin-top:14px">
-      <div class="topline">
-        <h2>¿En qué estás gastando más?</h2>
-        <div class="chart-legend">
-          <span><span class="legend-dot" style="background:var(--panel-3)"></span><span id="labelMesAnterior">Mes anterior</span></span>
-          <span><span class="legend-dot" style="background:var(--accent)"></span><span id="labelMesActual">Este mes</span></span>
-        </div>
-      </div>
-      <div id="categoryChart"><div class="tiny muted">Sin datos suficientes para graficar.</div></div>
-
-      <!-- Panel inline de detalle — aparece debajo del gráfico al tocar una barra -->
-      <div id="drillPanel" style="display:none;margin-top:12px;border-top:1px solid var(--line);padding-top:12px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <div>
-            <span id="drillTitle" style="font-weight:700;font-size:.95rem"></span>
-            <span id="drillTotal" style="font-size:.8rem;color:var(--muted);margin-left:8px"></span>
-          </div>
-          <div style="display:flex;gap:6px;align-items:center">
-            <button id="drillSortBtn" onclick="toggleDrillSort()" style="background:var(--panel-2);border:1px solid var(--line);border-radius:999px;color:var(--muted);padding:.25rem .7rem;font-size:.75rem;cursor:pointer">📅 Fecha</button>
-            <button onclick="closeDrill()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;line-height:1;padding:0">×</button>
-          </div>
-        </div>
-        <div id="drillList"></div>
-      </div>
-    </div>
-
     <div class="grid col2eq" style="margin-top:14px">
       <div class="card">
         <h2>Registrar ingreso</h2>
         <div class="form-row">
-          <div><label>Fuente</label><select class="form-input" id="ingresoFuente" onchange="toggleIngresoProyecto()"><option value="universidad">Universidad</option><option value="hotandcold">Hot and Cold</option><option value="otro">Otro</option></select></div>
+          <div><label>Fuente</label><select class="form-input" id="ingresoFuente" onchange="toggleIngresoProyecto()"><option value="universidad">Universidad</option><option value="otro">Yape/otro</option><option value="hotandcold">Hot and Cold</option></select></div>
           <div><label>Monto (S/)</label><input class="form-input" type="number" id="ingresoMonto" placeholder="3000"/></div>
         </div>
         <div class="form-row">
-          <div><label>Descripción</label><input class="form-input" id="ingresoDesc" placeholder="Sueldo mayo"/></div>
+          <div><label>Descripción</label><input class="form-input" id="ingresoDesc" placeholder="Sueldo, yape de mamá…"/></div>
           <div><label>Fecha</label><input class="form-input" type="date" id="ingresoFecha"/></div>
         </div>
         <div class="form-row" id="ingresoHCRow" style="display:none">
@@ -392,16 +369,16 @@
               <option value="">Sin proyecto</option>
             </select>
           </div>
-          <div><label>Tipo de ingreso HC</label>
+          <div><label>Tipo HC</label>
             <select class="form-input" id="ingresoTipoHC">
               <option value="honorario">Honorario / sueldo</option>
-              <option value="caja_chica">Caja chica de proyecto</option>
+              <option value="caja_chica">Caja chica</option>
               <option value="reembolso">Reembolso</option>
             </select>
           </div>
         </div>
         <div class="form-row">
-          <div><label>Banco / medio de cobro</label>
+          <div><label>Banco / medio</label>
             <select class="form-input" id="ingresoBanco">
               <option value="efectivo">Efectivo</option>
               <option value="BCP">BCP</option>
@@ -411,12 +388,14 @@
               <option value="otro">Otro</option>
             </select>
           </div>
-          <div><label>&#8203;</label>
-            <div class="tiny muted" style="padding:.82rem 0;line-height:1.4">¿Por qué banco o medio te llegó este ingreso?</div>
-          </div>
         </div>
         <button class="btn" id="addIngresoBtn">Registrar ingreso</button>
-        <div class="list-wrap" style="margin-top:14px;max-height:200px" id="ingresoList"><div class="tiny muted">Sin ingresos registrados aún.</div></div>
+        <!-- INGRESOS PERSONALES -->
+        <div class="section-label" style="margin-top:14px">👤 Ingresos personales</div>
+        <div class="list-wrap" style="max-height:160px" id="ingresoListPersonal"><div class="tiny muted">Sin ingresos personales.</div></div>
+        <!-- INGRESOS HC / CAJA CHICA -->
+        <div class="section-label" style="margin-top:10px">🏢 Hot and Cold / Caja chica</div>
+        <div class="list-wrap" style="max-height:160px" id="ingresoListHC"><div class="tiny muted">Sin ingresos HC este mes.</div></div>
       </div>
       <div class="card">
         <h2>Préstamos recibidos</h2>
@@ -800,6 +779,7 @@ let ingresos  = [];
 let prestamos = [];
 let fijos     = [];
 let currentPeriod = 'semana';
+let currentHistFilter = 'todo'; // 'todo' | 'personal' | 'hc'
 let viewDate = todayISO(); // ahora sí: todayISO ya está declarada
 
 function lsSave(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {} }
@@ -807,7 +787,12 @@ function lsLoad(key, def) { try { return JSON.parse(localStorage.getItem(key)) ?
 
 function initState() {
   const allIngresos = lsLoad('radar_ingresos', []);
-  ingresos  = allIngresos.filter(x => !x.fecha || x.fecha.startsWith(mesISO()));
+  // Caja chica: acumulada todo el tiempo (no filtrar por mes)
+  // Ingresos personales: solo del mes actual
+  ingresos = allIngresos.filter(x =>
+    x.tipoDeposito === 'caja_chica' ||
+    !x.fecha || x.fecha.startsWith(mesISO())
+  );
   prestamos = lsLoad('radar_prestamos', []);
   fijos     = lsLoad('radar_fijos', []);
   proyectos = lsLoad('radar_proyectos', []);
@@ -1652,7 +1637,10 @@ function procesarSyncFijosYPrestamos(res) {
       const nuevos   = res.ingresos.filter(x => x.movId && !idsLS.has(x.movId));
       const clean    = [...filtered, ...nuevos];
       lsSave('radar_ingresos', clean);
-      ingresos = clean.filter(x => !x.fecha || x.fecha.startsWith(mesISO()));
+      ingresos = clean.filter(x =>
+        x.tipoDeposito === 'caja_chica' ||
+        !x.fecha || x.fecha.startsWith(mesISO())
+      );
       renderIngresos();
     }
     renderSemaforo();
@@ -1846,6 +1834,18 @@ document.querySelectorAll('.period-tab').forEach(btn => {
     renderHistorial(currentPeriod);
   });
 });
+
+function setHistFilter(f) {
+  currentHistFilter = f;
+  ['filtTodo','filtPersonal','filtHC'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  const map = {todo:'filtTodo',personal:'filtPersonal',hc:'filtHC'};
+  const el = document.getElementById(map[f]);
+  if (el) el.classList.add('active');
+  renderHistorial(currentPeriod);
+}
 
 function renderHistorial(period) {
   const moves   = getAllMovesForPeriod(period);
@@ -2168,26 +2168,38 @@ document.getElementById('addIngresoBtn').addEventListener('click', async () => {
 });
 
 function renderIngresos() {
-  const list = document.getElementById('ingresoList');
-  if (!ingresos.length) { list.innerHTML = '<div class="tiny muted">Sin ingresos registrados aún.</div>'; return; }
-  list.innerHTML = ingresos.map((ing, i) => {
-    const fuente   = ing.fuente === 'hotandcold' ? '🏢 HC' : ing.fuente === 'universidad' ? '🎓 Uni' : '💰 Otro';
-    const detalle  = [
-      ing.proyecto || null,
-      ing.tipoDeposito ? ing.tipoDeposito.replace('_',' ') : null,
-      ing.banco && ing.banco !== 'efectivo' ? ing.banco : null,
-      ing.fecha || null
-    ].filter(Boolean).join(' · ');
+  const listP  = document.getElementById('ingresoListPersonal');
+  const listHC = document.getElementById('ingresoListHC');
+  // Separar
+  const personales = ingresos.filter(i => i.fuente !== 'hotandcold' || i.tipoDeposito === 'honorario');
+  const hcList     = ingresos.filter(i => i.fuente === 'hotandcold' && i.tipoDeposito !== 'honorario');
+
+  const renderItem = (ing, i) => {
+    const icon = ing.fuente === 'hotandcold' ? '🏢 HC' : ing.fuente === 'universidad' ? '🎓 Uni' : '💰 Otro';
+    const det  = [ing.proyecto||null, ing.tipoDeposito ? ing.tipoDeposito.replace('_',' ') : null,
+      ing.banco && ing.banco !== 'efectivo' ? ing.banco : null, ing.fecha||null].filter(Boolean).join(' · ');
     return `<div class="move">
-      <div><span class="tag ingreso">${fuente}</span> ${ing.desc}
-        <div class="move-meta">${detalle}</div>
-      </div>
+      <div><span class="tag ingreso">${icon}</span> ${ing.desc}<div class="move-meta">${det}</div></div>
       <div style="display:flex;align-items:center;gap:8px">
         <strong style="color:var(--good)">${money(ing.monto)}</strong>
-        <button onclick="deleteIngreso(${i})" title="Eliminar" style="background:none;border:none;cursor:pointer;color:var(--bad);font-size:1rem;padding:2px 4px">🗑</button>
-      </div>
-    </div>`;
-  }).join('');
+        <button onclick="deleteIngreso(${i})" style="background:none;border:none;cursor:pointer;color:var(--bad);font-size:1rem;padding:2px 4px">🗑</button>
+      </div></div>`;
+  };
+
+  if (listP) {
+    if (!personales.length) {
+      listP.innerHTML = '<div class="tiny muted">Sin ingresos personales.</div>';
+    } else {
+      listP.innerHTML = personales.map((ing, i) => renderItem(ing, ingresos.indexOf(ing))).join('');
+    }
+  }
+  if (listHC) {
+    if (!hcList.length) {
+      listHC.innerHTML = '<div class="tiny muted">Sin ingresos HC este mes.</div>';
+    } else {
+      listHC.innerHTML = hcList.map((ing, i) => renderItem(ing, ingresos.indexOf(ing))).join('');
+    }
+  }
 }
 
 window.deleteIngreso = function(i) {
@@ -2470,7 +2482,7 @@ function actualizarRecomendacion(futuros) {
   const ahora       = new Date();
   const minutosAhora = ahora.getHours() * 60 + ahora.getMinutes();
   if (!futuros.length) {
-    rec.textContent  = 'No tienes más compromisos hoy. Cierra el día: registra lo que gastaste y revisa cómo quedó tu semáforo.';
+    rec.textContent  = 'Sin compromisos hoy. Cierra y revisa tu semáforo.';
     pills.innerHTML  = '<span class="pill">Cierre del día</span><span class="pill">Registrar gastos</span>';
     return;
   }
@@ -2485,16 +2497,16 @@ function actualizarRecomendacion(futuros) {
     const minsPrev = i === 0 ? minutosAhora : futuros[i-1].mins;
     const hueco    = ev.mins >= 0 ? ev.mins - minsPrev : 0;
     if (hueco >= 90 && hueco < 240) {
-      if (esUni || esReunion) { consejos.push(`Tienes ${hueco >= 120 ? 'más de 2 horas' : 'casi 2 horas'} antes de ${ev.titulo} (${hora}). Ese espacio suele terminar en comida cara afuera. ¿Llevas algo preparado?`); pillasTags.add('Hueco libre'); pillasTags.add('Llevar comida'); }
+      if (esUni || esReunion) { consejos.push(`Libre antes de ${ev.titulo} (${hora}). Lleva almuerzo de casa.`); pillasTags.add('Hueco libre'); pillasTags.add('Llevar comida'); }
       else { consejos.push(`Hay un espacio de ${Math.round(hueco/60*10)/10}h antes de ${ev.titulo}. Buen momento para adelantar algo sin gastar en salir.`); pillasTags.add('Tiempo libre'); }
     } else if (hueco >= 240) {
-      consejos.push(`Tienes más de ${Math.floor(hueco/60)} horas hasta ${ev.titulo} (${hora}). Bloque largo — si no llevas almuerzo prepárate para gastar en la calle.`); pillasTags.add('Bloque largo'); pillasTags.add('Llevar almuerzo');
+      consejos.push(`+${Math.floor(hueco/60)}h hasta ${ev.titulo}. Lleva almuerzo.`); pillasTags.add('Bloque largo'); pillasTags.add('Llevar almuerzo');
     }
-    if (esUni && i === 0 && hueco < 90) { consejos.push(`Tu próxima clase es ${ev.titulo} a las ${hora}. Lleva termo — el café afuera suma S/ 5–8 que se repiten todos los días.`); pillasTags.add('Llevar termo'); }
-    if (esReunion && i === 0 && hueco < 90) { consejos.push(`Reunión: ${ev.titulo} a las ${hora}. Confirma qué materiales o documentos necesitas llevar.`); }
+    if (esUni && i === 0 && hueco < 90) { consejos.push(`${ev.titulo} a las ${hora}. Lleva termo, S/ 5–8 diarios en café suman.`); pillasTags.add('Llevar termo'); }
+    if (esReunion && i === 0 && hueco < 90) { consejos.push(`Reunión ${ev.titulo} (${hora}). Confirma materiales.`); }
   });
-  if (futuros.length >= 3) { consejos.push(`Día cargado con ${futuros.length} compromisos. Cuando el día está lleno tendemos a gastar más en comida y transporte rápido. Prevenlo ahora.`); pillasTags.add('Día cargado'); }
-  if (!consejos.length) { const sig = futuros[0]; consejos.push(`Próximo: ${sig.titulo} a las ${sig.hora}. Parece un día tranquilo, buen momento para evitar gastos hormiga.`); pillasTags.add('Agenda del día'); }
+  if (futuros.length >= 3) { consejos.push(`${futuros.length} compromisos. Día lleno = más gasto en comida/taxi.`); pillasTags.add('Día cargado'); }
+  if (!consejos.length) { const sig = futuros[0]; consejos.push(`${sig.titulo} a las ${sig.hora}. Día tranquilo, cuida los gastos hormiga.`); pillasTags.add('Agenda del día'); }
   rec.textContent  = consejos[0];
   pills.innerHTML  = [...pillasTags].map(p => `<span class="pill">${p}</span>`).join('');
   if (consejos.length > 1) {
