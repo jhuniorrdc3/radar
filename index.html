@@ -23,7 +23,7 @@
       --xl:clamp(1.4rem,1.2rem + .8vw,1.9rem);
     }
     *,*::before,*::after{box-sizing:border-box}
-    html{-webkit-font-smoothing:antialiased} html,body{margin:0}
+    html{-webkit-font-smoothing:antialiased} html,body{margin:0;overflow:hidden}
     body{font-family:'Satoshi',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:var(--base)}
     button,input,textarea,select{font:inherit}
     /* overflow-x aquí y NO en body — body con overflow-x:hidden rompe position:fixed en Chrome mobile */
@@ -284,8 +284,8 @@
       <div class="card">
         <textarea class="entry" id="entry" placeholder="¿Qué pasó hoy? Dicta o escribe todo junto…"></textarea>
         <div class="actions">
-          <button class="btn" id="voiceBtn" style="flex:1">🎙️ Dictar con Chrome</button>
-          <button class="btn sec" id="parseBtn" style="flex:1">Organizar registro</button>
+          <button class="btn" id="voiceBtn" style="flex:1;font-size:.82rem;padding:.55rem .6rem">🎙️</button>
+          <button class="btn sec" id="parseBtn" style="flex:1;font-size:.82rem;padding:.55rem .6rem">Organizar</button>
         </div>
         <div id="saveStatus"></div>
         <!-- Movimientos pendientes (por confirmar) -->
@@ -678,7 +678,7 @@
           <option value="ocio">Ocio</option>
           <option value="mercado">Mercado</option>
           <option value="salud">Salud</option>
-          <option value="snacks">Tecnología</option>
+          <option value="snacks">Snacks</option>
           <option value="suscripciones">Suscripciones</option>
           <option value="cuidado">Cuidado personal</option>
           <option value="otros">Otros</option>
@@ -743,7 +743,7 @@
           <option value="ocio">Ocio</option>
           <option value="mercado">Mercado</option>
           <option value="salud">Salud</option>
-          <option value="snacks">Tecnología</option>
+          <option value="snacks">Snacks</option>
           <option value="suscripciones">Suscripciones</option>
           <option value="cuidado">Cuidado personal</option>
           <option value="otros">Otros</option>
@@ -811,6 +811,7 @@ function switchTab(tabId) {
   const view = document.getElementById(tabId);
   if (view) view.classList.add('active');
   if (tabId === 'finanzas') { renderHistorial(currentPeriod); renderCategoryChart(); preLlenarLimites(); renderDeudasFinanzas(); }
+  if (tabId === 'compromisos') { cargarFijosYPrestamosDesdeSheets(); }
   if (tabId === 'proyectos') { renderProyectosHC(); }
   if (tabId === 'informe')  renderInformeCompleto();
 }
@@ -3435,5 +3436,6 @@ document.getElementById('syncBtn').addEventListener('click', () => {
   kaxSay('Sincronizando con Sheets… 📡', 'thinking', 3000);
 });
 </script>
+  </div><!-- /mainScroll -->
 </body>
 </html>
