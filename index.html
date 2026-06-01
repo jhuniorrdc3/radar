@@ -215,6 +215,41 @@
     .split-bar-gast.warn{background:#d47a3a}
     .split-bar-gast.over{background:var(--bad)}
     .split-bar-disp{height:100%;border-radius:0 999px 999px 0;background:#5aab7a;transition:width .7s cubic-bezier(.4,0,.2,1)}
+    /* BLOQUE DEUDA TC */
+    .tc-deuda-wrap{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;box-shadow:var(--shadow)}
+    .tc-deuda-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+    .tc-deuda-title{font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+    .tc-deuda-vence{font-size:.75rem;color:var(--warn)}
+    .tc-deuda-nums{display:flex;justify-content:space-between;margin-bottom:6px}
+    .tc-deuda-total{font-size:1.4rem;font-weight:700;color:var(--bad);font-variant-numeric:tabular-nums}
+    .tc-split-bar{height:14px;background:var(--panel-3);border-radius:999px;overflow:hidden;display:flex;margin-bottom:5px}
+    .tc-split-pagado{height:100%;background:#5aab7a;border-radius:999px 0 0 999px;transition:width .7s cubic-bezier(.4,0,.2,1)}
+    .tc-split-pendiente{height:100%;background:#e8856a;transition:width .7s cubic-bezier(.4,0,.2,1)}
+    .tc-split-labels{display:flex;justify-content:space-between;font-size:.72rem}
+    .tc-split-labels .ok{color:#5aab7a}.tc-split-labels .bad{color:#e8856a}
+    .tc-edit-row{display:flex;gap:8px;align-items:center;margin-top:8px}
+    .tc-edit-row input{flex:1;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:5px 10px;color:var(--text);font-size:.85rem}
+    .tc-edit-row button{background:var(--accent);color:#082320;border:none;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:.8rem;font-weight:700}
+    /* SECCIÓN MIS LÍMITES */
+    .limites-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
+    @media(max-width:640px){.limites-grid{grid-template-columns:1fr}}
+    .limite-item{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+    .limite-item label{font-size:.72rem;color:var(--muted);display:block;margin-bottom:4px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+    .limite-item input{width:100%;background:transparent;border:none;border-bottom:1px solid var(--line);color:var(--text);font-size:1rem;font-weight:700;padding:3px 0;outline:none;font-variant-numeric:tabular-nums}
+    .limite-item .limite-hint{font-size:.7rem;color:var(--muted);margin-top:3px}
+    .limites-save{margin-top:10px;background:var(--accent);color:#082320;border:none;border-radius:8px;padding:7px 18px;cursor:pointer;font-size:.85rem;font-weight:700}
+    /* RESUMEN DEUDAS FINANZAS */
+    .deudas-wrap{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;box-shadow:var(--shadow)}
+    .deudas-total-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+    .deudas-total-label{font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+    .deudas-total-monto{font-size:1.5rem;font-weight:700;color:var(--bad);font-variant-numeric:tabular-nums}
+    .deuda-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+    .deuda-row:first-child{border-top:none;padding-top:0}
+    .deuda-row-nombre{font-size:.88rem;font-weight:600}
+    .deuda-row-detalle{font-size:.72rem;color:var(--muted);margin-top:1px}
+    .deuda-row-monto{font-size:1rem;font-weight:700;color:var(--bad);font-variant-numeric:tabular-nums}
+    .deudas-bar-track{height:8px;background:var(--panel-3);border-radius:999px;overflow:hidden;margin:8px 0 4px}
+    .deudas-bar-fill{height:100%;border-radius:999px;background:var(--bad);transition:width .6s cubic-bezier(.4,0,.2,1)}
   </style>
 </head>
 <body>
@@ -267,7 +302,7 @@
       <div class="daily-budget-wrap" id="dailyBudgetWrap">
         <div class="db-header">
           <span class="db-label">🎮 Presupuesto del día</span>
-          <span class="db-nums"><strong id="dbGastado">S/ 0</strong><span style="color:var(--muted)"> / S/ 51</span></span>
+          <span class="db-nums"><strong id="dbGastado">S/ 0</strong><span style="color:var(--muted)"> / <span id="dbLimiteLabel">S/ 51</span></span></span>
         </div>
         <div class="db-track"><div class="db-fill ok" id="dbFill" style="width:0%"></div></div>
         <div class="db-msg" id="dbMsg">Registra gastos para ver cómo vas hoy.</div>
@@ -346,6 +381,75 @@
       </div>
       <div class="card kpi"><div class="muted tiny">Compromisos fijos</div><strong id="totalFijosMes" style="color:var(--warn)">S/ 0</strong><div class="tiny muted">Estimado mensual</div></div>
       <div class="card kpi"><div class="muted tiny">Excedente real</div><strong id="excedente">S/ 0</strong><div class="tiny muted">Ingresos − gastos − fijos</div></div>
+    </div>
+
+    <!-- MIS LÍMITES -->
+    <div class="card" style="margin-bottom:14px">
+      <h2>⚙️ Mis límites y configuración</h2>
+      <div class="limites-grid">
+        <div class="limite-item">
+          <label>🎮 Tope diario personal</label>
+          <input type="number" id="editDailyBudget" placeholder="51" step="1"/>
+          <div class="limite-hint">S/ por día en gastos personales</div>
+        </div>
+        <div class="limite-item">
+          <label>💳 Límite personal TC</label>
+          <input type="number" id="editTCLimite" placeholder="2000" step="1"/>
+          <div class="limite-hint">Tu tope de consumo en tarjeta</div>
+        </div>
+        <div class="limite-item">
+          <label>💳 Deuda TC actual</label>
+          <input type="number" id="editTCDeuda" placeholder="4256.74" step="0.01"/>
+          <div class="limite-hint">Del estado de cuenta más reciente</div>
+        </div>
+      </div>
+      <button class="limites-save" onclick="guardarLimites()">Guardar cambios</button>
+    </div>
+
+    <!-- DEUDA TC -->
+    <div class="tc-deuda-wrap" id="tcDeudaWrap">
+      <div class="tc-deuda-header">
+        <span class="tc-deuda-title">💳 Deuda Tarjeta de Crédito</span>
+        <span class="tc-deuda-vence" id="tcVenceLabel">Vence el 25</span>
+      </div>
+      <div class="tc-deuda-nums">
+        <div>
+          <div class="tiny muted">Total a pagar</div>
+          <div class="tc-deuda-total" id="tcDeudaTotal">S/ 0</div>
+        </div>
+        <div style="text-align:right">
+          <div class="tiny muted">Consumido este mes</div>
+          <div style="font-size:1rem;font-weight:700;color:var(--warn)" id="tcConsumoMes">S/ 0</div>
+        </div>
+      </div>
+      <div class="tc-split-bar">
+        <div class="tc-split-pagado" id="tcBarPagado" style="width:0%"></div>
+        <div class="tc-split-pendiente" id="tcBarPendiente" style="width:100%"></div>
+      </div>
+      <div class="tc-split-labels">
+        <span class="bad"><strong id="tcRegistrado"></strong></span>
+        <span class="tiny muted"><strong id="tcPendiente"></strong></span>
+      </div>
+      <div class="tc-edit-row" style="margin-top:10px">
+        <input type="number" id="tcDeudaInput" placeholder="Deuda actual del estado de cuenta (S/)" step="0.01"/>
+        <button onclick="guardarDeudaTC()">Actualizar deuda</button>
+      </div>
+      <div class="tc-edit-row">
+        <input type="number" id="tcLimiteInput" placeholder="Mi límite personal TC (S/)" step="0.01"/>
+        <button onclick="guardarLimiteTC()">Actualizar límite</button>
+      </div>
+      <div class="tiny muted" style="margin-top:6px">Actualiza tu deuda cuando llegue el estado de cuenta. Tu límite personal es S/2000.</div>
+    </div>
+
+    <!-- RESUMEN DEUDAS -->
+    <div class="deudas-wrap" id="deudasWrap">
+      <div class="deudas-total-row">
+        <span class="deudas-total-label">💀 Total que debo</span>
+        <span class="deudas-total-monto" id="deudasTotal">S/ 0</span>
+      </div>
+      <div class="deudas-bar-track"><div class="deudas-bar-fill" id="deudasBar" style="width:0%"></div></div>
+      <div class="tiny muted" id="deudasSubtitle" style="margin-bottom:10px">Cargando…</div>
+      <div id="deudasDesglose"></div>
     </div>
 
     <!-- Historial semanal / mensual -->
@@ -717,7 +821,7 @@ function switchTab(tabId) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   const view = document.getElementById(tabId);
   if (view) view.classList.add('active');
-  if (tabId === 'finanzas') { renderHistorial(currentPeriod); renderCategoryChart(); }
+  if (tabId === 'finanzas') { renderHistorial(currentPeriod); renderCategoryChart(); preLlenarLimites(); renderDeudasFinanzas(); }
   if (tabId === 'proyectos') { renderProyectosHC(); }
   if (tabId === 'informe')  renderInformeCompleto();
 }
@@ -1003,12 +1107,15 @@ setTimeout(() => kaxSay('¡Hola Jhunior! Soy Kax. Registra tu día cuando estés
 // ─────────────────────────────────────────────
 function money(n) { return 'S/ ' + Number(n || 0).toFixed(2).replace(/\.00$/, ''); }
 
-const DAILY_BUDGET = 51;
+const DAILY_BUDGET = parseFloat(localStorage.getItem('radar_daily_budget') || '51');
 function renderDailyBudget(personalHoy) {
   const fill = document.getElementById('dbFill');
   const msg  = document.getElementById('dbMsg');
   const lbl  = document.getElementById('dbGastado');
+  const limLbl = document.getElementById('dbLimiteLabel');
   if (!fill) return;
+  const DAILY_BUDGET = parseFloat(localStorage.getItem('radar_daily_budget') || '51');
+  if (limLbl) limLbl.textContent = 'S/ ' + DAILY_BUDGET;
   const pct = Math.min((personalHoy / DAILY_BUDGET) * 100, 100);
   fill.style.width = pct + '%';
   if (lbl) lbl.textContent = money(personalHoy);
@@ -1737,6 +1844,187 @@ function renderCajaChica() {
   }
 }
 // ─────────────────────────────────────────────
+
+
+function renderDeudasFinanzas() {
+  const deudaTC      = parseFloat(localStorage.getItem('radar_tc_deuda') || '4256.74');
+  const totalPrest   = prestamos.reduce((a,b) => a + b.monto, 0);
+  const totalDeudas  = deudaTC + totalPrest;
+
+  // Ingresos personales del mes como referencia
+  const ingP = ingresos.filter(i =>
+    i.tipoDeposito !== 'caja_chica' && i.fuente !== 'hotandcold' ||
+    (i.fuente === 'hotandcold' && i.tipoDeposito === 'honorario')
+  ).reduce((a,b) => a + b.monto, 0);
+  // Usar un estimado si no hay ingresos registrados aún
+  const ingresoRef = ingP > 0 ? ingP : 3000;
+  const pctDeudas  = Math.min((totalDeudas / ingresoRef) * 100, 100);
+
+  const elTotal    = document.getElementById('deudasTotal');
+  const elBar      = document.getElementById('deudasBar');
+  const elSub      = document.getElementById('deudasSubtitle');
+  const elDesg     = document.getElementById('deudasDesglose');
+
+  if (elTotal) {
+    elTotal.textContent = money(totalDeudas);
+    elTotal.style.color = pctDeudas > 80 ? 'var(--bad)' : pctDeudas > 50 ? 'var(--warn)' : 'var(--text)';
+  }
+  if (elBar)  elBar.style.width = pctDeudas.toFixed(0) + '%';
+  if (elSub)  elSub.textContent = pctDeudas > 80
+    ? '🔴 Tus deudas superan tus ingresos del mes. Prioridad: no generar más deuda.'
+    : pctDeudas > 50
+      ? '🟡 Deudas moderadas. Planifica pagos antes de gastar en ocio.'
+      : '🟢 Deudas manejables respecto a tus ingresos.';
+
+  if (!elDesg) return;
+
+  // Construir filas: TC + cada préstamo
+  let rows = '';
+
+  // Fila TC
+  rows += '<div class="deuda-row">'
+    + '<div><div class="deuda-row-nombre">💳 Tarjeta de crédito</div>'
+    + '<div class="deuda-row-detalle">Vence día 25 · límite personal S/ ' + (localStorage.getItem('radar_tc_limite') || '2000') + '</div></div>'
+    + '<span class="deuda-row-monto">' + money(deudaTC) + '</span>'
+    + '</div>';
+
+  // Filas de préstamos
+  if (prestamos.length) {
+    prestamos.forEach(p => {
+      const diasDesde = p.fecha
+        ? Math.floor((Date.now() - new Date(p.fecha)) / (1000*60*60*24))
+        : null;
+      rows += '<div class="deuda-row">'
+        + '<div><div class="deuda-row-nombre">🤝 ' + p.persona + '</div>'
+        + '<div class="deuda-row-detalle">Desde ' + (p.fecha || '–') + (diasDesde !== null ? ' · ' + diasDesde + ' días pendiente' : '') + '</div></div>'
+        + '<span class="deuda-row-monto">' + money(p.monto) + '</span>'
+        + '</div>';
+    });
+  } else {
+    rows += '<div class="deuda-row"><div class="tiny muted">Sin préstamos registrados.</div></div>';
+  }
+
+  elDesg.innerHTML = rows;
+}
+
+// ─── DEUDA TC ────────────────────────────────────────────────
+const TC_DEUDA_KEY = 'radar_tc_deuda';
+
+function guardarLimites() {
+  const daily  = parseFloat(document.getElementById('editDailyBudget').value);
+  const limite = parseFloat(document.getElementById('editTCLimite').value);
+  const deuda  = parseFloat(document.getElementById('editTCDeuda').value);
+
+  if (!isNaN(daily)  && daily > 0)  localStorage.setItem('radar_daily_budget', daily.toString());
+  if (!isNaN(limite) && limite > 0)  localStorage.setItem('radar_tc_limite', limite.toString());
+  if (!isNaN(deuda)  && deuda >= 0)  localStorage.setItem(TC_DEUDA_KEY, deuda.toString());
+
+  // Limpiar campos
+  document.getElementById('editDailyBudget').value = '';
+  document.getElementById('editTCLimite').value    = '';
+  document.getElementById('editTCDeuda').value     = '';
+
+  // Re-renderizar todo
+  renderDeudaTC();
+  setViewDate(viewDate);
+  kaxSay('Límites actualizados.', 'happy', 2500);
+}
+
+// Pre-llenar con valores actuales al abrir Finanzas
+function preLlenarLimites() {
+  const daily  = localStorage.getItem('radar_daily_budget') || '51';
+  const limite = localStorage.getItem('radar_tc_limite')    || '2000';
+  const deuda  = localStorage.getItem(TC_DEUDA_KEY)         || '4256.74';
+  document.getElementById('editDailyBudget').placeholder = 'Actual: S/ ' + daily;
+  document.getElementById('editTCLimite').placeholder    = 'Actual: S/ ' + limite;
+  document.getElementById('editTCDeuda').placeholder     = 'Actual: S/ ' + deuda;
+}
+
+function guardarLimiteTC() {
+  const input = document.getElementById('tcLimiteInput');
+  const val   = parseFloat(input.value);
+  if (isNaN(val) || val <= 0) return;
+  localStorage.setItem('radar_tc_limite', val.toString());
+  input.value = '';
+  renderDeudaTC();
+}
+
+function guardarDeudaTC() {
+  const input = document.getElementById('tcDeudaInput');
+  const val   = parseFloat(input.value);
+  if (isNaN(val) || val < 0) return;
+  localStorage.setItem(TC_DEUDA_KEY, val.toString());
+  input.value = '';
+  renderDeudaTC();
+  kaxSay('Deuda TC actualizada. Mantén el control.', 'alert', 3000);
+}
+
+function renderDeudaTC() {
+  const LIMITE_PERSONAL = parseFloat(localStorage.getItem('radar_tc_limite') || '2000');
+  const deudaActual     = parseFloat(localStorage.getItem(TC_DEUDA_KEY) || '4256.74');
+
+  // Consumo TC registrado en Radar este mes
+  const movMes     = getAllMovesForPeriod('mes');
+  const consumoMes = movMes.filter(m => m.account === 'TC').reduce((a,b) => a+b.amount, 0);
+
+  // Estado respecto al límite personal
+  const sobreElLimite = deudaActual > LIMITE_PERSONAL;
+  const exceso        = Math.max(deudaActual - LIMITE_PERSONAL, 0);
+  const pctDeuda      = Math.min((deudaActual / LIMITE_PERSONAL) * 100, 100);
+
+  // Días hasta el 25
+  const hoy   = new Date();
+  const vence = new Date(hoy.getFullYear(), hoy.getMonth(), 25);
+  if (vence < hoy) vence.setMonth(vence.getMonth()+1);
+  const dias  = Math.ceil((vence - hoy) / (1000*60*60*24));
+
+  const elTotal   = document.getElementById('tcDeudaTotal');
+  const elConsumo = document.getElementById('tcConsumoMes');
+  const elVence   = document.getElementById('tcVenceLabel');
+  const elBarP    = document.getElementById('tcBarPagado');
+  const elBarPend = document.getElementById('tcBarPendiente');
+  const elReg     = document.getElementById('tcRegistrado');
+  const elPend    = document.getElementById('tcPendiente');
+  const wrap      = document.getElementById('tcDeudaWrap');
+
+  if (elTotal) {
+    elTotal.textContent = money(deudaActual);
+    elTotal.style.color = sobreElLimite ? 'var(--bad)' : 'var(--warn)';
+  }
+  if (elConsumo) elConsumo.textContent = money(consumoMes) + ' (este mes en Radar)';
+  if (elVence)   elVence.textContent   = 'Vence en ' + dias + ' día' + (dias===1?'':'s') + ' · día 25';
+
+  // Barra: muestra deuda vs límite personal
+  // Si supera el límite, la barra entera es roja
+  if (sobreElLimite) {
+    if (elBarP)    { elBarP.style.width = '100%'; elBarP.style.background = 'var(--bad)'; }
+    if (elBarPend) { elBarPend.style.width = '0%'; }
+  } else {
+    if (elBarP)    { elBarP.style.width = pctDeuda.toFixed(1) + '%'; elBarP.style.background = pctDeuda > 70 ? '#d47a3a' : '#e8856a'; }
+    if (elBarPend) { elBarPend.style.width = (100-pctDeuda).toFixed(1) + '%'; }
+  }
+
+  // Labels debajo de la barra
+  if (elReg) elReg.textContent = sobreElLimite
+    ? '🔴 ' + money(exceso) + ' sobre tu límite'
+    : money(deudaActual) + ' de ' + money(LIMITE_PERSONAL);
+  if (elPend) elPend.textContent = 'Límite: S/' + LIMITE_PERSONAL.toFixed(0);
+
+  // Borde del card
+  if (wrap) {
+    wrap.style.borderColor = sobreElLimite
+      ? 'rgba(217,107,118,.8)'
+      : dias <= 7
+        ? 'rgba(211,162,86,.5)'
+        : 'var(--line)';
+  }
+
+  // Kax alerta si está en rojo (solo desktop para no tapar)
+  if (sobreElLimite && window.innerWidth > 640) {
+    kaxSay('Tu TC supera tu límite personal por ' + money(exceso) + '. Evita nuevos cargos hasta el 25.', 'alert', 6000);
+  }
+}
+
 function calcSemaforo() {
   const mesActual = new Date().toLocaleString('es-PE', { month:'long' }).toLowerCase();
   const hayUni    = MESES_UNI.some(m => mesActual.includes(m));
@@ -1780,6 +2068,8 @@ function renderSemaforo() {
   const totalIngP = ingresosPersonales.reduce((a,b) => a+b.monto, 0);
   if (kpiP) kpiP.textContent = money(totalIngP);
   if (kpiH) kpiH.textContent = money(cajaChica);
+  renderDeudaTC();
+  renderDeudasFinanzas();
   const kpiG = document.getElementById('kpiGastosMes');
   if (kpiG) kpiG.textContent = money(totalGastos);
   const ex = document.getElementById('excedente');
