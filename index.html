@@ -197,6 +197,13 @@
     .cc-bar-val{font-size:.72rem;color:var(--text);min-width:50px;text-align:right;font-variant-numeric:tabular-nums}
     .gi-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:.82rem}
     .gi-row:first-child{border-top:none;padding-top:0}
+    /* CARDS POR PROYECTO */
+    .proy-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:12px;box-shadow:var(--shadow)}
+    .proy-card-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+    .proy-card-name{font-weight:700;font-size:.95rem}
+    .proy-card-saldo{font-size:1.3rem;font-weight:700;font-variant-numeric:tabular-nums}
+    .proy-card-saldo.ok{color:var(--good)}.proy-card-saldo.warn{color:var(--warn)}.proy-card-saldo.over{color:var(--bad)}
+    .proy-card-meta{font-size:.75rem;color:var(--muted);margin-bottom:8px}
   </style>
 </head>
 <body>
@@ -521,15 +528,8 @@
 
   <!-- PROYECTOS -->
   <section class="view" id="proyectos">
-    <div class="cc-hero ok" id="ccHero">
-      <div class="cc-label">💼 Caja Chica disponible</div>
-      <div class="cc-amount" id="ccHeroAmount">S/ –</div>
-      <div class="cc-sub" id="ccHeroSub">Cargando…</div>
-    </div>
-    <div class="card" style="margin-bottom:14px">
-      <h2>Desglose de caja chica</h2>
-      <div id="ccDesglose"><div class="tiny muted">Sin movimientos HC este mes.</div></div>
-    </div>
+    <!-- Cards por proyecto (generados dinámicamente) -->
+    <div id="proyCardsContainer"></div>
     <div class="card" style="margin-bottom:14px">
       <div class="topline">
         <h2>Gastos internos HC</h2>
@@ -2311,58 +2311,75 @@ function getAllHCMoves() {
 }
 
 function renderProyectosHC() {
-  const hcMovs = getAllHCMoves();
-  const ccRecibida  = ingresos.filter(i => i.tipoDeposito === 'caja_chica').reduce((a,b) => a+b.monto, 0);
-  const ccEjecutada = hcMovs.reduce((a,b) => a+b.amount, 0);
-  const ccDisp      = ccRecibida - ccEjecutada;
-  const pctUsado    = ccRecibida > 0 ? (ccEjecutada/ccRecibida)*100 : 0;
-
-  const hero    = document.getElementById('ccHero');
-  const heroAmt = document.getElementById('ccHeroAmount');
-  const heroSub = document.getElementById('ccHeroSub');
-  if (hero && heroAmt) {
-    heroAmt.textContent = money(ccDisp);
-    hero.className = 'cc-hero ' + (pctUsado < 70 ? 'ok' : pctUsado < 90 ? 'warn' : 'over');
-    heroAmt.style.color = pctUsado < 70 ? 'var(--good)' : pctUsado < 90 ? 'var(--warn)' : 'var(--bad)';
-    const barHtml = ccRecibida > 0
-      ? '<div class="cc-bar-row"><span class="cc-bar-label">Gastado</span><div class="cc-bar-track"><div class="cc-bar-fill' + (pctUsado>=90?' bad':'') + '" style="width:' + Math.min(pctUsado,100).toFixed(0) + '%"></div></div><span class="cc-bar-val">' + money(ccEjecutada) + '</span></div>'
-      + '<div class="cc-bar-row"><span class="cc-bar-label">Disponible</span><div class="cc-bar-track"><div class="cc-bar-fill good" style="width:' + Math.max(100-pctUsado,0).toFixed(0) + '%"></div></div><span class="cc-bar-val">' + money(ccDisp) + '</span></div>'
-      : '';
-    if (heroSub) heroSub.innerHTML = 'Gastado: ' + money(ccEjecutada) + ' de ' + money(ccRecibida) + ' (' + pctUsado.toFixed(0) + '%)' + barHtml;
-  }
-
-  // Desglose por subcategoria
-  const desglose = document.getElementById('ccDesglose');
-  if (desglose) {
-    // Solo gastos de proyectos reales (no internos) para el desglose por subcategoría
-    const movsProy = hcMovs.filter(m => m.project && m.project !== 'Gastos internos' && m.project !== 'Sin proyecto');
-    const bySubcat = {};
-    movsProy.forEach(m => { bySubcat[m.subcat||'otros'] = (bySubcat[m.subcat||'otros']||0) + m.amount; });
-    const sorted = Object.entries(bySubcat).sort((a,b) => b[1]-a[1]);
-    const maxV = Math.max(...sorted.map(([,v]) => v), 1);
-    if (!sorted.length) {
-      desglose.innerHTML = '<div class="tiny muted">Sin movimientos HC registrados.</div>';
-    } else {
-      // Panel de detalle embebido
-      let detailPanel = document.getElementById('ccDesgloseDetail');
-      if (!detailPanel) {
-        detailPanel = document.createElement('div');
-        detailPanel.id = 'ccDesgloseDetail';
-        detailPanel.style.cssText = 'margin-top:10px;border-top:1px solid var(--line);padding-top:8px;display:none';
-        desglose.parentNode.appendChild(detailPanel);
-      }
-      desglose.innerHTML = sorted.map(([k,v]) => {
-        const pct = ((v/maxV)*100).toFixed(0);
-        const isBad = v === sorted[0][1];
-        return '<div class="cc-bar-row" style="cursor:pointer" onclick="showCCDetail(\'' + k + '\')">'
-          + '<span class="cc-bar-label">' + k + '</span>'
-          + '<div class="cc-bar-track"><div class="cc-bar-fill' + (isBad?' bad':'') + '" style="width:' + pct + '%"></div></div>'
-          + '<span class="cc-bar-val">' + money(v) + ' ▸</span></div>';
-      }).join('');
-    }
-  }
-  // Guardar hcMovs para drill
+  const hcMovs    = getAllHCMoves();
   window._hcMovsCache = hcMovs;
+
+  const container = document.getElementById('proyCardsContainer');
+  if (!container) return;
+
+  // Agrupar ingresos de caja chica por proyecto
+  const ccPorProy = {};
+  ingresos.filter(i => i.tipoDeposito === 'caja_chica').forEach(i => {
+    const proy = (i.proyecto || 'Sin proyecto').toLowerCase();
+    ccPorProy[proy] = (ccPorProy[proy] || 0) + i.monto;
+  });
+
+  // Agrupar gastos HC por proyecto (solo proyectos reales)
+  const gastosPorProy = {};
+  hcMovs.filter(m => m.project && m.project !== 'Gastos internos' && m.project !== 'Sin proyecto')
+    .forEach(m => {
+      const proy = m.project.toLowerCase();
+      if (!gastosPorProy[proy]) gastosPorProy[proy] = [];
+      gastosPorProy[proy].push(m);
+    });
+
+  // Unión de proyectos conocidos (con CC o con gastos)
+  const todosProyectos = new Set([...Object.keys(ccPorProy), ...Object.keys(gastosPorProy)]);
+
+  if (!todosProyectos.size) {
+    container.innerHTML = '<div class="card"><div class="tiny muted">Sin proyectos con caja chica registrada.</div></div>';
+  } else {
+    container.innerHTML = [...todosProyectos].map(proy => {
+      const ccRec  = ccPorProy[proy] || 0;
+      const movs   = gastosPorProy[proy] || [];
+      const ccExec = movs.reduce((a,b) => a+b.amount, 0);
+      const ccDisp = ccRec - ccExec;
+      const pct    = ccRec > 0 ? Math.min((ccExec/ccRec)*100, 100) : 0;
+      const cls    = pct < 70 ? 'ok' : pct < 90 ? 'warn' : 'over';
+
+      // Barras gastado/disponible
+      const barras = ccRec > 0
+        ? '<div class="cc-bar-row"><span class="cc-bar-label">Gastado</span><div class="cc-bar-track"><div class="cc-bar-fill' + (pct>=90?' bad':'') + '" style="width:' + pct.toFixed(0) + '%"></div></div><span class="cc-bar-val">' + money(ccExec) + '</span></div>'
+        + '<div class="cc-bar-row"><span class="cc-bar-label">Disponible</span><div class="cc-bar-track"><div class="cc-bar-fill good" style="width:' + (100-pct).toFixed(0) + '%"></div></div><span class="cc-bar-val">' + money(ccDisp) + '</span></div>'
+        : '<div class="tiny muted" style="margin:4px 0">Sin caja chica registrada para este proyecto.</div>';
+
+      // Desglose por subcategoría
+      const bySubcat = {};
+      movs.forEach(m => { bySubcat[m.subcat||'otros'] = (bySubcat[m.subcat||'otros']||0) + m.amount; });
+      const sortedSC = Object.entries(bySubcat).sort((a,b) => b[1]-a[1]);
+      const maxV = Math.max(...sortedSC.map(([,v]) => v), 1);
+      const subcatHtml = sortedSC.length
+        ? '<div style="margin-top:10px;border-top:1px solid var(--line);padding-top:8px">'
+          + '<div class="tiny muted" style="margin-bottom:6px">Desglose por subcategoría</div>'
+          + sortedSC.map(([k,v]) =>
+              '<div class="cc-bar-row" style="cursor:pointer" onclick="showCCDetailProy(\'' + proy + '\',\'' + k + '\')">'
+              + '<span class="cc-bar-label">' + k + '</span>'
+              + '<div class="cc-bar-track"><div class="cc-bar-fill' + (v===sortedSC[0][1]?' bad':'') + '" style="width:' + ((v/maxV)*100).toFixed(0) + '%"></div></div>'
+              + '<span class="cc-bar-val">' + money(v) + ' ▸</span></div>'
+            ).join('')
+          + '<div id="drill-' + proy + '" style="display:none;margin-top:8px;border-top:1px solid var(--line);padding-top:8px"></div>'
+          + '</div>'
+        : '';
+
+      return '<div class="proy-card">'
+        + '<div class="proy-card-header">'
+        + '<span class="proy-card-name">📁 ' + proy.charAt(0).toUpperCase() + proy.slice(1) + '</span>'
+        + '<span class="proy-card-saldo ' + cls + '">' + money(ccDisp) + '</span>'
+        + '</div>'
+        + '<div class="proy-card-meta">Gastado ' + money(ccExec) + ' de ' + money(ccRec) + ' (' + pct.toFixed(0) + '%)</div>'
+        + barras + subcatHtml + '</div>';
+    }).join('');
+  }
 
   // Gastos internos
   const giList  = document.getElementById('gastosInternosList');
@@ -2382,28 +2399,36 @@ function renderProyectosHC() {
 }
 
 
-function showCCDetail(subcatKey) {
-  // Solo movimientos de proyectos reales (excluir gastos internos)
+function showCCDetailProy(proyKey, subcatKey) {
   const moves = (window._hcMovsCache || []).filter(m =>
-    (m.subcat||'otros') === subcatKey &&
-    m.project && m.project !== 'Gastos internos' && m.project !== 'Sin proyecto'
+    (m.project||'').toLowerCase() === proyKey &&
+    (m.subcat||'otros') === subcatKey
   );
   const total = moves.reduce((a,b) => a+b.amount, 0);
-  let panel = document.getElementById('ccDesgloseDetail');
+  const panel = document.getElementById('drill-' + proyKey);
   if (!panel) return;
-  panel.style.display = 'block';
-  panel.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
-    + '<strong style="font-size:.9rem">📂 ' + subcatKey + '</strong>'
-    + '<div style="display:flex;gap:8px;align-items:center">'
-    + '<span style="font-size:.8rem;color:var(--muted)">' + moves.length + ' movs · ' + money(total) + '</span>'
-    + '<button onclick="document.getElementById(\'ccDesgloseDetail\').style.display=\'none\'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:0 4px">×</button>'
+  // Toggle
+  if (panel.style.display !== 'none' && panel.dataset.subcat === subcatKey) {
+    panel.style.display = 'none'; return;
+  }
+  panel.dataset.subcat = subcatKey;
+  panel.style.display  = 'block';
+  panel.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+    + '<strong style="font-size:.85rem">📂 ' + subcatKey + '</strong>'
+    + '<div style="display:flex;gap:6px;align-items:center">'
+    + '<span style="font-size:.75rem;color:var(--muted)">' + moves.length + ' movs · ' + money(total) + '</span>'
+    + '<button onclick="document.getElementById(\'drill-' + proyKey + '\').style.display=\'none\'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem">×</button>'
     + '</div></div>'
     + (moves.length
-      ? moves.map(m => '<div class="gi-row"><div><span style="font-weight:600">' + m.description + '</span>'
-          + '<div class="tiny muted">' + m.fechaMov + ' · ' + (m.account||'efectivo') + ' · ' + (m.project||'sin proyecto') + '</div></div>'
+      ? [...moves].sort((a,b) => b.fechaMov.localeCompare(a.fechaMov)).map(m =>
+          '<div class="gi-row"><div><span style="font-weight:600">' + m.description + '</span>'
+          + '<div class="tiny muted">' + m.fechaMov + ' · ' + (m.account||'efectivo') + '</div></div>'
           + '<strong style="color:var(--accent)">' + money(m.amount) + '</strong></div>').join('')
       : '<div class="tiny muted">Sin movimientos.</div>');
 }
+
+// Mantener showCCDetail por compatibilidad
+function showCCDetail(subcatKey) { showCCDetailProy('', subcatKey); }
 
 function renderProjectList() {
   const list = document.getElementById('projectList');
