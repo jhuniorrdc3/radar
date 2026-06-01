@@ -2329,8 +2329,10 @@ function renderProyectosHC() {
   // Desglose por subcategoria
   const desglose = document.getElementById('ccDesglose');
   if (desglose) {
+    // Solo gastos de proyectos reales (no internos) para el desglose por subcategoría
+    const movsProy = hcMovs.filter(m => m.project && m.project !== 'Gastos internos' && m.project !== 'Sin proyecto');
     const bySubcat = {};
-    hcMovs.forEach(m => { bySubcat[m.subcat||'otros'] = (bySubcat[m.subcat||'otros']||0) + m.amount; });
+    movsProy.forEach(m => { bySubcat[m.subcat||'otros'] = (bySubcat[m.subcat||'otros']||0) + m.amount; });
     const sorted = Object.entries(bySubcat).sort((a,b) => b[1]-a[1]);
     const maxV = Math.max(...sorted.map(([,v]) => v), 1);
     if (!sorted.length) {
@@ -2376,7 +2378,11 @@ function renderProyectosHC() {
 
 
 function showCCDetail(subcatKey) {
-  const moves = (window._hcMovsCache || []).filter(m => (m.subcat||'otros') === subcatKey);
+  // Solo movimientos de proyectos reales (excluir gastos internos)
+  const moves = (window._hcMovsCache || []).filter(m =>
+    (m.subcat||'otros') === subcatKey &&
+    m.project && m.project !== 'Gastos internos' && m.project !== 'Sin proyecto'
+  );
   const total = moves.reduce((a,b) => a+b.amount, 0);
   let panel = document.getElementById('ccDesgloseDetail');
   if (!panel) return;
@@ -2479,7 +2485,7 @@ function renderInformeCompleto() {
   const totalHoy   = savedToday.reduce((a,b) => a + b.amount, 0);
   const totalMes   = movMes.reduce((a,b) => a + b.amount, 0);
   const subcats    = {comida:0,transporte:0,cafe:0,farmacia:0,ropa:0,ocio:0,mercado:0,salud:0,otros:0};
-  savedToday.forEach(m => { if (m.subcat && subcats[m.subcat] !== undefined) subcats[m.subcat] += m.amount; });
+  savedToday.forEach(m => { if (m.type === 'Personal' && m.subcat && subcats[m.subcat] !== undefined) subcats[m.subcat] += m.amount; });
   const consejoTexts = CONSEJOS_RULES.filter(r => (subcats[r.subcat] || 0) > r.threshold).map(r => '• ' + r.msg);
   const projectMax   = {};
   movMes.forEach(m => { if (m.type === 'Hot and Cold') projectMax[m.project] = (projectMax[m.project]||0) + m.amount; });
