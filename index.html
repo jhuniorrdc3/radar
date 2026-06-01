@@ -331,25 +331,21 @@
   <section class="view" id="finanzas">
     <div class="grid col3">
       <div class="card kpi">
-        <div class="muted tiny">Ingresos del mes</div>
+        <div class="muted tiny">Mis finanzas del mes</div>
         <div style="margin-top:4px;display:flex;flex-direction:column;gap:4px">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <span class="tiny muted">👤 Ingresos</span>
             <strong id="kpiIngresoPersonal" style="color:var(--good);font-size:1rem">S/ 0</strong>
           </div>
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <span class="tiny muted">🏢 Caja chica</span>
-            <strong id="kpiIngresoHC" style="color:var(--accent);font-size:1rem">S/ 0</strong>
-          </div>
           <div style="border-top:1px solid var(--line);margin-top:3px;padding-top:3px;display:flex;justify-content:space-between;align-items:center">
-            <span class="tiny muted">💸 Gastos personales</span>
+            <span class="tiny muted">💸 Gastos</span>
             <strong id="kpiGastosMes" style="color:var(--bad);font-size:1rem">S/ 0</strong>
           </div>
         </div>
-        <div style="display:none"><span id="totalIngresos"></span></div>
+        <div style="display:none"><span id="totalIngresos"></span><span id="kpiIngresoHC"></span></div>
       </div>
       <div class="card kpi"><div class="muted tiny">Compromisos fijos</div><strong id="totalFijosMes" style="color:var(--warn)">S/ 0</strong><div class="tiny muted">Estimado mensual</div></div>
-      <div class="card kpi"><div class="muted tiny">Excedente real</div><strong id="excedente">S/ 0</strong><div class="tiny muted">Ingresos − fijos − gastos</div></div>
+      <div class="card kpi"><div class="muted tiny">Excedente real</div><strong id="excedente">S/ 0</strong><div class="tiny muted">Ingresos − gastos − fijos</div></div>
     </div>
 
     <!-- Historial semanal / mensual -->
@@ -837,6 +833,7 @@ function initState() {
   const allIngresos = lsLoad('radar_ingresos', []);
   ingresos = allIngresos.filter(x => x.tipoDeposito === 'caja_chica' || !x.fecha || x.fecha.startsWith(mesISO()));
   prestamos = lsLoad('radar_prestamos', []);
+  // renderPrestamos se llama en renderSemaforo
   fijos     = lsLoad('radar_fijos', []);
   proyectos = lsLoad('radar_proyectos', []);
 }
