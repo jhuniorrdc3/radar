@@ -314,12 +314,17 @@
     <div class="grid col3">
       <div class="card kpi">
         <div class="muted tiny">Ingresos del mes</div>
-        <strong id="totalIngresos">S/ 0</strong>
-        <div class="tiny" style="margin-top:3px">
-          <span style="color:var(--good)" id="kpiIngresoPersonal">👤 S/ 0</span>
-          <span style="color:var(--muted);margin:0 3px">·</span>
-          <span style="color:var(--accent)" id="kpiIngresoHC">🏢 S/ 0</span>
+        <div style="margin-top:4px;display:flex;flex-direction:column;gap:4px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span class="tiny muted">👤 Ingresos</span>
+            <strong id="kpiIngresoPersonal" style="color:var(--good);font-size:1rem">S/ 0</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span class="tiny muted">🏢 Caja chica</span>
+            <strong id="kpiIngresoHC" style="color:var(--accent);font-size:1rem">S/ 0</strong>
+          </div>
         </div>
+        <div style="display:none"><span id="totalIngresos"></span></div>
       </div>
       <div class="card kpi"><div class="muted tiny">Compromisos fijos</div><strong id="totalFijosMes" style="color:var(--warn)">S/ 0</strong><div class="tiny muted">Estimado mensual</div></div>
       <div class="card kpi"><div class="muted tiny">Excedente real</div><strong id="excedente">S/ 0</strong><div class="tiny muted">Ingresos − fijos − gastos</div></div>
@@ -388,8 +393,8 @@
       <div class="card">
         <h2>Registrar ingreso</h2>
         <div class="form-row">
-          <div><label>Fuente</label><select class="form-input" id="ingresoFuente" onchange="toggleIngresoProyecto()"><option value="universidad">Universidad</option><option value="hotandcold">Hot and Cold</option><option value="otro">Otro</option></select></div>
-          <div><label>Monto (S/)</label><input class="form-input" type="number" id="ingresoMonto" placeholder="3000"/></div>
+          <div><label>Fuente</label><select class="form-input" id="ingresoFuente" onchange="toggleIngresoProyecto(); actualizarPlaceholderIngreso()"><option value="universidad">Universidad</option><option value="hotandcold">Hot and Cold</option><option value="otro">Otro</option></select></div>
+          <div><label>Monto (S/)</label><input class="form-input" type="number" id="ingresoMonto" placeholder="0"/></div>
         </div>
         <div class="form-row">
           <div><label>Descripción</label><input class="form-input" id="ingresoDesc" placeholder="Sueldo mayo"/></div>
@@ -1763,8 +1768,8 @@ function renderSemaforo() {
   const kpiP = document.getElementById('kpiIngresoPersonal');
   const kpiH = document.getElementById('kpiIngresoHC');
   const totalIngP = ingresosPersonales.reduce((a,b) => a+b.monto, 0);
-  if (kpiP) kpiP.textContent = '👤 ' + money(totalIngP);
-  if (kpiH) kpiH.textContent = '🏢 ' + money(cajaChica);
+  if (kpiP) kpiP.textContent = money(totalIngP);
+  if (kpiH) kpiH.textContent = money(cajaChica);
   const ex = document.getElementById('excedente');
   if (ex) { ex.textContent = money(excedente); ex.style.color = excedente >= 0 ? 'var(--good)' : 'var(--bad)'; }
   renderOportunidades(excedente);
