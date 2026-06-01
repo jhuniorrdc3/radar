@@ -1752,6 +1752,10 @@ function calcSemaforo() {
 
 function renderSemaforo() {
   const { estado, msg, excedente, totalIn, cajaChica, totalPrestamos } = calcSemaforo();
+  const ingresosPersonales = ingresos.filter(i =>
+    i.tipoDeposito !== 'caja_chica' && i.fuente !== 'hotandcold' ||
+    (i.fuente === 'hotandcold' && i.tipoDeposito === 'honorario')
+  );
   const box = document.getElementById('semaforoBox');
   if (box) box.innerHTML = `<div class="semaforo ${estado}"><div class="dot ${estado}"></div><div><strong>${estado.charAt(0).toUpperCase() + estado.slice(1)}</strong> · ${msg}</div></div>`;
   const el = document.getElementById('totalIngresos');
