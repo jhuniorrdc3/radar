@@ -2429,10 +2429,14 @@ function toggleDesglose(idKey) {
 
 
 function showCCDetailProy(proyKey, subcatKey) {
-  const moves = (window._hcMovsCache || []).filter(m =>
-    (m.project||'').toLowerCase() === proyKey &&
-    (m.subcat||'otros') === subcatKey
-  );
+  const cleanKey = proyKey.replace(/^proy-/, '');
+  const isInternal = cleanKey === 'internos';
+  const moves = (window._hcMovsCache || []).filter(m => {
+    const matchProject = isInternal
+      ? (!m.project || m.project === 'Gastos internos' || m.project === 'Sin proyecto')
+      : (m.project||'').toLowerCase() === cleanKey;
+    return matchProject && (m.subcat||'otros') === subcatKey;
+  });
   const total = moves.reduce((a,b) => a+b.amount, 0);
   const panel = document.getElementById('drill-' + proyKey);
   if (!panel) return;
