@@ -23,7 +23,7 @@
       --xl:clamp(1.4rem,1.2rem + .8vw,1.9rem);
     }
     *,*::before,*::after{box-sizing:border-box}
-    html{-webkit-font-smoothing:antialiased} html,body{margin:0}
+    html{-webkit-font-smoothing:antialiased} html,body{margin:0;padding-top:52px}
     body{font-family:'Satoshi',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:var(--base)}
     button,input,textarea,select{font:inherit}
     /* overflow-x aquí y NO en body — body con overflow-x:hidden rompe position:fixed en Chrome mobile */
@@ -278,7 +278,6 @@
     <span id="syncStatus" style="display:none;font-size:.78rem;color:var(--muted);margin-top:4px">Sincronizando…</span>
   </div>
 
-  <div style="height:52px"></div>
   <!-- HOY -->
   <section class="view active" id="hoy">
     <div class="grid col2">
@@ -1647,7 +1646,7 @@ function cargarResumenSheets(r) {
   if (cd2) cd2.textContent = fmt(r['CAJA CHICA DISPONIBLE']);
 
   if (r['TOTAL FIJOS MES'] && !fijos.length) {
-    document.getElementById('totalFijosMes').textContent = fmt(r['TOTAL FIJOS MES']);
+    const elFM = document.getElementById('totalFijosMes'); if (elFM) elFM.textContent = fmt(r['TOTAL FIJOS MES']);
     document.getElementById('totalFijosDisplay').textContent = fmt(r['TOTAL FIJOS MES']);
   }
   // NO inyectar ingresos desde RESUMEN — los ingresos vienen del sync real
@@ -2234,7 +2233,7 @@ function renderFijos() {
   // Usar monto real si existe, sino estimado
   const total = fijos.reduce((a,b) => a + (b.montoReal || b.monto), 0);
   document.getElementById('totalFijosDisplay').textContent = money(total);
-  document.getElementById('totalFijosMes').textContent     = money(total);
+  const elFijos = document.getElementById('totalFijosMes'); if (elFijos) elFijos.textContent = money(total);
 
   if (!fijos.length) { list.innerHTML = '<div class="tiny muted">Sin compromisos registrados aún.</div>'; return; }
 
