@@ -28,9 +28,9 @@
     button,input,textarea,select{font:inherit}
     /* overflow-x aquí y NO en body — body con overflow-x:hidden rompe position:fixed en Chrome mobile */
     .app{max-width:1160px;margin:auto;padding:16px;overflow-x:hidden}
-    .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:nowrap;position:sticky;top:0;z-index:100;background:var(--bg);padding:6px 16px;border-bottom:1px solid var(--line);margin-bottom:0}
     .brand{display:flex;gap:12px;align-items:center}
-    .logo{width:42px;height:42px;border-radius:50%;background:radial-gradient(circle at 38% 38%,rgba(92,192,177,.4),transparent 60%),#15201f;border:1px solid var(--line);display:grid;place-items:center;flex-shrink:0}
+    .logo{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 38% 38%,rgba(92,192,177,.4),transparent 60%),#15201f;border:1px solid var(--line);display:grid;place-items:center;flex-shrink:0}
     .logo:before{content:'';width:18px;height:18px;border:2px solid var(--accent);border-radius:50%;box-shadow:0 0 0 6px rgba(92,192,177,.08)}
     h1{font-size:clamp(1.5rem,2vw,2rem);margin:0} .sub{color:var(--muted);font-size:.9rem}
     /* min-width:0 necesario para que flex item pueda encogerse debajo de su contenido */
@@ -81,7 +81,7 @@
     .recommend{background:linear-gradient(150deg,rgba(92,192,177,.1),rgba(92,192,177,.03));border:1px solid rgba(92,192,177,.2);padding:14px;border-radius:14px;line-height:1.5}
     .pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
     .pill{display:inline-flex;align-items:center;padding:.28rem .65rem;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);font-size:.8rem;color:var(--muted)}
-    .kpi strong{display:block;font-size:1.65rem;margin:4px 0 2px;font-variant-numeric:tabular-nums;transition:color .3s}
+    .kpi strong{display:block;font-size:1.2rem;margin:2px 0 1px;font-variant-numeric:tabular-nums;transition:color .3s}
     .topline{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
     .list-wrap{max-height:380px;overflow:auto;padding-right:4px}
     .move{display:flex;justify-content:space-between;gap:12px;padding:13px 0;border-top:1px solid var(--line)}
@@ -367,14 +367,18 @@
     <div class="grid col3">
       <div class="card kpi">
         <div class="muted tiny">Mis finanzas del mes</div>
-        <div style="margin-top:4px;display:flex;flex-direction:column;gap:4px">
+        <div style="margin-top:4px;display:flex;flex-direction:column;gap:3px">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <span class="tiny muted">👤 Ingresos</span>
-            <strong id="kpiIngresoPersonal" style="color:var(--good);font-size:1rem">S/ 0</strong>
+            <strong id="kpiIngresoPersonal" style="color:var(--good);font-size:.95rem">S/ 0</strong>
           </div>
-          <div style="border-top:1px solid var(--line);margin-top:3px;padding-top:3px;display:flex;justify-content:space-between;align-items:center">
+          <div style="border-top:1px solid var(--line);margin-top:2px;padding-top:2px;display:flex;justify-content:space-between;align-items:center">
             <span class="tiny muted">💸 Gastos</span>
-            <strong id="kpiGastosMes" style="color:var(--bad);font-size:1rem">S/ 0</strong>
+            <strong id="kpiGastosMes" style="color:var(--bad);font-size:.95rem">S/ 0</strong>
+          </div>
+          <div style="border-top:1px solid var(--line);margin-top:2px;padding-top:2px;display:flex;justify-content:space-between;align-items:center">
+            <span class="tiny muted">💀 Deudas</span>
+            <strong id="kpiDeudaTotal" style="color:var(--bad);font-size:.95rem">S/ 0</strong>
           </div>
         </div>
         <div style="display:none"><span id="totalIngresos"></span><span id="kpiIngresoHC"></span></div>
@@ -589,22 +593,7 @@
         <div style="display:flex;align-items:flex-end"><button class="btn" id="addFijoBtn">Agregar</button></div>
       </div>
       <div id="fijoList"><div class="tiny muted">Sin compromisos registrados aún.</div></div>
-      <div class="section-label" style="margin-top:16px">Tipo de cambio USD → S/</div>
-      <div style="display:flex;gap:10px;align-items:center;margin-top:6px">
-        <input class="form-input" type="number" id="tipoCambio" step="0.01" style="width:120px" placeholder="3.70"/>
-        <span class="tiny muted">S/ por dólar (para convertir pagos en USD)</span>
-      </div>
-    </div>
-    <div class="grid col2eq">
-      <div class="card">
-        <h2>Total compromisos</h2>
-        <strong id="totalFijosDisplay" style="font-size:2rem;font-variant-numeric:tabular-nums;color:var(--warn)">S/ 0</strong>
-        <div class="tiny muted" style="margin-top:6px">Lo mínimo que necesitas cubrir antes de cualquier otro gasto.</div>
-      </div>
-      <div class="card">
-        <h2>Proyección meses críticos</h2>
-        <div id="proyeccionBox"><div class="tiny muted">Agrega tus fijos para ver la proyección.</div></div>
-      </div>
+      
     </div>
   </section>
 
@@ -1865,6 +1854,8 @@ function renderDeudasFinanzas() {
   const elSub      = document.getElementById('deudasSubtitle');
   const elDesg     = document.getElementById('deudasDesglose');
 
+  const kpiDT = document.getElementById('kpiDeudaTotal');
+  if (kpiDT) kpiDT.textContent = money(totalDeudas);
   if (elTotal) {
     elTotal.textContent = money(totalDeudas);
     elTotal.style.color = pctDeudas > 80 ? 'var(--bad)' : pctDeudas > 50 ? 'var(--warn)' : 'var(--text)';
