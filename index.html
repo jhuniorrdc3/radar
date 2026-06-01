@@ -211,10 +211,10 @@
     .split-bar-labels .lbl-disp{color:var(--good)}
     .split-bar-track{height:14px;background:var(--panel-3);border-radius:999px;overflow:hidden;position:relative;display:flex}
     .split-bar-gast{height:100%;border-radius:999px 0 0 999px;transition:width .7s cubic-bezier(.4,0,.2,1)}
-    .split-bar-gast.ok{background:var(--accent)}
-    .split-bar-gast.warn{background:var(--warn)}
+    .split-bar-gast.ok{background:#e8856a}
+    .split-bar-gast.warn{background:#d47a3a}
     .split-bar-gast.over{background:var(--bad)}
-    .split-bar-disp{height:100%;border-radius:0 999px 999px 0;background:var(--good);opacity:.7;transition:width .7s cubic-bezier(.4,0,.2,1)}
+    .split-bar-disp{height:100%;border-radius:0 999px 999px 0;background:#5aab7a;transition:width .7s cubic-bezier(.4,0,.2,1)}
   </style>
 </head>
 <body>
@@ -541,16 +541,6 @@
   <section class="view" id="proyectos">
     <!-- Cards por proyecto (generados dinámicamente) -->
     <div id="proyCardsContainer"></div>
-    <div class="card" style="margin-bottom:14px">
-      <div class="topline">
-        <h2>Gastos internos HC</h2>
-        <div style="display:flex;gap:8px;align-items:center">
-          <span style="font-size:.85rem;color:var(--accent);font-weight:700" id="giTotal">S/ 0</span>
-          <span class="pill" id="giCount">0 gastos</span>
-        </div>
-      </div>
-      <div id="gastosInternosList"><div class="tiny muted">Sin gastos internos este mes.</div></div>
-    </div>
     <div class="grid col2eq">
       <div class="card">
         <h2>Proyectos activos</h2>
@@ -2385,7 +2375,7 @@ function renderProyectosHC() {
     const maxV = Math.max(...sortedSC.map(([,v]) => v), 1);
 
     const desgloseBtns = sortedSC.length
-      ? '<div id="desg-' + idKey + '" style="display:none;margin-top:8px;border-top:1px solid var(--line);padding-top:8px">'
+      ? '<div id="desg-' + idKey + '" style="margin-top:8px;border-top:1px solid var(--line);padding-top:8px">'
         + '<div class="tiny muted" style="margin-bottom:6px">Desglose por subcategoría</div>'
         + sortedSC.map(([k,v]) =>
             '<div class="cc-bar-row" style="cursor:pointer" onclick="showCCDetailProy(\'' + idKey + '\',\'' + k + '\')">'
@@ -2395,11 +2385,11 @@ function renderProyectosHC() {
           ).join('')
         + '<div id="drill-' + idKey + '" style="display:none;margin-top:6px"></div>'
         + '</div>'
-        + '<button onclick="toggleDesglose(\'' + idKey + '\')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.75rem;margin-top:6px;padding:2px 0">▸ Ver desglose (' + sortedSC.length + ' categorías)</button>'
+        
       : '';
 
     return '<div class="proy-card">'
-      + '<div class="proy-card-header" style="cursor:pointer" onclick="toggleDesglose(\'' + idKey + '\')">'
+      + '<div class="proy-card-header" onclick="toggleDesglose(\'' + idKey + '\')">'
       + '<span class="proy-card-name">' + icon + ' ' + nombre.charAt(0).toUpperCase() + nombre.slice(1) + '</span>'
       + '<span class="proy-card-saldo" style="' + saldoColor + '">' + (isInternal ? money(ccExec) : money(ccDisp)) + '</span>'
       + '</div>'
@@ -2430,20 +2420,6 @@ function renderProyectosHC() {
 
   container.innerHTML = html;
 
-  // Gastos internos también en la lista separada (mantener compatibilidad)
-  const giList    = document.getElementById('gastosInternosList');
-  const giCount   = document.getElementById('giCount');
-  const giTotalEl = document.getElementById('giTotal');
-  if (giCount)   giCount.textContent   = internos.length + ' gastos';
-  if (giTotalEl) giTotalEl.textContent = money(totalInternos);
-  if (giList) {
-    giList.innerHTML = internos.length
-      ? [...internos].sort((a,b) => b.fechaMov.localeCompare(a.fechaMov)).map(m =>
-          '<div class="gi-row"><div><span style="font-weight:600">' + m.description + '</span>'
-          + '<div class="tiny muted">' + m.fechaMov + ' · ' + (m.account||'efectivo') + ' · ' + (m.subcat||'otros') + '</div></div>'
-          + '<strong style="color:var(--accent)">' + money(m.amount) + '</strong></div>').join('')
-      : '<div class="tiny muted">Sin gastos internos.</div>';
-  }
 }
 
 function toggleDesglose(idKey) {
