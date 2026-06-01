@@ -895,6 +895,19 @@ setTimeout(() => kaxSay('¡Hola Jhunior! Soy Kax. Registra tu día cuando estés
 // HELPERS
 // ─────────────────────────────────────────────
 function money(n) { return 'S/ ' + Number(n || 0).toFixed(2).replace(/\.00$/, ''); }
+function normalizarCuenta(raw) {
+  const v = String(raw || '').toLowerCase().trim();
+  if (v === 'tc' || v === 'tarjeta de credito' || v === 'credito' || v === 'crédito') return 'TC';
+  if (v === 'debito' || v === 'débito' || v === 'tarjeta de debito' || v === 'tarjeta de débito') return 'Débito';
+  if (v === 'yape') return 'Yape';
+  if (v === 'plin') return 'Plin';
+  if (v === 'bcp') return 'BCP';
+  if (v === 'interbank') return 'Interbank';
+  if (v === 'bbva') return 'BBVA';
+  if (v === 'scotiabank') return 'Scotiabank';
+  if (v === '' || v === 'efectivo' || v === 'cash') return 'efectivo';
+  return String(raw).trim();
+}
 function todayLabel() { return new Date().toLocaleDateString('es-PE', { day:'2-digit', month:'short' }); }
 function daysUntil(day) {
   const now  = new Date();
@@ -1514,7 +1527,7 @@ function procesarSyncMovimientos(res) {
   const porFecha = {};
   res.movimientos.forEach(m => {
     if (!porFecha[m.fechaMov]) porFecha[m.fechaMov] = [];
-    porFecha[m.fechaMov].push(m);
+    porFecha[m.fechaMov].push({ ...m, account: normalizarCuenta(m.account) });
   });
 
   // Recoger TODAS las fechas en localStorage (no solo mes actual)
@@ -1544,12 +1557,15 @@ function procesarSyncMovimientos(res) {
       return { ...lsMov,
         amount: s.amount ?? lsMov.amount, description: s.description || lsMov.description,
         type: s.type || lsMov.type, subcat: s.subcat !== undefined ? s.subcat : lsMov.subcat,
-        account: s.account || lsMov.account, project: s.project !== undefined ? s.project : lsMov.project,
+        account:     normalizarCuenta(s.account) || lsMov.account,
+        project:     s.project !== undefined ? s.project : lsMov.project,
         fechaMov: s.fechaMov || lsMov.fechaMov };
     });
 
     const idsLocales = new Set(merged.map(m => m.movId).filter(Boolean));
-    const agregar    = movsSheets.filter(m => m.movId && !idsLocales.has(m.movId));
+    const agregar    = movsSheets
+      .filter(m => m.movId && !idsLocales.has(m.movId))
+      .map(m => ({ ...m, account: normalizarCuenta(m.account) }));
     nuevos += agregar.length;
     lsSave(lsKey, [...merged, ...agregar]);
   });
