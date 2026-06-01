@@ -101,13 +101,13 @@
     .progress span{display:block;height:100%;border-radius:999px;background:var(--accent);transition:width .6s cubic-bezier(.4,0,.2,1)}
     .report-box{background:var(--panel-2);border:1px dashed var(--line);border-radius:14px;padding:14px;white-space:pre-wrap;line-height:1.55;font-size:.85rem}
     /* SUBCAT BARRAS */
-    .subcat-grid{display:flex;flex-direction:column;gap:4px;margin-top:8px}
-    .subcat{display:flex;align-items:center;gap:8px;padding:5px 0}
-    .subcat .sc-name{font-size:.75rem;color:var(--muted);min-width:62px;white-space:nowrap}
+    .subcat-grid{display:flex;flex-direction:column;gap:3px;margin-top:8px}
+    .subcat{display:flex;align-items:center;gap:8px;padding:4px 0}
+    .subcat .sc-name{font-size:.73rem;color:var(--muted);min-width:64px;white-space:nowrap}
     .subcat .sc-track{flex:1;height:8px;background:var(--panel-3);border-radius:999px;overflow:hidden}
     .subcat .sc-fill{height:100%;border-radius:999px;background:var(--accent);transition:width .6s cubic-bezier(.4,0,.2,1)}
-    .subcat .sc-val{font-size:.75rem;font-variant-numeric:tabular-nums;min-width:44px;text-align:right;color:var(--text)}
-    .subcat.sc-zero .sc-fill{background:var(--panel-3)}
+    .subcat .sc-val{font-size:.73rem;font-variant-numeric:tabular-nums;min-width:42px;text-align:right;color:var(--text)}
+    .subcat.sc-zero .sc-fill{width:0%!important}
     .subcat.sc-zero .sc-val{color:var(--muted)}
     .project,.deuda-item,.fijo-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
     .project:first-child,.deuda-item:first-child,.fijo-item:first-child{border-top:none;padding-top:0}
@@ -154,37 +154,34 @@
     @media(max-width:960px){.col2,.col2eq,.col3,.col4{grid-template-columns:1fr 1fr}}
     @media(max-width:640px){
       .col2,.col2eq,.col3,.col4,.form-row{grid-template-columns:1fr}
-      .col4kpi{grid-template-columns:repeat(2,1fr)}
+      .col4kpi{grid-template-columns:repeat(2,1fr)} /* siempre 2x2 en móvil */
       .top{flex-direction:column;align-items:flex-start}
+      /* tabs ocupa todo el ancho disponible en móvil */
       .tabs{width:100%;max-width:100%}
       .kax-wrap{bottom:16px;right:16px}
-      .kax-avatar{width:52px}
-      /* subcat-grid ya es flex, no necesita override */
-      .card{padding:10px 12px}
-      .card h2{font-size:.9rem;margin-bottom:5px}
-      .kpi strong{font-size:1.25rem;margin:2px 0 1px}
-      .entry{min-height:52px;font-size:.9rem;padding:8px 10px}
-      .actions .btn{padding:.6rem .4rem;font-size:.8rem}
-      .move{padding:8px 0}
-      .btn{padding:.65rem .9rem;font-size:.85rem}
-      .grid{gap:8px}
+      /* Kax más pequeño en móvil para no tapar contenido */
+      .kax-avatar{width:58px}
+      .subcat-grid{grid-template-columns:repeat(3,1fr)} /* forzar siempre 3 cols */
     }
     /* Undo toast */
     .undo-toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:10px 18px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);z-index:400;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;white-space:nowrap;font-size:.88rem}
     .undo-toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
     .undo-toast .undo-bar{height:3px;background:var(--accent);border-radius:999px;transition:width linear}
     .undo-btn{background:var(--accent);color:#082320;border:none;border-radius:999px;padding:.3rem .85rem;font-weight:700;cursor:pointer;font-size:.85rem}
-    /* === BARRA PRESUPUESTO DIARIO === */
-    .daily-budget-wrap{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;margin-top:14px;box-shadow:var(--shadow)}
-    .db-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
-    .db-label{font-size:.78rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
-    .db-nums{font-size:.85rem;font-variant-numeric:tabular-nums}
-    .db-nums strong{font-size:1.05rem}
-    .db-track{height:14px;background:var(--panel-3);border-radius:999px;overflow:hidden}
+    /* BARRA PRESUPUESTO DIARIO */
+    .daily-budget-wrap{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:10px 14px;box-shadow:var(--shadow)}
+    .db-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px}
+    .db-label{font-size:.75rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+    .db-nums{font-size:.82rem;font-variant-numeric:tabular-nums}
+    .db-nums strong{font-size:1rem}
+    .db-track{height:12px;background:var(--panel-3);border-radius:999px;overflow:hidden}
     .db-fill{height:100%;border-radius:999px;transition:width .7s cubic-bezier(.4,0,.2,1),background .4s}
     .db-fill.ok{background:var(--good)}.db-fill.warn{background:var(--warn)}.db-fill.over{background:var(--bad)}
-    .db-msg{font-size:.78rem;margin-top:5px;color:var(--muted)}
-    /* === HERO CAJA CHICA === */
+    .db-msg{font-size:.75rem;margin-top:4px;color:var(--muted)}
+    /* GASTOS ACUMULADOS FILTROS */
+    .hist-filter-btn{background:var(--panel-2);border:1px solid var(--line);color:var(--muted);padding:.35rem .8rem;border-radius:999px;cursor:pointer;font-size:.78rem;font-weight:600;transition:all .2s}
+    .hist-filter-btn.active{background:var(--accent);color:#082320;border-color:transparent}
+    /* CAJA CHICA HERO */
     .cc-hero{text-align:center;padding:16px;border-radius:var(--r);margin-bottom:12px;border:2px solid transparent;transition:background .4s,border-color .4s}
     .cc-hero.ok{background:var(--good-dim);border-color:rgba(130,198,111,.3)}
     .cc-hero.warn{background:var(--warn-dim);border-color:rgba(211,162,86,.3)}
@@ -192,11 +189,11 @@
     .cc-hero .cc-label{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
     .cc-hero .cc-amount{font-size:2.4rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1;margin:4px 0}
     .cc-hero .cc-sub{font-size:.78rem;color:var(--muted)}
-    .cc-bar-row{display:flex;gap:8px;align-items:center;margin:8px 0 2px}
+    .cc-bar-row{display:flex;gap:8px;align-items:center;margin:6px 0 2px}
     .cc-bar-label{font-size:.72rem;color:var(--muted);min-width:60px}
     .cc-bar-track{flex:1;height:9px;background:var(--panel-3);border-radius:999px;overflow:hidden}
     .cc-bar-fill{height:100%;border-radius:999px;background:var(--accent);transition:width .6s cubic-bezier(.4,0,.2,1)}
-    .cc-bar-fill.bad{background:var(--bad)}
+    .cc-bar-fill.bad{background:var(--bad)}.cc-bar-fill.good{background:var(--good)}
     .cc-bar-val{font-size:.72rem;color:var(--text);min-width:50px;text-align:right;font-variant-numeric:tabular-nums}
     .gi-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:.82rem}
     .gi-row:first-child{border-top:none;padding-top:0}
@@ -249,7 +246,7 @@
         </div>
         <div class="tiny muted" style="margin-top:8px">Puedes mezclar gastos personales y de Hot and Cold en el mismo texto.</div>
       </div>
-      <div class="daily-budget-wrap" id="dailyBudgetWrap" style="margin-top:0">
+      <div class="daily-budget-wrap" id="dailyBudgetWrap">
         <div class="db-header">
           <span class="db-label">🎮 Presupuesto del día</span>
           <span class="db-nums"><strong id="dbGastado">S/ 0</strong><span style="color:var(--muted)"> / S/ 51</span></span>
@@ -308,7 +305,7 @@
           <div class="subcat" id="sbr-cuidado"><span class="sc-name">💈 Cuidado</span><div class="sc-track"><div class="sc-fill" id="scf-cuidado" style="width:0%"></div></div><span class="sc-val" id="sc-cuidado">S/ 0</span></div>
           <div class="subcat" id="sbr-otros"><span class="sc-name">❓ Otros</span><div class="sc-track"><div class="sc-fill" id="scf-otros" style="width:0%"></div></div><span class="sc-val" id="sc-otros">S/ 0</span></div>
         </div>
-      </div>
+            </div>
     </div>
   </section>
 
@@ -318,9 +315,9 @@
       <div class="card kpi">
         <div class="muted tiny">Ingresos del mes</div>
         <strong id="totalIngresos">S/ 0</strong>
-        <div class="tiny" style="margin-top:4px">
+        <div class="tiny" style="margin-top:3px">
           <span style="color:var(--good)" id="kpiIngresoPersonal">👤 S/ 0</span>
-          <span style="color:var(--muted);margin:0 4px">·</span>
+          <span style="color:var(--muted);margin:0 3px">·</span>
           <span style="color:var(--accent)" id="kpiIngresoHC">🏢 S/ 0</span>
         </div>
       </div>
@@ -338,11 +335,11 @@
         </div>
       </div>
       <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
-        <button class="period-tab active" id="filtTodo" onclick="setHistFilter('todo')">Todo</button>
-        <button class="period-tab" id="filtPersonal" onclick="setHistFilter('personal')">Personal</button>
-        <button class="period-tab" id="filtHC" onclick="setHistFilter('hc')">Hot &amp; Cold</button>
+        <button class="hist-filter-btn active" id="filtTodo" onclick="setHistFilter('todo')">Todo</button>
+        <button class="hist-filter-btn" id="filtPersonal" onclick="setHistFilter('personal')">Personal</button>
+        <button class="hist-filter-btn" id="filtHC" onclick="setHistFilter('hc')">Hot &amp; Cold</button>
       </div>
-      <div id="histResumen" style="margin-bottom:10px;display:flex;gap:10px;flex-wrap:wrap"></div>
+      <div id="histResumen" style="margin-bottom:8px;display:flex;gap:8px;flex-wrap:wrap"></div>
       <div id="histSubcats" class="subcat-grid"></div>
       <div style="margin-top:14px">
         <button
@@ -360,15 +357,42 @@
       </div>
     </div>
 
+    <!-- Detalle inline de categoría (se muestra debajo del gráfico al tocar una barra) -->
+    <div class="card" style="margin-top:14px">
+      <div class="topline">
+        <h2>¿En qué estás gastando más?</h2>
+        <div class="chart-legend">
+          <span><span class="legend-dot" style="background:var(--panel-3)"></span><span id="labelMesAnterior">Mes anterior</span></span>
+          <span><span class="legend-dot" style="background:var(--accent)"></span><span id="labelMesActual">Este mes</span></span>
+        </div>
+      </div>
+      <div id="categoryChart"><div class="tiny muted">Sin datos suficientes para graficar.</div></div>
+
+      <!-- Panel inline de detalle — aparece debajo del gráfico al tocar una barra -->
+      <div id="drillPanel" style="display:none;margin-top:12px;border-top:1px solid var(--line);padding-top:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div>
+            <span id="drillTitle" style="font-weight:700;font-size:.95rem"></span>
+            <span id="drillTotal" style="font-size:.8rem;color:var(--muted);margin-left:8px"></span>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <button id="drillSortBtn" onclick="toggleDrillSort()" style="background:var(--panel-2);border:1px solid var(--line);border-radius:999px;color:var(--muted);padding:.25rem .7rem;font-size:.75rem;cursor:pointer">📅 Fecha</button>
+            <button onclick="closeDrill()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;line-height:1;padding:0">×</button>
+          </div>
+        </div>
+        <div id="drillList"></div>
+      </div>
+    </div>
+
     <div class="grid col2eq" style="margin-top:14px">
       <div class="card">
         <h2>Registrar ingreso</h2>
         <div class="form-row">
-          <div><label>Fuente</label><select class="form-input" id="ingresoFuente" onchange="toggleIngresoProyecto()"><option value="universidad">Universidad</option><option value="otro">Yape/otro</option><option value="hotandcold">Hot and Cold</option></select></div>
+          <div><label>Fuente</label><select class="form-input" id="ingresoFuente" onchange="toggleIngresoProyecto()"><option value="universidad">Universidad</option><option value="hotandcold">Hot and Cold</option><option value="otro">Otro</option></select></div>
           <div><label>Monto (S/)</label><input class="form-input" type="number" id="ingresoMonto" placeholder="3000"/></div>
         </div>
         <div class="form-row">
-          <div><label>Descripción</label><input class="form-input" id="ingresoDesc" placeholder="Sueldo, yape de mamá…"/></div>
+          <div><label>Descripción</label><input class="form-input" id="ingresoDesc" placeholder="Sueldo mayo"/></div>
           <div><label>Fecha</label><input class="form-input" type="date" id="ingresoFecha"/></div>
         </div>
         <div class="form-row" id="ingresoHCRow" style="display:none">
@@ -377,16 +401,16 @@
               <option value="">Sin proyecto</option>
             </select>
           </div>
-          <div><label>Tipo HC</label>
+          <div><label>Tipo de ingreso HC</label>
             <select class="form-input" id="ingresoTipoHC">
               <option value="honorario">Honorario / sueldo</option>
-              <option value="caja_chica">Caja chica</option>
+              <option value="caja_chica">Caja chica de proyecto</option>
               <option value="reembolso">Reembolso</option>
             </select>
           </div>
         </div>
         <div class="form-row">
-          <div><label>Banco / medio</label>
+          <div><label>Banco / medio de cobro</label>
             <select class="form-input" id="ingresoBanco">
               <option value="efectivo">Efectivo</option>
               <option value="BCP">BCP</option>
@@ -396,14 +420,15 @@
               <option value="otro">Otro</option>
             </select>
           </div>
+          <div><label>&#8203;</label>
+            <div class="tiny muted" style="padding:.82rem 0;line-height:1.4">¿Por qué banco o medio te llegó este ingreso?</div>
+          </div>
         </div>
         <button class="btn" id="addIngresoBtn">Registrar ingreso</button>
-        <!-- INGRESOS PERSONALES -->
-        <div class="section-label" style="margin-top:14px">👤 Ingresos personales</div>
-        <div class="list-wrap" style="max-height:160px" id="ingresoListPersonal"><div class="tiny muted">Sin ingresos personales.</div></div>
-        <!-- INGRESOS HC / CAJA CHICA -->
-        <div class="section-label" style="margin-top:10px">🏢 Hot and Cold / Caja chica</div>
-        <div class="list-wrap" style="max-height:160px" id="ingresoListHC"><div class="tiny muted">Sin ingresos HC este mes.</div></div>
+        <div class="section-label" style="margin-top:12px">👤 Ingresos personales</div>
+        <div class="list-wrap" style="max-height:150px" id="ingresoListPersonal"><div class="tiny muted">Sin ingresos personales.</div></div>
+        <div class="section-label" style="margin-top:8px">🏢 Hot and Cold / Caja chica</div>
+        <div class="list-wrap" style="max-height:150px" id="ingresoListHC"><div class="tiny muted">Sin ingresos HC.</div></div>
       </div>
       <div class="card">
         <h2>Préstamos recibidos</h2>
@@ -491,18 +516,15 @@
 
   <!-- PROYECTOS -->
   <section class="view" id="proyectos">
-    <!-- HERO CAJA CHICA -->
     <div class="cc-hero ok" id="ccHero">
       <div class="cc-label">💼 Caja Chica disponible</div>
       <div class="cc-amount" id="ccHeroAmount">S/ –</div>
       <div class="cc-sub" id="ccHeroSub">Cargando…</div>
     </div>
-    <!-- BARRAS DE DESGLOSE HC -->
     <div class="card" style="margin-bottom:14px">
       <h2>Desglose de caja chica</h2>
       <div id="ccDesglose"><div class="tiny muted">Sin movimientos HC este mes.</div></div>
     </div>
-    <!-- GASTOS INTERNOS -->
     <div class="card" style="margin-bottom:14px">
       <div class="topline">
         <h2>Gastos internos HC</h2>
@@ -522,7 +544,6 @@
         <h2>Agregar proyecto</h2>
         <div class="add-row"><input id="newProject" placeholder="Nombre del nuevo proyecto"/><button class="btn" id="addProjectBtn">Agregar</button></div>
         <div class="note tiny" style="margin-top:12px">Los proyectos se guardan en Sheets automáticamente.</div>
-        <!-- IDs ocultos para renderCajaChica -->
         <div style="display:none">
           <span id="sheets-cc-total"></span>
           <span id="sheets-cc-ejecutada"></span>
@@ -556,7 +577,7 @@
           <option value="ocio">Ocio</option>
           <option value="mercado">Mercado</option>
           <option value="salud">Salud</option>
-          <option value="snacks">Snacks</option>
+          <option value="snacks">Tecnología</option>
           <option value="suscripciones">Suscripciones</option>
           <option value="cuidado">Cuidado personal</option>
           <option value="otros">Otros</option>
@@ -621,7 +642,7 @@
           <option value="ocio">Ocio</option>
           <option value="mercado">Mercado</option>
           <option value="salud">Salud</option>
-          <option value="snacks">Snacks</option>
+          <option value="snacks">Tecnología</option>
           <option value="suscripciones">Suscripciones</option>
           <option value="cuidado">Cuidado personal</option>
           <option value="otros">Otros</option>
@@ -794,7 +815,7 @@ let ingresos  = [];
 let prestamos = [];
 let fijos     = [];
 let currentPeriod = 'semana';
-let currentHistFilter = 'todo'; // 'todo' | 'personal' | 'hc'
+let currentHistFilter = 'todo';
 let viewDate = todayISO(); // ahora sí: todayISO ya está declarada
 
 function lsSave(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {} }
@@ -802,12 +823,7 @@ function lsLoad(key, def) { try { return JSON.parse(localStorage.getItem(key)) ?
 
 function initState() {
   const allIngresos = lsLoad('radar_ingresos', []);
-  // Caja chica: acumulada todo el tiempo (no filtrar por mes)
-  // Ingresos personales: solo del mes actual
-  ingresos = allIngresos.filter(x =>
-    x.tipoDeposito === 'caja_chica' ||
-    !x.fecha || x.fecha.startsWith(mesISO())
-  );
+  ingresos = allIngresos.filter(x => x.tipoDeposito === 'caja_chica' || !x.fecha || x.fecha.startsWith(mesISO()));
   prestamos = lsLoad('radar_prestamos', []);
   fijos     = lsLoad('radar_fijos', []);
   proyectos = lsLoad('radar_proyectos', []);
@@ -920,20 +936,43 @@ const KAX_POSES = {
 };
 
 const KAX_CRITICAL = new Set(['alert', 'sad']);
-function kaxSay(msg, mood = 'idle', duration = 5000) {
+
+function kaxPose(mood) {
   clearTimeout(kaxTimer);
-  const isMobile = window.innerWidth <= 640;
-  if (isMobile && !KAX_CRITICAL.has(mood)) { kaxPose(mood); return; }
   const newSrc = KAX_POSES[mood] || KAX_POSES.idle;
   if (!kaxAvatar.src.endsWith(newSrc)) {
     kaxAvatar.classList.add('kax-switching');
     setTimeout(() => { kaxAvatar.src = newSrc; kaxAvatar.classList.remove('kax-switching'); }, 180);
   }
   kaxAvatar.className = 'kax-avatar ' + mood;
+  kaxTimer = setTimeout(() => { kaxAvatar.src = KAX_POSES.idle; kaxAvatar.className = 'kax-avatar idle'; }, 3500);
+}
+
+function kaxSay(msg, mood = 'idle', duration = 5000) {
+  clearTimeout(kaxTimer);
+  const isMobile = window.innerWidth <= 640;
+  if (isMobile && !KAX_CRITICAL.has(mood)) { kaxPose(mood); return; }
+
+  // — Cambiar pose con fade suave si la imagen es distinta
+  const newSrc = KAX_POSES[mood] || KAX_POSES.idle;
+  if (!kaxAvatar.src.endsWith(newSrc)) {
+    kaxAvatar.classList.add('kax-switching');
+    setTimeout(() => {
+      kaxAvatar.src = newSrc;
+      kaxAvatar.classList.remove('kax-switching');
+    }, 180);
+  }
+
+  // — Aplicar animación CSS según mood
+  kaxAvatar.className = 'kax-avatar ' + mood;
+
+  // — Burbuja de texto
   kaxBubble.textContent = msg;
   kaxBubble.classList.add('show');
+
   kaxTimer = setTimeout(() => {
     kaxBubble.classList.remove('show');
+    // Volver a idle cuando cierra la burbuja
     kaxAvatar.src = KAX_POSES.idle;
     kaxAvatar.className = 'kax-avatar idle';
   }, duration);
@@ -942,29 +981,14 @@ function kaxTap() {
   const msgs = ["¡Aquí estoy! ¿Qué pasó hoy?","Recuerda registrar cada gasto, aunque sea pequeño.","Mañana revisa tus compromisos para no quedarte en cero.","¡Cada sol registrado es un paso hacia tu meta! 🚀"];
   kaxSay(msgs[Math.floor(Math.random() * msgs.length)], 'idle', 4000);
 }
-setTimeout(() => { if (window.innerWidth > 640) kaxSay('¡Hola Jhunior! Soy Kax. Registra tu día cuando estés listo. 🦊', 'idle', 5000); else kaxPose('idle'); }, 1200);
+setTimeout(() => kaxSay('¡Hola Jhunior! Soy Kax. Registra tu día cuando estés listo. 🦊', 'idle', 5000), 1200);
 
 // ─────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────
 function money(n) { return 'S/ ' + Number(n || 0).toFixed(2).replace(/\.00$/, ''); }
-// ── NORMALIZAR CUENTA ─────────────────────────────────────
-function normalizarCuenta(raw) {
-  const v = String(raw || '').toLowerCase().trim();
-  if (v === 'tc' || v === 'tarjeta de credito' || v === 'credito' || v === 'crédito') return 'TC';
-  if (v === 'debito' || v === 'débito' || v === 'tarjeta de debito') return 'Débito';
-  if (v === 'yape') return 'Yape';
-  if (v === 'plin') return 'Plin';
-  if (v === 'bcp') return 'BCP';
-  if (v === 'interbank') return 'Interbank';
-  if (v === 'bbva') return 'BBVA';
-  if (v === 'scotiabank') return 'Scotiabank';
-  if (v === '' || v === 'efectivo' || v === 'cash') return 'efectivo';
-  return String(raw).trim();
-}
 
-// ── BARRA PRESUPUESTO DIARIO ───────────────────────────
-const DAILY_BUDGET = 51; // S/ tope diario personal
+const DAILY_BUDGET = 51;
 function renderDailyBudget(personalHoy) {
   const fill = document.getElementById('dbFill');
   const msg  = document.getElementById('dbMsg');
@@ -976,126 +1000,27 @@ function renderDailyBudget(personalHoy) {
   fill.className = 'db-fill ' + (pct < 70 ? 'ok' : pct < 100 ? 'warn' : 'over');
   const restante = DAILY_BUDGET - personalHoy;
   if (personalHoy === 0) {
-    msg.textContent = 'Aún no hay gastos personales hoy. Tope: S/ ' + DAILY_BUDGET + '.';
+    msg.textContent = 'Aún sin gastos personales. Tope: S/ ' + DAILY_BUDGET + '.';
   } else if (restante > 0) {
     msg.textContent = 'Te quedan S/ ' + restante.toFixed(0) + ' para hoy. ' + (pct < 70 ? '🟢 Bien.' : '🟡 Ve con cuidado.');
   } else {
-    msg.textContent = '🔴 Superaste el tope diario por S/ ' + Math.abs(restante).toFixed(0) + '.';
-    // Kax solo alerta visualmente, sin texto en móvil
-    const isMobile = window.innerWidth <= 640;
-    if (isMobile) {
-      kaxPose('alert');
-    } else {
-      kaxSay('Superaste tu tope diario de S/ ' + DAILY_BUDGET + '. Cierra el día sin más gastos.', 'alert', 5000);
-    }
-  }
-  // Kax HAPPY si termina el día bajo el tope (solo se activa al fin del día)
-  const hora = new Date().getHours();
-  if (hora >= 20 && personalHoy > 0 && personalHoy <= DAILY_BUDGET) {
-    const isMobile = window.innerWidth <= 640;
-    if (isMobile) kaxPose('happy');
-    else kaxSay('🎉 Lograste gastar menos del tope hoy. Así se construye el control.', 'happy', 5000);
+    msg.textContent = '🔴 Superaste el tope por S/ ' + Math.abs(restante).toFixed(0) + '.';
+    if (window.innerWidth <= 640) kaxPose('alert');
+    else kaxSay('Superaste tu tope diario de S/ ' + DAILY_BUDGET + '. Cierra el día.', 'alert', 5000);
   }
 }
 
-// Cambio de pose SIN texto (móvil silencioso)
-function kaxPose(mood) {
-  clearTimeout(kaxTimer);
-  const newSrc = KAX_POSES[mood] || KAX_POSES.idle;
-  if (!kaxAvatar.src.endsWith(newSrc)) {
-    kaxAvatar.classList.add('kax-switching');
-    setTimeout(() => { kaxAvatar.src = newSrc; kaxAvatar.classList.remove('kax-switching'); }, 180);
-  }
-  kaxAvatar.className = 'kax-avatar ' + mood;
-  kaxTimer = setTimeout(() => {
-    kaxAvatar.src = KAX_POSES.idle;
-    kaxAvatar.className = 'kax-avatar idle';
-  }, 3500);
-}
-
-// ── PROYECTOS HC: hero + desglose + gastos internos ──────────
-function renderProyectosHC() {
-  const movMes = getAllMovesForPeriod('mes');
-  const hcMovs = movMes.filter(m => m.type === 'Hot and Cold');
-
-  // Caja chica
-  const ccRecibida  = ingresos.filter(i => i.tipoDeposito === 'caja_chica').reduce((a,b) => a + b.monto, 0);
-  const ccEjecutada = hcMovs.reduce((a,b) => a + b.amount, 0);
-  const ccDisp      = ccRecibida - ccEjecutada;
-  const pctUsado    = ccRecibida > 0 ? (ccEjecutada / ccRecibida) * 100 : 0;
-
-  // Hero
-  const hero = document.getElementById('ccHero');
-  const heroAmt = document.getElementById('ccHeroAmount');
-  const heroSub = document.getElementById('ccHeroSub');
-  if (hero && heroAmt) {
-    heroAmt.textContent = money(ccDisp);
-    hero.className = 'cc-hero ' + (pctUsado < 70 ? 'ok' : pctUsado < 90 ? 'warn' : 'over');
-    heroAmt.style.color = pctUsado < 70 ? 'var(--good)' : pctUsado < 90 ? 'var(--warn)' : 'var(--bad)';
-    if (heroSub) heroSub.textContent = `Gastado: ${money(ccEjecutada)} de ${money(ccRecibida)} (${pctUsado.toFixed(0)}%)`;
-  }
-
-  // Barra por proyecto
-  if (hero && heroAmt) {
-    const barHtml = ccRecibida > 0
-      ? `<div class="cc-bar-row" style="margin-top:10px">
-           <span class="cc-bar-label">Gastado</span>
-           <div class="cc-bar-track"><div class="cc-bar-fill${pctUsado>=90?' bad':''}" style="width:${Math.min(pctUsado,100).toFixed(0)}%"></div></div>
-           <span class="cc-bar-val">${money(ccEjecutada)}</span>
-         </div>
-         <div class="cc-bar-row">
-           <span class="cc-bar-label">Disponible</span>
-           <div class="cc-bar-track"><div class="cc-bar-fill" style="width:${Math.max(100-pctUsado,0).toFixed(0)}%;background:var(--good)"></div></div>
-           <span class="cc-bar-val">${money(ccDisp)}</span>
-         </div>`
-      : '';
-    if (heroSub) heroSub.innerHTML = `Gastado: ${money(ccEjecutada)} de ${money(ccRecibida)} (${pctUsado.toFixed(0)}%)${barHtml}`;
-  }
-
-  // Desglose por subcategoria
-  const desglose = document.getElementById('ccDesglose');
-  if (desglose) {
-    const bySubcat = {};
-    hcMovs.forEach(m => { bySubcat[m.subcat || 'otros'] = (bySubcat[m.subcat || 'otros'] || 0) + m.amount; });
-    const maxVal = Math.max(...Object.values(bySubcat), 1);
-    const sorted = Object.entries(bySubcat).sort((a,b) => b[1]-a[1]);
-    if (!sorted.length) {
-      desglose.innerHTML = '<div class="tiny muted">Sin movimientos HC este mes.</div>';
-    } else {
-      desglose.innerHTML = sorted.map(([k,v]) => {
-        const pct = Math.round((v / maxVal) * 100);
-        const isBad = v > maxVal * 0.6;
-        return `<div class="cc-bar-row">
-          <span class="cc-bar-label">${k}</span>
-          <div class="cc-bar-track"><div class="cc-bar-fill${isBad ? ' bad' : ''}" style="width:${pct}%"></div></div>
-          <span class="cc-bar-val">${money(v)}</span>
-        </div>`;
-      }).join('');
-    }
-  }
-
-  // Gastos internos (project = 'Gastos internos' o 'Sin proyecto')
-  const giList = document.getElementById('gastosInternosList');
-  const giCount = document.getElementById('giCount');
-  const internos = hcMovs.filter(m => !m.project || m.project === 'Gastos internos' || m.project === 'Sin proyecto');
-  if (giCount) giCount.textContent = internos.length + ' gastos';
-  const giTotal = document.getElementById('giTotal');
-  if (giTotal) {
-    const totalGI = internos.reduce((a,b) => a + b.amount, 0);
-    giTotal.textContent = money(totalGI);
-  }
-  if (giList) {
-    if (!internos.length) {
-      giList.innerHTML = '<div class="tiny muted">Sin gastos internos este mes.</div>';
-    } else {
-      const sorted = [...internos].sort((a,b) => b.fechaMov.localeCompare(a.fechaMov));
-      giList.innerHTML = sorted.map(m => `
-        <div class="gi-row">
-          <div><span style="font-weight:600">${m.description}</span><div class="tiny muted">${m.fechaMov} · ${m.account || 'efectivo'} · ${m.subcat || 'otros'}</div></div>
-          <strong style="color:var(--accent);white-space:nowrap">${money(m.amount)}</strong>
-        </div>`).join('');
-    }
-  }
+function normalizarCuenta(raw) {
+  const v = String(raw || '').toLowerCase().trim();
+  if (v === 'tc' || v === 'tarjeta de credito' || v === 'credito') return 'TC';
+  if (v === 'debito' || v === 'débito' || v === 'tarjeta de debito') return 'Débito';
+  if (v === 'yape') return 'Yape';
+  if (v === 'plin') return 'Plin';
+  if (v === 'bcp') return 'BCP';
+  if (v === 'interbank') return 'Interbank';
+  if (v === 'bbva') return 'BBVA';
+  if (v === '' || v === 'efectivo' || v === 'cash') return 'efectivo';
+  return String(raw).trim();
 }
 function todayLabel() { return new Date().toLocaleDateString('es-PE', { day:'2-digit', month:'short' }); }
 function daysUntil(day) {
@@ -1140,7 +1065,7 @@ function detectSubcat(t) {
   const l = t.toLowerCase();
   if (/café|cafe|cappuccino|americano/.test(l))         return 'cafe';
   if (/suscripci[oó]n|perplexity|claude|chatgpt|netflix|spotify|amazon|prime|youtube|premium|adobe|canva|notion|figma|dropbox|icloud|plan\s*mensual/.test(l)) return 'suscripciones';
-  if (/galleta|choc|doritos|papas\s*fritas|pringles|snack|chifles|maiz\s*tostado|wafer|golosina|caramelo|chupete|gomita|oreo|chips/.test(l)) return 'snacks';
+  if (/galleta|choc|doritos|papas\s*fritas|pringles|snack|chifles|wafer|golosina|caramelo|gomita|oreo|chips/.test(l)) return 'snacks';
   if (/barberia|barbero|peluquer|corte\s*de\s*cabello|spa|manicur|pedicur|depilac|cosm[eé]tico|perfume|shampoo|cuidado\s*personal/.test(l)) return 'cuidado';
   // FIX 4: abarrotes antes que comida para que bodega/palta/fideos no caigan en comida
   if (/abarrotes|bodega|minimarket|market|palta|fideos\b|arroz\b|az[uú]car|aceite\b|harina|leche\b|huevo|papa\b|cebolla|ajo\b|tomate|fruta|verdura|detergente|jab[oó]n|papel\s*higi[eé]nico|servilleta|mercado|supermercado|plaza\s*vea|wong|tottus|limpieza/.test(l)) return 'mercado';
@@ -1412,15 +1337,14 @@ function renderSavedToday() {
   renderDailyBudget(personal);
   document.getElementById('countMoves').textContent = `${savedToday.length} movimiento${savedToday.length === 1 ? '' : 's'}`;
 
-  // Barras de subcategorias
   const maxSubcatVal = Math.max(...Object.values(subcats), 1);
   Object.keys(subcats).forEach(k => {
     const el  = document.getElementById('sc-' + k);
     const bar = document.getElementById('scf-' + k);
     const row = document.getElementById('sbr-' + k);
     const v   = subcats[k];
-    if (el)  el.textContent = v > 0 ? money(v) : 'S/ 0';
-    if (bar) bar.style.width = (v > 0 ? Math.max((v / maxSubcatVal) * 100, 4) : 0) + '%';
+    if (el)  el.textContent = money(v);
+    if (bar) bar.style.width = (v > 0 ? Math.max((v/maxSubcatVal)*100, 4) : 0) + '%';
     if (row) row.classList.toggle('sc-zero', v === 0);
   });
 
@@ -1674,10 +1598,7 @@ function procesarSyncFijosYPrestamos(res) {
       const nuevos   = res.ingresos.filter(x => x.movId && !idsLS.has(x.movId));
       const clean    = [...filtered, ...nuevos];
       lsSave('radar_ingresos', clean);
-      ingresos = clean.filter(x =>
-        x.tipoDeposito === 'caja_chica' ||
-        !x.fecha || x.fecha.startsWith(mesISO())
-      );
+      ingresos = clean.filter(x => x.tipoDeposito === 'caja_chica' || !x.fecha || x.fecha.startsWith(mesISO()));
       renderIngresos();
     }
     renderSemaforo();
@@ -1757,8 +1678,8 @@ function procesarSyncMovimientos(res) {
       return { ...lsMov,
         amount: s.amount ?? lsMov.amount, description: s.description || lsMov.description,
         type: s.type || lsMov.type, subcat: s.subcat !== undefined ? s.subcat : lsMov.subcat,
-        account:     normalizarCuenta(s.account) || lsMov.account,
-        project:     s.project !== undefined ? s.project : lsMov.project,
+        account: normalizarCuenta(s.account) || lsMov.account,
+        project: s.project !== undefined ? s.project : lsMov.project,
         fechaMov: s.fechaMov || lsMov.fechaMov };
     });
 
@@ -1835,10 +1756,9 @@ function renderSemaforo() {
   if (box) box.innerHTML = `<div class="semaforo ${estado}"><div class="dot ${estado}"></div><div><strong>${estado.charAt(0).toUpperCase() + estado.slice(1)}</strong> · ${msg}</div></div>`;
   const el = document.getElementById('totalIngresos');
   if (el) el.textContent = money(totalIn);
-  // KPI desglosado: personal vs HC
   const kpiP = document.getElementById('kpiIngresoPersonal');
   const kpiH = document.getElementById('kpiIngresoHC');
-  const totalIngP = ingresosPersonales.reduce((a,b) => a + b.monto, 0);
+  const totalIngP = ingresosPersonales.reduce((a,b) => a+b.monto, 0);
   if (kpiP) kpiP.textContent = '👤 ' + money(totalIngP);
   if (kpiH) kpiH.textContent = '🏢 ' + money(cajaChica);
   const ex = document.getElementById('excedente');
@@ -1872,36 +1792,61 @@ document.querySelectorAll('.period-tab[data-period]').forEach(btn => {
   });
 });
 
+
+function openDrillHist(subcatKey, subcatLabel) {
+  const allP = getAllMovesForPeriod(currentPeriod);
+  const base = currentHistFilter === 'personal' ? allP.filter(m => m.type === 'Personal')
+             : currentHistFilter === 'hc'       ? allP.filter(m => m.type === 'Hot and Cold')
+             : allP;
+  const moves = base.filter(m => m.subcat === subcatKey);
+  if (!moves.length) return;
+  const sorted = [...moves].sort((a,b) => b.fechaMov.localeCompare(a.fechaMov));
+  const total = moves.reduce((s,m) => s+m.amount, 0);
+  // Mostrar en un mini panel debajo
+  let panel = document.getElementById('histDrillPanel');
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'histDrillPanel';
+    panel.style.cssText = 'margin-top:10px;border-top:1px solid var(--line);padding-top:10px';
+    document.getElementById('histSubcats').after(panel);
+  }
+  panel.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+    + '<strong style="font-size:.9rem">' + subcatLabel + '</strong>'
+    + '<span style="font-size:.8rem;color:var(--muted)">' + moves.length + ' movs · ' + money(total) + '</span>'
+    + '<button onclick="document.getElementById(\'histDrillPanel\').remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:0 4px">×</button></div>'
+    + sorted.map(m => '<div class="gi-row">'
+      + '<div><span style="font-weight:600">' + m.description + '</span>'
+      + '<div class="tiny muted">' + m.fechaMov + ' · ' + (m.account||'') + '</div></div>'
+      + '<strong style="color:var(--accent)">' + money(m.amount) + '</strong></div>').join('');
+}
+
 function setHistFilter(f) {
   currentHistFilter = f;
   ['filtTodo','filtPersonal','filtHC'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('active');
   });
-  const map = {todo:'filtTodo',personal:'filtPersonal',hc:'filtHC'};
-  const el = document.getElementById(map[f]);
+  const mapF = {todo:'filtTodo',personal:'filtPersonal',hc:'filtHC'};
+  const el = document.getElementById(mapF[f]);
   if (el) el.classList.add('active');
   renderHistorial(currentPeriod);
 }
 
 function renderHistorial(period) {
   const allMoves = getAllMovesForPeriod(period);
-  // Aplicar filtro Personal / HC / Todo
   const moves = currentHistFilter === 'personal' ? allMoves.filter(m => m.type === 'Personal')
               : currentHistFilter === 'hc'       ? allMoves.filter(m => m.type === 'Hot and Cold')
               : allMoves;
   const subcats = {comida:0,transporte:0,cafe:0,farmacia:0,ropa:0,ocio:0,mercado:0,salud:0,snacks:0,suscripciones:0,cuidado:0,otros:0};
   let totalP = 0, totalHC = 0;
 
-  allMoves.forEach(m => {
+  moves.forEach(m => {
     if (m.type === 'Personal') totalP += m.amount;
     else totalHC += m.amount;
-  });
-  moves.forEach(m => {
+    // Subcats cuentan para todos — refleja hábitos reales de gasto
     if (m.subcat && subcats[m.subcat] !== undefined) subcats[m.subcat] += m.amount;
   });
 
-  // Subcats ordenadas mayor→menor con barras
   const subNames = {comida:'🍽️ Comida',transporte:'🚕 Transp.',cafe:'☕ Café',farmacia:'💊 Farmac.',ropa:'👗 Ropa',ocio:'💑 Ocio',mercado:'🛒 Mercado',salud:'🏋️ Salud',snacks:'🍫 Snacks',suscripciones:'🔔 Suscr.',cuidado:'💈 Cuidado',otros:'❓ Otros'};
   const subcatsEl = document.getElementById('histSubcats');
   if (subcatsEl) {
@@ -1909,20 +1854,21 @@ function renderHistorial(period) {
     const maxV   = Math.max(...sorted.map(([,v]) => v), 1);
     subcatsEl.innerHTML = sorted.map(([k,v]) => {
       const pct = v > 0 ? Math.max((v/maxV)*100, 4) : 0;
-      return '<div class="subcat' + (v===0?' sc-zero':'') + '"' + (v>0?' style="cursor:pointer" onclick="openDrill(\'' + k + '\',\'' + subNames[k] + '\')"':'') + '><span class="sc-name">' + subNames[k] + '</span>' + '<div class="sc-track"><div class="sc-fill" style="width:' + pct + '%"></div></div>' + '<span class="sc-val">' + (v>0?money(v):'S/ 0') + '</span></div>';
+      const onclick = v > 0 ? ' style="cursor:pointer" onclick="openDrillHist(\'' + k + '\',\'' + subNames[k] + '\')"' : '';
+      return '<div class="subcat' + (v===0?' sc-zero':'') + '"' + onclick + '>'
+        + '<span class="sc-name">' + subNames[k] + '</span>'
+        + '<div class="sc-track"><div class="sc-fill" style="width:' + pct + '%"></div></div>'
+        + '<span class="sc-val">' + (v>0?money(v):'S/ 0') + '</span></div>';
     }).join('');
   }
 
-  // Resumen KPIs
   const resEl = document.getElementById('histResumen');
   if (resEl) {
     const total = totalP + totalHC;
-    resEl.innerHTML = `
-      <div class="pill">🧾 Total: <strong style="margin-left:4px;color:var(--text)">${money(total)}</strong></div>
-      <div class="pill">👤 Personal: <strong style="margin-left:4px;color:var(--warn)">${money(totalP)}</strong></div>
-      <div class="pill">🏢 HC: <strong style="margin-left:4px;color:var(--accent)">${money(totalHC)}</strong></div>
-      <div class="pill">📅 ${moves.length} movs.</div>
-    `;
+    resEl.innerHTML = '<div class="pill">🧾 Total: <strong style="margin-left:4px;color:var(--text)">' + money(total) + '</strong></div>'
+      + '<div class="pill">👤 Personal: <strong style="margin-left:4px;color:var(--warn)">' + money(totalP) + '</strong></div>'
+      + '<div class="pill">🏢 HC: <strong style="margin-left:4px;color:var(--accent)">' + money(totalHC) + '</strong></div>'
+      + '<div class="pill">📅 ' + moves.length + ' movs.</div>';
   }
 
   // Lista de movimientos del período (con fecha)
@@ -2221,24 +2167,18 @@ function renderIngresos() {
   const renderItem = (ing) => {
     const i    = ingresos.indexOf(ing);
     const icon = ing.fuente === 'hotandcold' ? '🏢 HC' : ing.fuente === 'universidad' ? '🎓 Uni' : '💰 Otro';
-    const det  = [
-      ing.proyecto || null,
-      ing.tipoDeposito ? ing.tipoDeposito.replace('_',' ') : null,
-      ing.banco && ing.banco !== 'efectivo' ? ing.banco : null,
-      ing.fecha || null
-    ].filter(Boolean).join(' · ');
-    return `<div class="move">
-      <div><span class="tag ingreso">${icon}</span> ${ing.desc}
-        <div class="move-meta">${det}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <strong style="color:var(--good)">${money(ing.monto)}</strong>
-        <button onclick="deleteIngreso(${i})" style="background:none;border:none;cursor:pointer;color:var(--bad);font-size:1rem;padding:2px 4px">🗑</button>
-      </div></div>`;
+    const det  = [ing.proyecto||null, ing.tipoDeposito?ing.tipoDeposito.replace('_',' '):null,
+      ing.banco&&ing.banco!=='efectivo'?ing.banco:null, ing.fecha||null].filter(Boolean).join(' · ');
+    return '<div class="move"><div><span class="tag ingreso">' + icon + '</span> ' + ing.desc
+      + '<div class="move-meta">' + det + '</div></div>'
+      + '<div style="display:flex;align-items:center;gap:8px">'
+      + '<strong style="color:var(--good)">' + money(ing.monto) + '</strong>'
+      + '<button onclick="deleteIngreso(' + i + ')" style="background:none;border:none;cursor:pointer;color:var(--bad);font-size:1rem;padding:2px 4px">🗑</button>'
+      + '</div></div>';
   };
 
   if (listP)  listP.innerHTML  = personales.length ? personales.map(renderItem).join('') : '<div class="tiny muted">Sin ingresos personales.</div>';
-  if (listHC) listHC.innerHTML = hcItems.length    ? hcItems.map(renderItem).join('')    : '<div class="tiny muted">Sin ingresos HC este mes.</div>';
+  if (listHC) listHC.innerHTML = hcItems.length    ? hcItems.map(renderItem).join('')    : '<div class="tiny muted">Sin ingresos HC.</div>';
 }
 window.deleteIngreso = function(i) {
   const ing = ingresos.splice(i, 1)[0];
@@ -2347,6 +2287,58 @@ if (SR) {
 // ─────────────────────────────────────────────
 // PROYECTOS
 // ─────────────────────────────────────────────
+
+function renderProyectosHC() {
+  const movMes = getAllMovesForPeriod('mes');
+  const hcMovs = movMes.filter(m => m.type === 'Hot and Cold');
+  const ccRecibida  = ingresos.filter(i => i.tipoDeposito === 'caja_chica').reduce((a,b) => a+b.monto, 0);
+  const ccEjecutada = hcMovs.reduce((a,b) => a+b.amount, 0);
+  const ccDisp      = ccRecibida - ccEjecutada;
+  const pctUsado    = ccRecibida > 0 ? (ccEjecutada/ccRecibida)*100 : 0;
+
+  const hero    = document.getElementById('ccHero');
+  const heroAmt = document.getElementById('ccHeroAmount');
+  const heroSub = document.getElementById('ccHeroSub');
+  if (hero && heroAmt) {
+    heroAmt.textContent = money(ccDisp);
+    hero.className = 'cc-hero ' + (pctUsado < 70 ? 'ok' : pctUsado < 90 ? 'warn' : 'over');
+    heroAmt.style.color = pctUsado < 70 ? 'var(--good)' : pctUsado < 90 ? 'var(--warn)' : 'var(--bad)';
+    const barHtml = ccRecibida > 0
+      ? '<div class="cc-bar-row"><span class="cc-bar-label">Gastado</span><div class="cc-bar-track"><div class="cc-bar-fill' + (pctUsado>=90?' bad':'') + '" style="width:' + Math.min(pctUsado,100).toFixed(0) + '%"></div></div><span class="cc-bar-val">' + money(ccEjecutada) + '</span></div>'
+      + '<div class="cc-bar-row"><span class="cc-bar-label">Disponible</span><div class="cc-bar-track"><div class="cc-bar-fill good" style="width:' + Math.max(100-pctUsado,0).toFixed(0) + '%"></div></div><span class="cc-bar-val">' + money(ccDisp) + '</span></div>'
+      : '';
+    if (heroSub) heroSub.innerHTML = 'Gastado: ' + money(ccEjecutada) + ' de ' + money(ccRecibida) + ' (' + pctUsado.toFixed(0) + '%)' + barHtml;
+  }
+
+  // Desglose por subcategoria
+  const desglose = document.getElementById('ccDesglose');
+  if (desglose) {
+    const bySubcat = {};
+    hcMovs.forEach(m => { bySubcat[m.subcat||'otros'] = (bySubcat[m.subcat||'otros']||0) + m.amount; });
+    const sorted = Object.entries(bySubcat).sort((a,b) => b[1]-a[1]);
+    const maxV = Math.max(...sorted.map(([,v]) => v), 1);
+    desglose.innerHTML = sorted.length
+      ? sorted.map(([k,v]) => '<div class="cc-bar-row"><span class="cc-bar-label">' + k + '</span><div class="cc-bar-track"><div class="cc-bar-fill' + (v===sorted[0][1]?' bad':'') + '" style="width:' + ((v/maxV)*100).toFixed(0) + '%"></div></div><span class="cc-bar-val">' + money(v) + '</span></div>').join('')
+      : '<div class="tiny muted">Sin movimientos HC este mes.</div>';
+  }
+
+  // Gastos internos
+  const giList  = document.getElementById('gastosInternosList');
+  const giCount = document.getElementById('giCount');
+  const giTotalEl = document.getElementById('giTotal');
+  const internos  = hcMovs.filter(m => !m.project || m.project === 'Gastos internos' || m.project === 'Sin proyecto');
+  if (giCount) giCount.textContent = internos.length + ' gastos';
+  if (giTotalEl) giTotalEl.textContent = money(internos.reduce((a,b) => a+b.amount, 0));
+  if (giList) {
+    giList.innerHTML = internos.length
+      ? [...internos].sort((a,b) => b.fechaMov.localeCompare(a.fechaMov)).map(m =>
+          '<div class="gi-row"><div><span style="font-weight:600">' + m.description + '</span>'
+          + '<div class="tiny muted">' + m.fechaMov + ' · ' + (m.account||'efectivo') + ' · ' + (m.subcat||'otros') + '</div></div>'
+          + '<strong style="color:var(--accent)">' + money(m.amount) + '</strong></div>').join('')
+      : '<div class="tiny muted">Sin gastos internos este mes.</div>';
+  }
+}
+
 function renderProjectList() {
   const list = document.getElementById('projectList');
   if (!proyectos.length) {
@@ -2520,7 +2512,7 @@ function actualizarRecomendacion(futuros) {
   const ahora       = new Date();
   const minutosAhora = ahora.getHours() * 60 + ahora.getMinutes();
   if (!futuros.length) {
-    rec.textContent  = 'Sin compromisos hoy. Cierra y revisa tu semáforo.';
+    rec.textContent  = 'No tienes más compromisos hoy. Cierra el día: registra lo que gastaste y revisa cómo quedó tu semáforo.';
     pills.innerHTML  = '<span class="pill">Cierre del día</span><span class="pill">Registrar gastos</span>';
     return;
   }
@@ -2535,16 +2527,16 @@ function actualizarRecomendacion(futuros) {
     const minsPrev = i === 0 ? minutosAhora : futuros[i-1].mins;
     const hueco    = ev.mins >= 0 ? ev.mins - minsPrev : 0;
     if (hueco >= 90 && hueco < 240) {
-      if (esUni || esReunion) { consejos.push(`Libre antes de ${ev.titulo} (${hora}). Lleva almuerzo de casa.`); pillasTags.add('Hueco libre'); pillasTags.add('Llevar comida'); }
+      if (esUni || esReunion) { consejos.push(`Tienes ${hueco >= 120 ? 'más de 2 horas' : 'casi 2 horas'} antes de ${ev.titulo} (${hora}). Ese espacio suele terminar en comida cara afuera. ¿Llevas algo preparado?`); pillasTags.add('Hueco libre'); pillasTags.add('Llevar comida'); }
       else { consejos.push(`Hay un espacio de ${Math.round(hueco/60*10)/10}h antes de ${ev.titulo}. Buen momento para adelantar algo sin gastar en salir.`); pillasTags.add('Tiempo libre'); }
     } else if (hueco >= 240) {
-      consejos.push(`+${Math.floor(hueco/60)}h hasta ${ev.titulo}. Lleva almuerzo.`); pillasTags.add('Bloque largo'); pillasTags.add('Llevar almuerzo');
+      consejos.push(`Tienes más de ${Math.floor(hueco/60)} horas hasta ${ev.titulo} (${hora}). Bloque largo — si no llevas almuerzo prepárate para gastar en la calle.`); pillasTags.add('Bloque largo'); pillasTags.add('Llevar almuerzo');
     }
-    if (esUni && i === 0 && hueco < 90) { consejos.push(`${ev.titulo} a las ${hora}. Lleva termo, S/ 5–8 diarios en café suman.`); pillasTags.add('Llevar termo'); }
-    if (esReunion && i === 0 && hueco < 90) { consejos.push(`Reunión ${ev.titulo} (${hora}). Confirma materiales.`); }
+    if (esUni && i === 0 && hueco < 90) { consejos.push(`Tu próxima clase es ${ev.titulo} a las ${hora}. Lleva termo — el café afuera suma S/ 5–8 que se repiten todos los días.`); pillasTags.add('Llevar termo'); }
+    if (esReunion && i === 0 && hueco < 90) { consejos.push(`Reunión: ${ev.titulo} a las ${hora}. Confirma qué materiales o documentos necesitas llevar.`); }
   });
-  if (futuros.length >= 3) { consejos.push(`${futuros.length} compromisos. Día lleno = más gasto en comida/taxi.`); pillasTags.add('Día cargado'); }
-  if (!consejos.length) { const sig = futuros[0]; consejos.push(`${sig.titulo} a las ${sig.hora}. Día tranquilo, cuida los gastos hormiga.`); pillasTags.add('Agenda del día'); }
+  if (futuros.length >= 3) { consejos.push(`Día cargado con ${futuros.length} compromisos. Cuando el día está lleno tendemos a gastar más en comida y transporte rápido. Prevenlo ahora.`); pillasTags.add('Día cargado'); }
+  if (!consejos.length) { const sig = futuros[0]; consejos.push(`Próximo: ${sig.titulo} a las ${sig.hora}. Parece un día tranquilo, buen momento para evitar gastos hormiga.`); pillasTags.add('Agenda del día'); }
   rec.textContent  = consejos[0];
   pills.innerHTML  = [...pillasTags].map(p => `<span class="pill">${p}</span>`).join('');
   if (consejos.length > 1) {
@@ -2815,11 +2807,7 @@ let _drillMoves = [];
 let _drillSort  = 'date';
 
 function openDrill(subcatKey, subcatLabel) {
-  const allP = getAllMovesForPeriod(currentPeriod);
-  const base = currentHistFilter === 'personal' ? allP.filter(m => m.type === 'Personal')
-             : currentHistFilter === 'hc'       ? allP.filter(m => m.type === 'Hot and Cold')
-             : allP;
-  const moves = base.filter(m => m.subcat === subcatKey);
+  const moves = getAllMovesForMonth(0).filter(m => m.subcat === subcatKey);
   _drillMoves = moves;
   _drillSort  = 'date';
   document.getElementById('drillTitle').textContent = subcatLabel;
