@@ -2292,9 +2292,21 @@ if (SR) {
 // PROYECTOS
 // ─────────────────────────────────────────────
 
+function getAllHCMoves() {
+  // Trae TODOS los movimientos HC de todos los meses en localStorage
+  const all = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('radar_today_')) {
+      const movs = lsLoad(key, []);
+      movs.forEach(m => { if (m.type === 'Hot and Cold') all.push(m); });
+    }
+  }
+  return all.sort((a,b) => (b.fechaMov||'').localeCompare(a.fechaMov||''));
+}
+
 function renderProyectosHC() {
-  const movMes = getAllMovesForPeriod('mes');
-  const hcMovs = movMes.filter(m => m.type === 'Hot and Cold');
+  const hcMovs = getAllHCMoves();
   const ccRecibida  = ingresos.filter(i => i.tipoDeposito === 'caja_chica').reduce((a,b) => a+b.monto, 0);
   const ccEjecutada = hcMovs.reduce((a,b) => a+b.amount, 0);
   const ccDisp      = ccRecibida - ccEjecutada;
@@ -2321,10 +2333,29 @@ function renderProyectosHC() {
     hcMovs.forEach(m => { bySubcat[m.subcat||'otros'] = (bySubcat[m.subcat||'otros']||0) + m.amount; });
     const sorted = Object.entries(bySubcat).sort((a,b) => b[1]-a[1]);
     const maxV = Math.max(...sorted.map(([,v]) => v), 1);
-    desglose.innerHTML = sorted.length
-      ? sorted.map(([k,v]) => '<div class="cc-bar-row"><span class="cc-bar-label">' + k + '</span><div class="cc-bar-track"><div class="cc-bar-fill' + (v===sorted[0][1]?' bad':'') + '" style="width:' + ((v/maxV)*100).toFixed(0) + '%"></div></div><span class="cc-bar-val">' + money(v) + '</span></div>').join('')
-      : '<div class="tiny muted">Sin movimientos HC este mes.</div>';
+    if (!sorted.length) {
+      desglose.innerHTML = '<div class="tiny muted">Sin movimientos HC registrados.</div>';
+    } else {
+      // Panel de detalle embebido
+      let detailPanel = document.getElementById('ccDesgloseDetail');
+      if (!detailPanel) {
+        detailPanel = document.createElement('div');
+        detailPanel.id = 'ccDesgloseDetail';
+        detailPanel.style.cssText = 'margin-top:10px;border-top:1px solid var(--line);padding-top:8px;display:none';
+        desglose.parentNode.appendChild(detailPanel);
+      }
+      desglose.innerHTML = sorted.map(([k,v]) => {
+        const pct = ((v/maxV)*100).toFixed(0);
+        const isBad = v === sorted[0][1];
+        return '<div class="cc-bar-row" style="cursor:pointer" onclick="showCCDetail(\'' + k + '\')">'
+          + '<span class="cc-bar-label">' + k + '</span>'
+          + '<div class="cc-bar-track"><div class="cc-bar-fill' + (isBad?' bad':'') + '" style="width:' + pct + '%"></div></div>'
+          + '<span class="cc-bar-val">' + money(v) + ' ▸</span></div>';
+      }).join('');
+    }
   }
+  // Guardar hcMovs para drill
+  window._hcMovsCache = hcMovs;
 
   // Gastos internos
   const giList  = document.getElementById('gastosInternosList');
@@ -2341,6 +2372,26 @@ function renderProyectosHC() {
           + '<strong style="color:var(--accent)">' + money(m.amount) + '</strong></div>').join('')
       : '<div class="tiny muted">Sin gastos internos este mes.</div>';
   }
+}
+
+
+function showCCDetail(subcatKey) {
+  const moves = (window._hcMovsCache || []).filter(m => (m.subcat||'otros') === subcatKey);
+  const total = moves.reduce((a,b) => a+b.amount, 0);
+  let panel = document.getElementById('ccDesgloseDetail');
+  if (!panel) return;
+  panel.style.display = 'block';
+  panel.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+    + '<strong style="font-size:.9rem">📂 ' + subcatKey + '</strong>'
+    + '<div style="display:flex;gap:8px;align-items:center">'
+    + '<span style="font-size:.8rem;color:var(--muted)">' + moves.length + ' movs · ' + money(total) + '</span>'
+    + '<button onclick="document.getElementById(\'ccDesgloseDetail\').style.display=\'none\'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:0 4px">×</button>'
+    + '</div></div>'
+    + (moves.length
+      ? moves.map(m => '<div class="gi-row"><div><span style="font-weight:600">' + m.description + '</span>'
+          + '<div class="tiny muted">' + m.fechaMov + ' · ' + (m.account||'efectivo') + ' · ' + (m.project||'sin proyecto') + '</div></div>'
+          + '<strong style="color:var(--accent)">' + money(m.amount) + '</strong></div>').join('')
+      : '<div class="tiny muted">Sin movimientos.</div>');
 }
 
 function renderProjectList() {
