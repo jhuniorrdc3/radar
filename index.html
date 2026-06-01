@@ -100,12 +100,15 @@
     .progress{height:11px;background:var(--panel-3);border-radius:999px;overflow:hidden;margin:6px 0}
     .progress span{display:block;height:100%;border-radius:999px;background:var(--accent);transition:width .6s cubic-bezier(.4,0,.2,1)}
     .report-box{background:var(--panel-2);border:1px dashed var(--line);border-radius:14px;padding:14px;white-space:pre-wrap;line-height:1.55;font-size:.85rem}
-    /* FIX: subcat-grid SIEMPRE 3 columnas, incluso en móvil */
-    .subcat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
-    .subcat{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:9px 10px;transition:border-color .2s}
-    .subcat:hover{border-color:var(--accent)}
-    .subcat .tiny{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .subcat strong{display:block;font-size:1.05rem;margin:3px 0 2px;font-variant-numeric:tabular-nums}
+    /* SUBCAT BARRAS */
+    .subcat-grid{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+    .subcat{display:flex;align-items:center;gap:8px;padding:5px 0}
+    .subcat .sc-name{font-size:.75rem;color:var(--muted);min-width:62px;white-space:nowrap}
+    .subcat .sc-track{flex:1;height:8px;background:var(--panel-3);border-radius:999px;overflow:hidden}
+    .subcat .sc-fill{height:100%;border-radius:999px;background:var(--accent);transition:width .6s cubic-bezier(.4,0,.2,1)}
+    .subcat .sc-val{font-size:.75rem;font-variant-numeric:tabular-nums;min-width:44px;text-align:right;color:var(--text)}
+    .subcat.sc-zero .sc-fill{background:var(--panel-3)}
+    .subcat.sc-zero .sc-val{color:var(--muted)}
     .project,.deuda-item,.fijo-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
     .project:first-child,.deuda-item:first-child,.fijo-item:first-child{border-top:none;padding-top:0}
     .add-row{display:flex;gap:10px;flex-wrap:wrap}
@@ -151,20 +154,52 @@
     @media(max-width:960px){.col2,.col2eq,.col3,.col4{grid-template-columns:1fr 1fr}}
     @media(max-width:640px){
       .col2,.col2eq,.col3,.col4,.form-row{grid-template-columns:1fr}
-      .col4kpi{grid-template-columns:repeat(2,1fr)} /* siempre 2x2 en móvil */
+      .col4kpi{grid-template-columns:repeat(2,1fr)}
       .top{flex-direction:column;align-items:flex-start}
-      /* tabs ocupa todo el ancho disponible en móvil */
       .tabs{width:100%;max-width:100%}
       .kax-wrap{bottom:16px;right:16px}
-      /* Kax más pequeño en móvil para no tapar contenido */
-      .kax-avatar{width:58px}
-      .subcat-grid{grid-template-columns:repeat(3,1fr)} /* forzar siempre 3 cols */
+      .kax-avatar{width:52px}
+      /* subcat-grid ya es flex, no necesita override */
+      .card{padding:10px 12px}
+      .card h2{font-size:.9rem;margin-bottom:5px}
+      .kpi strong{font-size:1.25rem;margin:2px 0 1px}
+      .entry{min-height:52px;font-size:.9rem;padding:8px 10px}
+      .actions .btn{padding:.6rem .4rem;font-size:.8rem}
+      .move{padding:8px 0}
+      .btn{padding:.65rem .9rem;font-size:.85rem}
+      .grid{gap:8px}
     }
     /* Undo toast */
     .undo-toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:10px 18px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);z-index:400;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;white-space:nowrap;font-size:.88rem}
     .undo-toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
     .undo-toast .undo-bar{height:3px;background:var(--accent);border-radius:999px;transition:width linear}
     .undo-btn{background:var(--accent);color:#082320;border:none;border-radius:999px;padding:.3rem .85rem;font-weight:700;cursor:pointer;font-size:.85rem}
+    /* === BARRA PRESUPUESTO DIARIO === */
+    .daily-budget-wrap{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;margin-top:14px;box-shadow:var(--shadow)}
+    .db-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+    .db-label{font-size:.78rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+    .db-nums{font-size:.85rem;font-variant-numeric:tabular-nums}
+    .db-nums strong{font-size:1.05rem}
+    .db-track{height:14px;background:var(--panel-3);border-radius:999px;overflow:hidden}
+    .db-fill{height:100%;border-radius:999px;transition:width .7s cubic-bezier(.4,0,.2,1),background .4s}
+    .db-fill.ok{background:var(--good)}.db-fill.warn{background:var(--warn)}.db-fill.over{background:var(--bad)}
+    .db-msg{font-size:.78rem;margin-top:5px;color:var(--muted)}
+    /* === HERO CAJA CHICA === */
+    .cc-hero{text-align:center;padding:16px;border-radius:var(--r);margin-bottom:12px;border:2px solid transparent;transition:background .4s,border-color .4s}
+    .cc-hero.ok{background:var(--good-dim);border-color:rgba(130,198,111,.3)}
+    .cc-hero.warn{background:var(--warn-dim);border-color:rgba(211,162,86,.3)}
+    .cc-hero.over{background:var(--bad-dim);border-color:rgba(217,107,118,.3)}
+    .cc-hero .cc-label{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+    .cc-hero .cc-amount{font-size:2.4rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1;margin:4px 0}
+    .cc-hero .cc-sub{font-size:.78rem;color:var(--muted)}
+    .cc-bar-row{display:flex;gap:8px;align-items:center;margin:8px 0 2px}
+    .cc-bar-label{font-size:.72rem;color:var(--muted);min-width:60px}
+    .cc-bar-track{flex:1;height:9px;background:var(--panel-3);border-radius:999px;overflow:hidden}
+    .cc-bar-fill{height:100%;border-radius:999px;background:var(--accent);transition:width .6s cubic-bezier(.4,0,.2,1)}
+    .cc-bar-fill.bad{background:var(--bad)}
+    .cc-bar-val{font-size:.72rem;color:var(--text);min-width:50px;text-align:right;font-variant-numeric:tabular-nums}
+    .gi-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:.82rem}
+    .gi-row:first-child{border-top:none;padding-top:0}
   </style>
 </head>
 <body>
@@ -231,6 +266,15 @@
       <div class="card kpi"><div class="muted tiny">Personal</div><strong id="totalPersonal">S/ 0</strong><div class="tiny muted">Tus gastos propios</div></div>
       <div class="card kpi"><div class="muted tiny">TC usada hoy</div><strong id="totalTC">S/ 0</strong><div class="tiny muted">Controlar mezcla</div></div>
     </div>
+    <!-- BARRA PRESUPUESTO DIARIO -->
+    <div class="daily-budget-wrap" id="dailyBudgetWrap">
+      <div class="db-header">
+        <span class="db-label">🎮 Presupuesto del día</span>
+        <span class="db-nums"><strong id="dbGastado">S/ 0</strong> <span style="color:var(--muted)">/ S/ 51</span></span>
+      </div>
+      <div class="db-track"><div class="db-fill ok" id="dbFill" style="width:0%"></div></div>
+      <div class="db-msg" id="dbMsg">Registra gastos para ver cómo vas hoy.</div>
+    </div>
     <div class="grid col2eq" style="margin-top:14px">
       <div class="card">
         <div class="topline">
@@ -250,20 +294,20 @@
       <div class="card">
         <h2>Conciencia de hábito</h2>
         <div id="consejoBox"><div class="tiny muted">Registra gastos para ver consejos personalizados.</div></div>
-        <h3 style="margin-top:14px">Subcategorías de hoy</h3>
-        <div class="subcat-grid">
-          <div class="subcat"><div class="tiny muted">🍽️ Comida</div><strong id="sc-comida">S/ 0</strong></div>
-          <div class="subcat"><div class="tiny muted">🚕 Transp.</div><strong id="sc-transporte">S/ 0</strong></div>
-          <div class="subcat"><div class="tiny muted">☕ Café</div><strong id="sc-cafe">S/ 0</strong></div>
-          <div class="subcat"><div class="tiny muted">💊 Farmacia</div><strong id="sc-farmacia">S/ 0</strong></div>
-          <div class="subcat"><div class="tiny muted">👗 Ropa</div><strong id="sc-ropa">S/ 0</strong></div>
-          <div class="subcat"><div class="tiny muted">💑 Ocio</div><strong id="sc-ocio">S/ 0</strong></div>
-          <div class="subcat"><div class="tiny muted">🛒 Mercado</div><strong id="sc-mercado">S/ 0</strong></div>
-          <div class="subcat"><div class="tiny muted">🏋️ Salud</div><strong id="sc-salud">S/ 0</strong></div>
-          <div class="subcat"><div class="tiny muted">📱 Tecnol.</div><strong id="sc-tecnologia">S/ 0</strong></div>
-          <div class="subcat"><div class="tiny muted">🔔 Suscr.</div><strong id="sc-suscripciones">S/ 0</strong></div>
-          <div class="subcat"><div class="tiny muted">💈 Cuidado</div><strong id="sc-cuidado">S/ 0</strong></div>
-          <div class="subcat"><div class="tiny muted">❓ Otros</div><strong id="sc-otros">S/ 0</strong></div>
+        <h3 style="margin-top:10px;margin-bottom:4px">Subcategorías de hoy</h3>
+        <div class="subcat-grid" id="subcatBars">
+          <div class="subcat" id="sbr-comida"><span class="sc-name">🍽️ Comida</span><div class="sc-track"><div class="sc-fill" id="scf-comida" style="width:0%"></div></div><span class="sc-val" id="sc-comida">S/ 0</span></div>
+          <div class="subcat" id="sbr-transporte"><span class="sc-name">🚕 Transp.</span><div class="sc-track"><div class="sc-fill" id="scf-transporte" style="width:0%"></div></div><span class="sc-val" id="sc-transporte">S/ 0</span></div>
+          <div class="subcat" id="sbr-cafe"><span class="sc-name">☕ Café</span><div class="sc-track"><div class="sc-fill" id="scf-cafe" style="width:0%"></div></div><span class="sc-val" id="sc-cafe">S/ 0</span></div>
+          <div class="subcat" id="sbr-snacks"><span class="sc-name">🍫 Snacks</span><div class="sc-track"><div class="sc-fill" id="scf-snacks" style="width:0%"></div></div><span class="sc-val" id="sc-snacks">S/ 0</span></div>
+          <div class="subcat" id="sbr-mercado"><span class="sc-name">🛒 Mercado</span><div class="sc-track"><div class="sc-fill" id="scf-mercado" style="width:0%"></div></div><span class="sc-val" id="sc-mercado">S/ 0</span></div>
+          <div class="subcat" id="sbr-ocio"><span class="sc-name">👫 Ocio</span><div class="sc-track"><div class="sc-fill" id="scf-ocio" style="width:0%"></div></div><span class="sc-val" id="sc-ocio">S/ 0</span></div>
+          <div class="subcat" id="sbr-farmacia"><span class="sc-name">💊 Farmacia</span><div class="sc-track"><div class="sc-fill" id="scf-farmacia" style="width:0%"></div></div><span class="sc-val" id="sc-farmacia">S/ 0</span></div>
+          <div class="subcat" id="sbr-ropa"><span class="sc-name">👗 Ropa</span><div class="sc-track"><div class="sc-fill" id="scf-ropa" style="width:0%"></div></div><span class="sc-val" id="sc-ropa">S/ 0</span></div>
+          <div class="subcat" id="sbr-salud"><span class="sc-name">🏋️ Salud</span><div class="sc-track"><div class="sc-fill" id="scf-salud" style="width:0%"></div></div><span class="sc-val" id="sc-salud">S/ 0</span></div>
+          <div class="subcat" id="sbr-suscripciones"><span class="sc-name">🔔 Suscr.</span><div class="sc-track"><div class="sc-fill" id="scf-suscripciones" style="width:0%"></div></div><span class="sc-val" id="sc-suscripciones">S/ 0</span></div>
+          <div class="subcat" id="sbr-cuidado"><span class="sc-name">💈 Cuidado</span><div class="sc-track"><div class="sc-fill" id="scf-cuidado" style="width:0%"></div></div><span class="sc-val" id="sc-cuidado">S/ 0</span></div>
+          <div class="subcat" id="sbr-otros"><span class="sc-name">❓ Otros</span><div class="sc-track"><div class="sc-fill" id="scf-otros" style="width:0%"></div></div><span class="sc-val" id="sc-otros">S/ 0</span></div>
         </div>
       </div>
     </div>
@@ -460,6 +504,22 @@
 
   <!-- PROYECTOS -->
   <section class="view" id="proyectos">
+    <!-- HERO CAJA CHICA -->
+    <div class="cc-hero ok" id="ccHero">
+      <div class="cc-label">💼 Caja Chica disponible</div>
+      <div class="cc-amount" id="ccHeroAmount">S/ –</div>
+      <div class="cc-sub" id="ccHeroSub">Cargando…</div>
+    </div>
+    <!-- BARRAS DE DESGLOSE HC -->
+    <div class="card" style="margin-bottom:14px">
+      <h2>Desglose de caja chica</h2>
+      <div id="ccDesglose"><div class="tiny muted">Sin movimientos HC este mes.</div></div>
+    </div>
+    <!-- GASTOS INTERNOS -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="topline"><h2>Gastos internos HC</h2><span class="pill" id="giCount">0</span></div>
+      <div id="gastosInternosList"><div class="tiny muted">Sin gastos internos este mes.</div></div>
+    </div>
     <div class="grid col2eq">
       <div class="card">
         <h2>Proyectos activos</h2>
@@ -468,11 +528,12 @@
       <div class="card">
         <h2>Agregar proyecto</h2>
         <div class="add-row"><input id="newProject" placeholder="Nombre del nuevo proyecto"/><button class="btn" id="addProjectBtn">Agregar</button></div>
-        <div class="note tiny" style="margin-top:12px">Los proyectos se guardan localmente y en Sheets automáticamente.</div>
-        <div style="margin-top:16px">
-          <div class="tiny muted">Caja chica total recibida</div><strong id="sheets-cc-total">–</strong>
-          <div class="tiny muted" style="margin-top:8px">Caja chica ejecutada</div><strong id="sheets-cc-ejecutada">–</strong>
-          <div class="tiny muted" style="margin-top:8px">Caja chica disponible</div><strong id="sheets-cc-disp2">–</strong>
+        <div class="note tiny" style="margin-top:12px">Los proyectos se guardan en Sheets automáticamente.</div>
+        <!-- IDs ocultos para renderCajaChica -->
+        <div style="display:none">
+          <span id="sheets-cc-total"></span>
+          <span id="sheets-cc-ejecutada"></span>
+          <span id="sheets-cc-disp2"></span>
         </div>
       </div>
     </div>
@@ -502,7 +563,7 @@
           <option value="ocio">Ocio</option>
           <option value="mercado">Mercado</option>
           <option value="salud">Salud</option>
-          <option value="tecnologia">Tecnología</option>
+          <option value="snacks">Snacks</option>
           <option value="suscripciones">Suscripciones</option>
           <option value="cuidado">Cuidado personal</option>
           <option value="otros">Otros</option>
@@ -567,7 +628,7 @@
           <option value="ocio">Ocio</option>
           <option value="mercado">Mercado</option>
           <option value="salud">Salud</option>
-          <option value="tecnologia">Tecnología</option>
+          <option value="snacks">Snacks</option>
           <option value="suscripciones">Suscripciones</option>
           <option value="cuidado">Cuidado personal</option>
           <option value="otros">Otros</option>
@@ -858,29 +919,21 @@ const KAX_POSES = {
   excited:   'kax/Kax_Pose_6_EXCITED_Clean.png',
 };
 
+const KAX_CRITICAL = new Set(['alert', 'sad']);
 function kaxSay(msg, mood = 'idle', duration = 5000) {
   clearTimeout(kaxTimer);
-
-  // — Cambiar pose con fade suave si la imagen es distinta
+  const isMobile = window.innerWidth <= 640;
+  if (isMobile && !KAX_CRITICAL.has(mood)) { kaxPose(mood); return; }
   const newSrc = KAX_POSES[mood] || KAX_POSES.idle;
   if (!kaxAvatar.src.endsWith(newSrc)) {
     kaxAvatar.classList.add('kax-switching');
-    setTimeout(() => {
-      kaxAvatar.src = newSrc;
-      kaxAvatar.classList.remove('kax-switching');
-    }, 180);
+    setTimeout(() => { kaxAvatar.src = newSrc; kaxAvatar.classList.remove('kax-switching'); }, 180);
   }
-
-  // — Aplicar animación CSS según mood
   kaxAvatar.className = 'kax-avatar ' + mood;
-
-  // — Burbuja de texto
   kaxBubble.textContent = msg;
   kaxBubble.classList.add('show');
-
   kaxTimer = setTimeout(() => {
     kaxBubble.classList.remove('show');
-    // Volver a idle cuando cierra la burbuja
     kaxAvatar.src = KAX_POSES.idle;
     kaxAvatar.className = 'kax-avatar idle';
   }, duration);
@@ -889,16 +942,17 @@ function kaxTap() {
   const msgs = ["¡Aquí estoy! ¿Qué pasó hoy?","Recuerda registrar cada gasto, aunque sea pequeño.","Mañana revisa tus compromisos para no quedarte en cero.","¡Cada sol registrado es un paso hacia tu meta! 🚀"];
   kaxSay(msgs[Math.floor(Math.random() * msgs.length)], 'idle', 4000);
 }
-setTimeout(() => kaxSay('¡Hola Jhunior! Soy Kax. Registra tu día cuando estés listo. 🦊', 'idle', 5000), 1200);
+setTimeout(() => { if (window.innerWidth > 640) kaxSay('¡Hola Jhunior! Soy Kax. Registra tu día cuando estés listo. 🦊', 'idle', 5000); else kaxPose('idle'); }, 1200);
 
 // ─────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────
 function money(n) { return 'S/ ' + Number(n || 0).toFixed(2).replace(/\.00$/, ''); }
+// ── NORMALIZAR CUENTA ─────────────────────────────────────
 function normalizarCuenta(raw) {
   const v = String(raw || '').toLowerCase().trim();
   if (v === 'tc' || v === 'tarjeta de credito' || v === 'credito' || v === 'crédito') return 'TC';
-  if (v === 'debito' || v === 'débito' || v === 'tarjeta de debito' || v === 'tarjeta de débito') return 'Débito';
+  if (v === 'debito' || v === 'débito' || v === 'tarjeta de debito') return 'Débito';
   if (v === 'yape') return 'Yape';
   if (v === 'plin') return 'Plin';
   if (v === 'bcp') return 'BCP';
@@ -907,6 +961,119 @@ function normalizarCuenta(raw) {
   if (v === 'scotiabank') return 'Scotiabank';
   if (v === '' || v === 'efectivo' || v === 'cash') return 'efectivo';
   return String(raw).trim();
+}
+
+// ── BARRA PRESUPUESTO DIARIO ───────────────────────────
+const DAILY_BUDGET = 51; // S/ tope diario personal
+function renderDailyBudget(personalHoy) {
+  const fill = document.getElementById('dbFill');
+  const msg  = document.getElementById('dbMsg');
+  const lbl  = document.getElementById('dbGastado');
+  if (!fill) return;
+  const pct = Math.min((personalHoy / DAILY_BUDGET) * 100, 100);
+  fill.style.width = pct + '%';
+  if (lbl) lbl.textContent = money(personalHoy);
+  fill.className = 'db-fill ' + (pct < 70 ? 'ok' : pct < 100 ? 'warn' : 'over');
+  const restante = DAILY_BUDGET - personalHoy;
+  if (personalHoy === 0) {
+    msg.textContent = 'Aún no hay gastos personales hoy. Tope: S/ ' + DAILY_BUDGET + '.';
+  } else if (restante > 0) {
+    msg.textContent = 'Te quedan S/ ' + restante.toFixed(0) + ' para hoy. ' + (pct < 70 ? '🟢 Bien.' : '🟡 Ve con cuidado.');
+  } else {
+    msg.textContent = '🔴 Superaste el tope diario por S/ ' + Math.abs(restante).toFixed(0) + '.';
+    // Kax solo alerta visualmente, sin texto en móvil
+    const isMobile = window.innerWidth <= 640;
+    if (isMobile) {
+      kaxPose('alert');
+    } else {
+      kaxSay('Superaste tu tope diario de S/ ' + DAILY_BUDGET + '. Cierra el día sin más gastos.', 'alert', 5000);
+    }
+  }
+  // Kax HAPPY si termina el día bajo el tope (solo se activa al fin del día)
+  const hora = new Date().getHours();
+  if (hora >= 20 && personalHoy > 0 && personalHoy <= DAILY_BUDGET) {
+    const isMobile = window.innerWidth <= 640;
+    if (isMobile) kaxPose('happy');
+    else kaxSay('🎉 Lograste gastar menos del tope hoy. Así se construye el control.', 'happy', 5000);
+  }
+}
+
+// Cambio de pose SIN texto (móvil silencioso)
+function kaxPose(mood) {
+  clearTimeout(kaxTimer);
+  const newSrc = KAX_POSES[mood] || KAX_POSES.idle;
+  if (!kaxAvatar.src.endsWith(newSrc)) {
+    kaxAvatar.classList.add('kax-switching');
+    setTimeout(() => { kaxAvatar.src = newSrc; kaxAvatar.classList.remove('kax-switching'); }, 180);
+  }
+  kaxAvatar.className = 'kax-avatar ' + mood;
+  kaxTimer = setTimeout(() => {
+    kaxAvatar.src = KAX_POSES.idle;
+    kaxAvatar.className = 'kax-avatar idle';
+  }, 3500);
+}
+
+// ── PROYECTOS HC: hero + desglose + gastos internos ──────────
+function renderProyectosHC() {
+  const movMes = getAllMovesForPeriod('mes');
+  const hcMovs = movMes.filter(m => m.type === 'Hot and Cold');
+
+  // Caja chica
+  const ccRecibida  = ingresos.filter(i => i.tipoDeposito === 'caja_chica').reduce((a,b) => a + b.monto, 0);
+  const ccEjecutada = hcMovs.reduce((a,b) => a + b.amount, 0);
+  const ccDisp      = ccRecibida - ccEjecutada;
+  const pctUsado    = ccRecibida > 0 ? (ccEjecutada / ccRecibida) * 100 : 0;
+
+  // Hero
+  const hero = document.getElementById('ccHero');
+  const heroAmt = document.getElementById('ccHeroAmount');
+  const heroSub = document.getElementById('ccHeroSub');
+  if (hero && heroAmt) {
+    heroAmt.textContent = money(ccDisp);
+    hero.className = 'cc-hero ' + (pctUsado < 70 ? 'ok' : pctUsado < 90 ? 'warn' : 'over');
+    heroAmt.style.color = pctUsado < 70 ? 'var(--good)' : pctUsado < 90 ? 'var(--warn)' : 'var(--bad)';
+    if (heroSub) heroSub.textContent = `Gastado: ${money(ccEjecutada)} de ${money(ccRecibida)} (${pctUsado.toFixed(0)}%)`;
+  }
+
+  // Desglose por subcategoria
+  const desglose = document.getElementById('ccDesglose');
+  if (desglose) {
+    const bySubcat = {};
+    hcMovs.forEach(m => { bySubcat[m.subcat || 'otros'] = (bySubcat[m.subcat || 'otros'] || 0) + m.amount; });
+    const maxVal = Math.max(...Object.values(bySubcat), 1);
+    const sorted = Object.entries(bySubcat).sort((a,b) => b[1]-a[1]);
+    if (!sorted.length) {
+      desglose.innerHTML = '<div class="tiny muted">Sin movimientos HC este mes.</div>';
+    } else {
+      desglose.innerHTML = sorted.map(([k,v]) => {
+        const pct = Math.round((v / maxVal) * 100);
+        const isBad = v > maxVal * 0.6;
+        return `<div class="cc-bar-row">
+          <span class="cc-bar-label">${k}</span>
+          <div class="cc-bar-track"><div class="cc-bar-fill${isBad ? ' bad' : ''}" style="width:${pct}%"></div></div>
+          <span class="cc-bar-val">${money(v)}</span>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // Gastos internos (project = 'Gastos internos' o 'Sin proyecto')
+  const giList = document.getElementById('gastosInternosList');
+  const giCount = document.getElementById('giCount');
+  const internos = hcMovs.filter(m => !m.project || m.project === 'Gastos internos' || m.project === 'Sin proyecto');
+  if (giCount) giCount.textContent = internos.length + ' gastos';
+  if (giList) {
+    if (!internos.length) {
+      giList.innerHTML = '<div class="tiny muted">Sin gastos internos este mes.</div>';
+    } else {
+      const sorted = [...internos].sort((a,b) => b.fechaMov.localeCompare(a.fechaMov));
+      giList.innerHTML = sorted.map(m => `
+        <div class="gi-row">
+          <div><span style="font-weight:600">${m.description}</span><div class="tiny muted">${m.fechaMov} · ${m.account || 'efectivo'} · ${m.subcat || 'otros'}</div></div>
+          <strong style="color:var(--accent);white-space:nowrap">${money(m.amount)}</strong>
+        </div>`).join('');
+    }
+  }
 }
 function todayLabel() { return new Date().toLocaleDateString('es-PE', { day:'2-digit', month:'short' }); }
 function daysUntil(day) {
@@ -951,7 +1118,7 @@ function detectSubcat(t) {
   const l = t.toLowerCase();
   if (/café|cafe|cappuccino|americano/.test(l))         return 'cafe';
   if (/suscripci[oó]n|perplexity|claude|chatgpt|netflix|spotify|amazon|prime|youtube|premium|adobe|canva|notion|figma|dropbox|icloud|plan\s*mensual/.test(l)) return 'suscripciones';
-  if (/audif[oó]n|auricular|cargador|cable\s*usb|mouse|teclado|celular|laptop|computadora|tablet|foco|extensi[oó]n|pilas|bateria|tecnolog/.test(l)) return 'tecnologia';
+  if (/galleta|choc|doritos|papas\s*fritas|pringles|snack|chifles|maiz\s*tostado|wafer|golosina|caramelo|chupete|gomita|oreo|chips/.test(l)) return 'snacks';
   if (/barberia|barbero|peluquer|corte\s*de\s*cabello|spa|manicur|pedicur|depilac|cosm[eé]tico|perfume|shampoo|cuidado\s*personal/.test(l)) return 'cuidado';
   // FIX 4: abarrotes antes que comida para que bodega/palta/fideos no caigan en comida
   if (/abarrotes|bodega|minimarket|market|palta|fideos\b|arroz\b|az[uú]car|aceite\b|harina|leche\b|huevo|papa\b|cebolla|ajo\b|tomate|fruta|verdura|detergente|jab[oó]n|papel\s*higi[eé]nico|servilleta|mercado|supermercado|plaza\s*vea|wong|tottus|limpieza/.test(l)) return 'mercado';
@@ -1186,7 +1353,7 @@ function renderSavedToday() {
   const list = document.getElementById('movementList');
   list.innerHTML = '';
 
-  const subcats = {comida:0,transporte:0,cafe:0,farmacia:0,ropa:0,ocio:0,mercado:0,salud:0,tecnologia:0,suscripciones:0,cuidado:0,otros:0};
+  const subcats = {comida:0,transporte:0,cafe:0,farmacia:0,ropa:0,ocio:0,mercado:0,salud:0,snacks:0,suscripciones:0,cuidado:0,otros:0};
   let total = 0, hc = 0, personal = 0, tc = 0;
   const byProject = {};
 
@@ -1220,11 +1387,19 @@ function renderSavedToday() {
   animateValue('totalHC',       hc);
   animateValue('totalPersonal', personal);
   animateValue('totalTC',       tc);
+  renderDailyBudget(personal);
   document.getElementById('countMoves').textContent = `${savedToday.length} movimiento${savedToday.length === 1 ? '' : 's'}`;
 
+  // Barras de subcategorias
+  const maxSubcatVal = Math.max(...Object.values(subcats), 1);
   Object.keys(subcats).forEach(k => {
-    const el = document.getElementById('sc-' + k);
-    if (el) el.textContent = money(subcats[k]);
+    const el  = document.getElementById('sc-' + k);
+    const bar = document.getElementById('scf-' + k);
+    const row = document.getElementById('sbr-' + k);
+    const v   = subcats[k];
+    if (el)  el.textContent = v > 0 ? money(v) : 'S/ 0';
+    if (bar) bar.style.width = (v > 0 ? Math.max((v / maxSubcatVal) * 100, 4) : 0) + '%';
+    if (row) row.classList.toggle('sc-zero', v === 0);
   });
 
   const projectMax = Object.entries(byProject).sort((a,b) => b[1]-a[1])[0];
@@ -1674,7 +1849,7 @@ document.querySelectorAll('.period-tab').forEach(btn => {
 
 function renderHistorial(period) {
   const moves   = getAllMovesForPeriod(period);
-  const subcats = {comida:0,transporte:0,cafe:0,farmacia:0,ropa:0,ocio:0,mercado:0,salud:0,tecnologia:0,suscripciones:0,cuidado:0,otros:0};
+  const subcats = {comida:0,transporte:0,cafe:0,farmacia:0,ropa:0,ocio:0,mercado:0,salud:0,snacks:0,suscripciones:0,cuidado:0,otros:0};
   let totalP = 0, totalHC = 0;
 
   moves.forEach(m => {
@@ -1685,7 +1860,7 @@ function renderHistorial(period) {
   });
 
   // Subcategorías
-  const subNames = {comida:'🍽️ Comida',transporte:'🚕 Transp.',cafe:'☕ Café',farmacia:'💊 Farmac.',ropa:'👗 Ropa',ocio:'💑 Ocio',mercado:'🛒 Mercado',salud:'🏋️ Salud',tecnologia:'📱 Tecnol.',suscripciones:'🔔 Suscr.',cuidado:'💈 Cuidado',otros:'❓ Otros'};
+  const subNames = {comida:'🍽️ Comida',transporte:'🚕 Transp.',cafe:'☕ Café',farmacia:'💊 Farmac.',ropa:'👗 Ropa',ocio:'💑 Ocio',mercado:'🛒 Mercado',salud:'🏋️ Salud',snacks:'🍫 Snacks',suscripciones:'🔔 Suscr.',cuidado:'💈 Cuidado',otros:'❓ Otros'};
   const subcatsEl = document.getElementById('histSubcats');
   if (subcatsEl) {
     subcatsEl.innerHTML = Object.entries(subcats)
@@ -2638,8 +2813,8 @@ function renderCategoryChart() {
   const curMov = getAllMovesForMonth(0);
   const preMov = getAllMovesForMonth(-1);
 
-  const subcatKeys  = ['comida','transporte','cafe','farmacia','ropa','ocio','mercado','salud','tecnologia','suscripciones','cuidado','otros'];
-  const subcatLabel = ['🍽 Comida','🚕 Transp.','☕ Café','💊 Farmac.','👗 Ropa','💑 Ocio','🛒 Mercado','🏋 Salud','📱 Tecnol.','🔔 Suscr.','💈 Cuidado','❓ Otros'];
+  const subcatKeys  = ['comida','transporte','cafe','farmacia','ropa','ocio','mercado','salud','snacks','suscripciones','cuidado','otros'];
+  const subcatLabel = ['🍽 Comida','🚕 Transp.','☕ Café','💊 Farmac.','👗 Ropa','💑 Ocio','🛒 Mercado','🏋 Salud','🍫 Snacks','🔔 Suscr.','💈 Cuidado','❓ Otros'];
 
   const sumSubcats = (moves) => {
     const s = {};
