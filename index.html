@@ -675,6 +675,7 @@ function switchTab(tabId) {
   const view = document.getElementById(tabId);
   if (view) view.classList.add('active');
   if (tabId === 'finanzas') { renderHistorial(currentPeriod); renderCategoryChart(); }
+  if (tabId === 'proyectos') { renderProyectosHC(); }
   if (tabId === 'informe')  renderInformeCompleto();
 }
 
@@ -1018,6 +1019,23 @@ function renderProyectosHC() {
     hero.className = 'cc-hero ' + (pctUsado < 70 ? 'ok' : pctUsado < 90 ? 'warn' : 'over');
     heroAmt.style.color = pctUsado < 70 ? 'var(--good)' : pctUsado < 90 ? 'var(--warn)' : 'var(--bad)';
     if (heroSub) heroSub.textContent = `Gastado: ${money(ccEjecutada)} de ${money(ccRecibida)} (${pctUsado.toFixed(0)}%)`;
+  }
+
+  // Barra por proyecto
+  if (hero && heroAmt) {
+    const barHtml = ccRecibida > 0
+      ? `<div class="cc-bar-row" style="margin-top:10px">
+           <span class="cc-bar-label">Gastado</span>
+           <div class="cc-bar-track"><div class="cc-bar-fill${pctUsado>=90?' bad':''}" style="width:${Math.min(pctUsado,100).toFixed(0)}%"></div></div>
+           <span class="cc-bar-val">${money(ccEjecutada)}</span>
+         </div>
+         <div class="cc-bar-row">
+           <span class="cc-bar-label">Disponible</span>
+           <div class="cc-bar-track"><div class="cc-bar-fill" style="width:${Math.max(100-pctUsado,0).toFixed(0)}%;background:var(--good)"></div></div>
+           <span class="cc-bar-val">${money(ccDisp)}</span>
+         </div>`
+      : '';
+    if (heroSub) heroSub.innerHTML = `Gastado: ${money(ccEjecutada)} de ${money(ccRecibida)} (${pctUsado.toFixed(0)}%)${barHtml}`;
   }
 
   // Desglose por subcategoria
@@ -1848,35 +1866,46 @@ function setHistFilter(f) {
 }
 
 function renderHistorial(period) {
-  const moves   = getAllMovesForPeriod(period);
+  const allMoves = getAllMovesForPeriod(period);
+  // Aplicar filtro Personal / HC / Todo
+  const moves = currentHistFilter === 'personal' ? allMoves.filter(m => m.type === 'Personal')
+              : currentHistFilter === 'hc'       ? allMoves.filter(m => m.type === 'Hot and Cold')
+              : allMoves;
   const subcats = {comida:0,transporte:0,cafe:0,farmacia:0,ropa:0,ocio:0,mercado:0,salud:0,snacks:0,suscripciones:0,cuidado:0,otros:0};
   let totalP = 0, totalHC = 0;
 
-  moves.forEach(m => {
+  allMoves.forEach(m => {
     if (m.type === 'Personal') totalP += m.amount;
     else totalHC += m.amount;
-    // Subcats cuentan para todos — refleja hábitos reales de gasto
+  });
+  moves.forEach(m => {
     if (m.subcat && subcats[m.subcat] !== undefined) subcats[m.subcat] += m.amount;
   });
 
-  // Subcategorías
+  // Subcats ordenadas mayor→menor con barras
   const subNames = {comida:'🍽️ Comida',transporte:'🚕 Transp.',cafe:'☕ Café',farmacia:'💊 Farmac.',ropa:'👗 Ropa',ocio:'💑 Ocio',mercado:'🛒 Mercado',salud:'🏋️ Salud',snacks:'🍫 Snacks',suscripciones:'🔔 Suscr.',cuidado:'💈 Cuidado',otros:'❓ Otros'};
   const subcatsEl = document.getElementById('histSubcats');
   if (subcatsEl) {
-    subcatsEl.innerHTML = Object.entries(subcats)
-      .map(([k,v]) => `<div class="subcat"><div class="tiny muted">${subNames[k]}</div><strong>${money(v)}</strong></div>`)
-      .join('');
+    const sorted = Object.entries(subcats).sort((a,b) => b[1]-a[1]);
+    const maxV   = Math.max(...sorted.map(([,v]) => v), 1);
+    subcatsEl.innerHTML = sorted.map(([k,v]) => {
+      const pct = v > 0 ? Math.max((v/maxV)*100, 4) : 0;
+      return `<div class="subcat${v===0?' sc-zero':''}">`
+        + `<span class="sc-name">${subNames[k]}</span>`
+        + `<div class="sc-track"><div class="sc-fill" style="width:${pct}%"></div></div>`
+        + `<span class="sc-val">${v>0?money(v):'S/ 0'}</span></div>`;
+    }).join('');
   }
 
-  // Resumen total del período
+  // Resumen KPIs
   const resEl = document.getElementById('histResumen');
   if (resEl) {
     const total = totalP + totalHC;
     resEl.innerHTML = `
       <div class="pill">🧾 Total: <strong style="margin-left:4px;color:var(--text)">${money(total)}</strong></div>
       <div class="pill">👤 Personal: <strong style="margin-left:4px;color:var(--warn)">${money(totalP)}</strong></div>
-      <div class="pill">🏢 Hot&amp;Cold: <strong style="margin-left:4px;color:var(--accent)">${money(totalHC)}</strong></div>
-      <div class="pill">📅 ${moves.length} movimiento${moves.length === 1 ? '' : 's'}</div>
+      <div class="pill">🏢 HC: <strong style="margin-left:4px;color:var(--accent)">${money(totalHC)}</strong></div>
+      <div class="pill">📅 ${moves.length} movs.</div>
     `;
   }
 
@@ -2170,38 +2199,31 @@ document.getElementById('addIngresoBtn').addEventListener('click', async () => {
 function renderIngresos() {
   const listP  = document.getElementById('ingresoListPersonal');
   const listHC = document.getElementById('ingresoListHC');
-  // Separar
   const personales = ingresos.filter(i => i.fuente !== 'hotandcold' || i.tipoDeposito === 'honorario');
-  const hcList     = ingresos.filter(i => i.fuente === 'hotandcold' && i.tipoDeposito !== 'honorario');
+  const hcItems    = ingresos.filter(i => i.fuente === 'hotandcold' && i.tipoDeposito !== 'honorario');
 
-  const renderItem = (ing, i) => {
+  const renderItem = (ing) => {
+    const i    = ingresos.indexOf(ing);
     const icon = ing.fuente === 'hotandcold' ? '🏢 HC' : ing.fuente === 'universidad' ? '🎓 Uni' : '💰 Otro';
-    const det  = [ing.proyecto||null, ing.tipoDeposito ? ing.tipoDeposito.replace('_',' ') : null,
-      ing.banco && ing.banco !== 'efectivo' ? ing.banco : null, ing.fecha||null].filter(Boolean).join(' · ');
+    const det  = [
+      ing.proyecto || null,
+      ing.tipoDeposito ? ing.tipoDeposito.replace('_',' ') : null,
+      ing.banco && ing.banco !== 'efectivo' ? ing.banco : null,
+      ing.fecha || null
+    ].filter(Boolean).join(' · ');
     return `<div class="move">
-      <div><span class="tag ingreso">${icon}</span> ${ing.desc}<div class="move-meta">${det}</div></div>
+      <div><span class="tag ingreso">${icon}</span> ${ing.desc}
+        <div class="move-meta">${det}</div>
+      </div>
       <div style="display:flex;align-items:center;gap:8px">
         <strong style="color:var(--good)">${money(ing.monto)}</strong>
         <button onclick="deleteIngreso(${i})" style="background:none;border:none;cursor:pointer;color:var(--bad);font-size:1rem;padding:2px 4px">🗑</button>
       </div></div>`;
   };
 
-  if (listP) {
-    if (!personales.length) {
-      listP.innerHTML = '<div class="tiny muted">Sin ingresos personales.</div>';
-    } else {
-      listP.innerHTML = personales.map((ing, i) => renderItem(ing, ingresos.indexOf(ing))).join('');
-    }
-  }
-  if (listHC) {
-    if (!hcList.length) {
-      listHC.innerHTML = '<div class="tiny muted">Sin ingresos HC este mes.</div>';
-    } else {
-      listHC.innerHTML = hcList.map((ing, i) => renderItem(ing, ingresos.indexOf(ing))).join('');
-    }
-  }
+  if (listP)  listP.innerHTML  = personales.length ? personales.map(renderItem).join('') : '<div class="tiny muted">Sin ingresos personales.</div>';
+  if (listHC) listHC.innerHTML = hcItems.length    ? hcItems.map(renderItem).join('')    : '<div class="tiny muted">Sin ingresos HC este mes.</div>';
 }
-
 window.deleteIngreso = function(i) {
   const ing = ingresos.splice(i, 1)[0];
   const allI = lsLoad('radar_ingresos', []);
