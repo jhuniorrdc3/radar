@@ -1909,10 +1909,7 @@ function renderHistorial(period) {
     const maxV   = Math.max(...sorted.map(([,v]) => v), 1);
     subcatsEl.innerHTML = sorted.map(([k,v]) => {
       const pct = v > 0 ? Math.max((v/maxV)*100, 4) : 0;
-      return `<div class="subcat${v===0?' sc-zero':''}" style="${v>0?'cursor:pointer':''}" onclick="${v>0?`openDrill('${k}','${subNames[k]}')`:''}">`
-        + `<span class="sc-name">${subNames[k]}</span>`
-        + `<div class="sc-track"><div class="sc-fill" style="width:${pct}%"></div></div>`
-        + `<span class="sc-val">${v>0?money(v):'S/ 0'}</span></div>`;
+      return '<div class="subcat' + (v===0?' sc-zero':'') + '"' + (v>0?' style="cursor:pointer" onclick="openDrill(\'' + k + '\',\'' + subNames[k].replace(/"/g,'&quot;') + '\')">':'>') + '<span class="sc-name">' + subNames[k] + '</span>'+ '<div class="sc-track"><div class="sc-fill" style="width:' + pct + '%"></div></div>'+ '<span class="sc-val">' + (v>0?money(v):'S/ 0') + '</span></div>';
     }).join('');
   }
 
