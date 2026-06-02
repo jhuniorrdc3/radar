@@ -2305,7 +2305,7 @@ function editFijo(idx) {
     + '<input id="fe-monto-' + idx + '" type="number" placeholder="Monto S/" value="' + (f.monto||'') + '" style="max-width:90px"/>'
     + '<input id="fe-dia-' + idx + '" type="number" placeholder="Día" value="' + (f.dia||1) + '" min="1" max="31" style="max-width:60px"/>'
     + '<button onclick="guardarEditFijo(' + idx + ')">Guardar</button>'
-    + '<button class="btn-cancel" onclick="document.getElementById('fijo-edit-' + idx + '').remove()">×</button>';
+    + '<button class="btn-cancel" onclick="document.getElementById(&quot;fijo-edit-' + idx + '&quot;).remove()">×</button>';
   rows[idx].insertAdjacentElement('afterend', editRow);
 }
 function guardarEditFijo(idx) {
@@ -2317,6 +2317,12 @@ function guardarEditFijo(idx) {
   lsSave('radar_fijos', fijos);
   document.getElementById('fijo-edit-' + idx)?.remove();
   renderFijos();
+}
+function pedirMontoReal(idx) {
+  const f = fijos[idx];
+  if (!f) return;
+  const v = prompt('Monto real de ' + f.nombre + ' este mes:', f.montoReal || f.monto);
+  if (v !== null && v !== '') guardarMontoReal(idx, v);
 }
 function guardarMontoReal(idx, val) {
   const v = parseFloat(val);
@@ -2355,8 +2361,7 @@ function renderFijos() {
       const diasRestantes = Math.ceil((vence - hoy) / (1000*60*60*24));
       const urgente = diasRestantes <= 5 && !esPagado;
       const montoLabel = f.montoReal ? money(f.montoReal) : money(f.monto);
-      const montoRealHtml = '<div class="fijo-monto-real" title="Toca para registrar monto real" onclick="event.stopPropagation();const v=prompt(\'Monto real de \' + \'' + f.nombre + \'\');if(v)guardarMontoReal(' + i + ',v)">'
-        + (f.montoReal ? '✓ S/' + f.montoReal : '+ Monto real') + '</div>';
+      const montoRealHtml = '<div class="fijo-monto-real" onclick="event.stopPropagation();pedirMontoReal(' + i + ')">' + (f.montoReal ? '✓ S/' + f.montoReal : '+ Monto real') + '</div>';
       return '<div class="fijo-item' + (esPagado ? ' pagado' : urgente ? ' urgente' : '') + '" onclick="toggleFijoPagado(' + i + ')">'
         + '<div class="fijo-left">'
         + '<div class="fijo-nombre"><span class="check-icon">✓</span>' + f.nombre + '</div>'
