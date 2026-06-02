@@ -145,9 +145,7 @@
     .modal-box h2{margin:0 0 14px;font-size:1.1rem}
     .modal-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
     /* Chart legend */
-    .chart-legend{display:flex;gap:16px;font-size:.78rem;margin-bottom:12px;flex-wrap:wrap}
     .chart-legend span{display:flex;align-items:center;gap:5px}
-    .legend-dot{width:12px;height:10px;border-radius:3px;flex-shrink:0}
     #categoryChart{overflow-x:auto;-webkit-overflow-scrolling:touch}
     /* Móvil: solo col2/col3/col4 colapsan, subcat-grid NO */
     .col4kpi{grid-template-columns:repeat(4,1fr)}
@@ -182,13 +180,6 @@
     .hist-filter-btn{background:var(--panel-2);border:1px solid var(--line);color:var(--muted);padding:.35rem .8rem;border-radius:999px;cursor:pointer;font-size:.78rem;font-weight:600;transition:all .2s}
     .hist-filter-btn.active{background:var(--accent);color:#082320;border-color:transparent}
     /* CAJA CHICA HERO */
-    .cc-hero{text-align:center;padding:16px;border-radius:var(--r);margin-bottom:12px;border:2px solid transparent;transition:background .4s,border-color .4s}
-    .cc-hero.ok{background:var(--good-dim);border-color:rgba(130,198,111,.3)}
-    .cc-hero.warn{background:var(--warn-dim);border-color:rgba(211,162,86,.3)}
-    .cc-hero.over{background:var(--bad-dim);border-color:rgba(217,107,118,.3)}
-    .cc-hero .cc-label{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-    .cc-hero .cc-amount{font-size:2.4rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1;margin:4px 0}
-    .cc-hero .cc-sub{font-size:.78rem;color:var(--muted)}
     .cc-bar-row{display:flex;gap:8px;align-items:center;margin:6px 0 2px}
     .cc-bar-label{font-size:.72rem;color:var(--muted);min-width:60px}
     .cc-bar-track{flex:1;height:9px;background:var(--panel-3);border-radius:999px;overflow:hidden}
@@ -776,7 +767,7 @@ function switchTab(tabId) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   const view = document.getElementById(tabId);
   if (view) view.classList.add('active');
-  if (tabId === 'finanzas') { renderHistorial(currentPeriod); renderCategoryChart(); preLlenarLimites(); renderDeudasFinanzas(); }
+  if (tabId === 'finanzas') { renderHistorial(currentPeriod); preLlenarLimites(); renderDeudasFinanzas(); }
   if (tabId === 'fijos') { cargarFijosYPrestamosDesdeSheets(); }
   if (tabId === 'proyectos') { renderProyectosHC(); }
   if (tabId === 'informe')  renderInformeCompleto();
@@ -895,6 +886,12 @@ function initState() {
   prestamos = lsLoad('radar_prestamos', []);
   // renderPrestamos se llama en renderSemaforo
   fijos     = lsLoad('radar_fijos', []);
+  // Si no hay fijos en localStorage, cargar defaults conocidos
+  if (!fijos.length) {
+    const defaults = [{"nombre": "Seguro desgravamen", "monto": 17.01, "dia": 26}, {"nombre": "Movistar Ctafinanciera", "monto": 188.4, "dia": 4}, {"nombre": "Movistar Moviles", "monto": 82.9, "dia": 4}, {"nombre": "Spotify", "monto": 20.9, "dia": 13}, {"nombre": "Claude.ai", "monto": 74.0, "dia": 12}, {"nombre": "Google One", "monto": 8.21, "dia": 28}, {"nombre": "Perplexity", "monto": 44.47, "dia": 28}, {"nombre": "Microsoft 365", "monto": 25.86, "dia": 1}];
+    fijos = defaults;
+    lsSave('radar_fijos', fijos);
+  }
   proyectos = lsLoad('radar_proyectos', []);
 }
 
@@ -903,6 +900,39 @@ function getSavedToday() { return lsLoad(LS_TODAY(), []); }
 function persistToday(moves) { lsSave(LS_TODAY(), moves); }
 
 // Todos los moves de un período (para historial)
+
+function getAllMovesForPreviousPeriod(period) {
+  const keys = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('radar_today_')) keys.push(k.replace('radar_today_', ''));
+  }
+  const now = new Date();
+  return keys.reduce((all, dateStr) => {
+    let include = false;
+    if (period === 'semana') {
+      // 7 días anteriores a los últimos 7 días
+      const d = new Date(dateStr); const diff = Math.floor((now-d)/86400000);
+      include = diff >= 7 && diff < 14;
+    } else if (period === 'mes') {
+      // mes anterior
+      const prev = new Date(now.getFullYear(), now.getMonth()-1, 1);
+      const prevStr = prev.getFullYear() + '-' + String(prev.getMonth()+1).padStart(2,'0');
+      include = dateStr.startsWith(prevStr);
+    } else if (period === 'mesanterior') {
+      // 2 meses atrás
+      const prev2 = new Date(now.getFullYear(), now.getMonth()-2, 1);
+      const prev2Str = prev2.getFullYear() + '-' + String(prev2.getMonth()+1).padStart(2,'0');
+      include = dateStr.startsWith(prev2Str);
+    }
+    if (include) {
+      const movs = lsLoad('radar_today_' + dateStr, []);
+      movs.forEach(m => all.push(m));
+    }
+    return all;
+  }, []);
+}
+
 function getAllMovesForPeriod(period) {
   const todayStr = todayISO();   // fecha local YYYY-MM-DD
   const mesStr   = mesISO();     // mes local YYYY-MM
@@ -1063,7 +1093,6 @@ setTimeout(() => kaxSay('¡Hola Jhunior! Soy Kax. Registra tu día cuando estés
 // ─────────────────────────────────────────────
 function money(n) { return 'S/ ' + Number(n || 0).toFixed(2).replace(/\.00$/, ''); }
 
-const DAILY_BUDGET = parseFloat(localStorage.getItem('radar_daily_budget') || '51');
 function renderDailyBudget(personalHoy) {
   const fill = document.getElementById('dbFill');
   const msg  = document.getElementById('dbMsg');
@@ -1088,6 +1117,9 @@ function renderDailyBudget(personalHoy) {
   }
 }
 
+// ════════════════════════════════════════
+// UTILIDADES
+// ════════════════════════════════════════
 function normalizarCuenta(raw) {
   const v = String(raw || '').toLowerCase().trim();
   if (v === 'tc' || v === 'tarjeta de credito' || v === 'credito') return 'TC';
@@ -1214,6 +1246,9 @@ function resolverMultiplicacion(text) {
   return null;
 }
 
+// ════════════════════════════════════════
+// PROCESAMIENTO DE TEXTO / SYNC
+// ════════════════════════════════════════
 function splitMoves(text) {
   // Convertir números escritos en palabras a dígitos
   // Cubre los montos más comunes en gastos diarios peruanos
@@ -1295,7 +1330,6 @@ function parseSingle(text, forcedAmount = null, cuentaGlobal = null) {
              : Number(nums[0] || 0);
 
   if (esDolar && amount > 0) {
-    const tc = Number(document.getElementById('tipoCambio')?.value) || 3.70;
     amount   = Math.round(amount * tc * 100) / 100;
   }
 
@@ -1373,6 +1407,9 @@ function shiftDate(days) {
 // ─────────────────────────────────────────────
 function getSavedForDate(dateStr) { return lsLoad('radar_today_' + dateStr, []); }
 
+// ════════════════════════════════════════
+// VISTA: HOY
+// ════════════════════════════════════════
 function renderSavedToday() {
   const savedToday = getSavedForDate(viewDate);
   const list = document.getElementById('movementList');
@@ -1613,7 +1650,6 @@ function cargarResumenSheets(r) {
 
   if (r['TOTAL FIJOS MES'] && !fijos.length) {
     const elFM = document.getElementById('totalFijosMes'); if (elFM) elFM.textContent = fmt(r['TOTAL FIJOS MES']);
-    document.getElementById('totalFijosDisplay').textContent = fmt(r['TOTAL FIJOS MES']);
   }
   // NO inyectar ingresos desde RESUMEN — los ingresos vienen del sync real
   renderSemaforo();
@@ -1898,15 +1934,6 @@ function preLlenarLimites() {
   document.getElementById('editTCDeuda').placeholder     = 'Actual: S/ ' + deuda;
 }
 
-function guardarLimiteTC() {
-  const input = document.getElementById('tcLimiteInput');
-  const val   = parseFloat(input.value);
-  if (isNaN(val) || val <= 0) return;
-  localStorage.setItem('radar_tc_limite', val.toString());
-  input.value = '';
-  renderDeudaTC();
-}
-
 function guardarDeudaTC() {
   const input = document.getElementById('tcDeudaInput');
   const val   = parseFloat(input.value);
@@ -2101,6 +2128,9 @@ function setHistFilter(f) {
   renderHistorial(currentPeriod);
 }
 
+// ════════════════════════════════════════
+// VISTA: FINANZAS
+// ════════════════════════════════════════
 function renderHistorial(period) {
   const allMoves = getAllMovesForPeriod(period);
   const moves = currentHistFilter === 'personal' ? allMoves.filter(m => m.type === 'Personal')
@@ -2121,13 +2151,26 @@ function renderHistorial(period) {
   if (subcatsEl) {
     const sorted = Object.entries(subcats).sort((a,b) => b[1]-a[1]);
     const maxV   = Math.max(...sorted.map(([,v]) => v), 1);
+    // Calcular subcats del período anterior para flechitas
+    const prevMoves = getAllMovesForPreviousPeriod(period);
+    const prevBase = currentHistFilter === 'personal' ? prevMoves.filter(m => m.type === 'Personal')
+                   : currentHistFilter === 'hc'       ? prevMoves.filter(m => m.type === 'Hot and Cold')
+                   : prevMoves;
+    const prevSubcats = {};
+    prevBase.forEach(m => { if (m.subcat && prevSubcats[m.subcat] !== undefined || true) prevSubcats[m.subcat||'otros'] = (prevSubcats[m.subcat||'otros']||0) + m.amount; });
+
     subcatsEl.innerHTML = sorted.map(([k,v]) => {
-      const pct = v > 0 ? Math.max((v/maxV)*100, 4) : 0;
+      const pct  = v > 0 ? Math.max((v/maxV)*100, 4) : 0;
+      const prev = prevSubcats[k] || 0;
+      const diff = v - prev;
+      const arrow = prev === 0 ? '' : diff > 0
+        ? '<span style="color:var(--bad);font-size:.68rem;margin-left:3px">↑' + money(Math.abs(diff)) + '</span>'
+        : '<span style="color:var(--good);font-size:.68rem;margin-left:3px">↓' + money(Math.abs(diff)) + '</span>';
       const onclick = v > 0 ? ' style="cursor:pointer" onclick="openDrillHist(\'' + k + '\',\'' + subNames[k] + '\')"' : '';
       return '<div class="subcat' + (v===0?' sc-zero':'') + '"' + onclick + '>'
         + '<span class="sc-name">' + subNames[k] + '</span>'
         + '<div class="sc-track"><div class="sc-fill" style="width:' + pct + '%"></div></div>'
-        + '<span class="sc-val">' + (v>0?money(v):'S/ 0') + '</span></div>';
+        + '<span class="sc-val">' + (v>0?money(v):'S/ 0') + arrow + '</span></div>';
     }).join('');
   }
 
@@ -2194,11 +2237,13 @@ document.getElementById('addFijoBtn').addEventListener('click', async () => {
   renderSemaforo();
 });
 
+// ════════════════════════════════════════
+// VISTA: COMPROMISOS
+// ════════════════════════════════════════
 function renderFijos() {
   const list  = document.getElementById('fijoList');
   // Usar monto real si existe, sino estimado
   const total = fijos.reduce((a,b) => a + (b.montoReal || b.monto), 0);
-  document.getElementById('totalFijosDisplay').textContent = money(total);
   const elFijos = document.getElementById('totalFijosMes'); if (elFijos) elFijos.textContent = money(total);
 
   if (!fijos.length) { list.innerHTML = '<div class="tiny muted">Sin compromisos registrados aún.</div>'; return; }
@@ -2232,7 +2277,6 @@ function renderFijos() {
   }).join('');
 
   // Proyección meses críticos
-  const proj = document.getElementById('proyeccionBox');
   proj.innerHTML = ['Enero','Febrero','Marzo','Setiembre'].map(m => {
     const cubre = 1000 >= total;
     return `<div class="fijo-item">
@@ -2586,6 +2630,9 @@ function splitBar(ccExec, ccRec, cls) {
     + '</div></div>';
 }
 
+// ════════════════════════════════════════
+// VISTA: PROYECTOS
+// ════════════════════════════════════════
 function renderProyectosHC() {
   const hcMovs    = getAllHCMoves();
   window._hcMovsCache = hcMovs;
@@ -3151,25 +3198,6 @@ document.getElementById('goTodayBtn').addEventListener('click', () => setViewDat
 // ─────────────────────────────────────────────
 // GRÁFICO POR CATEGORÍAS (mes actual vs anterior)
 // ─────────────────────────────────────────────
-function getAllMovesForMonth(monthOffset) {
-  const now    = new Date();
-  const target = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
-  // Calcular prefijo YYYY-MM del mes objetivo usando fecha local
-  const mesTarget = target.getFullYear() + '-' +
-    String(target.getMonth() + 1).padStart(2, '0');
-  const result = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (!key || !key.startsWith('radar_today_')) continue;
-    const dateStr = key.replace('radar_today_', '');
-    if (dateStr.startsWith(mesTarget)) {
-      lsLoad(key, []).forEach(m => result.push(m));
-    }
-  }
-  return result;
-}
-
-// ─── ACORDEÓN MOVIMIENTOS ────────────────────────────────────
 function toggleMovimientos() {
   const acc  = document.getElementById('movAccordion');
   const icon = document.getElementById('toggleMovIcon');
@@ -3189,36 +3217,12 @@ function updateMovToggleCount(n) {
 let _drillMoves = [];
 let _drillSort  = 'date';
 
-function openDrill(subcatKey, subcatLabel) {
-  const moves = getAllMovesForMonth(0).filter(m => m.subcat === subcatKey);
-  _drillMoves = moves;
-  _drillSort  = 'date';
-  document.getElementById('drillTitle').textContent = subcatLabel;
-  const total = moves.reduce((s, m) => s + m.amount, 0);
-  document.getElementById('drillTotal').textContent =
-    `${moves.length} movimiento${moves.length !== 1 ? 's' : ''} · ${money(total)}`;
-  document.getElementById('drillSortBtn').textContent = '📅 Fecha';
-  renderDrillList();
-  const panel = document.getElementById('drillPanel');
-  panel.style.display = 'block';
-  setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
-}
-function closeDrill() {
-  document.getElementById('drillPanel').style.display = 'none';
-}
-function toggleDrillSort() {
-  _drillSort = _drillSort === 'date' ? 'amount' : 'date';
-  document.getElementById('drillSortBtn').textContent =
-    _drillSort === 'date' ? '📅 Fecha' : '💰 Monto';
-  renderDrillList();
-}
 function renderDrillList() {
   const sorted = [..._drillMoves].sort((a, b) =>
     _drillSort === 'amount'
       ? b.amount - a.amount
       : b.fechaMov.localeCompare(a.fechaMov)
   );
-  const list = document.getElementById('drillList');
   if (!sorted.length) { list.innerHTML = '<div class="tiny muted">Sin movimientos.</div>'; return; }
   list.innerHTML = sorted.map(m => `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)">
@@ -3230,143 +3234,6 @@ function renderDrillList() {
     </div>`).join('');
 }
 
-function renderCategoryChart() {
-  const box    = document.getElementById('categoryChart');
-  if (!box) return;
-
-  const now    = new Date();
-  const curMov = getAllMovesForMonth(0);
-  const preMov = getAllMovesForMonth(-1);
-
-  const subcatKeys  = ['comida','transporte','cafe','farmacia','ropa','ocio','mercado','salud','snacks','suscripciones','cuidado','otros'];
-  const subcatLabel = ['🍽 Comida','🚕 Transp.','☕ Café','💊 Farmac.','👗 Ropa','💑 Ocio','🛒 Mercado','🏋 Salud','🍫 Snacks','🔔 Suscr.','💈 Cuidado','❓ Otros'];
-
-  const sumSubcats = (moves) => {
-    const s = {};
-    subcatKeys.forEach(k => s[k] = 0);
-    moves.forEach(m => { if (m.type === 'Personal' && m.subcat && s[m.subcat] !== undefined) s[m.subcat] += m.amount; });
-    return s;
-  };
-
-  const cur = sumSubcats(curMov);
-  const pre = sumSubcats(preMov);
-  const maxVal = Math.max(...subcatKeys.map(k => Math.max(cur[k], pre[k])), 1);
-
-  // Labels de meses
-  const months = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-  const mCur   = months[now.getMonth()];
-  const mPre   = months[(now.getMonth() + 11) % 12];
-  const lblCur = document.getElementById('labelMesActual');
-  const lblPre = document.getElementById('labelMesAnterior');
-  if (lblCur) lblCur.textContent = mCur;
-  if (lblPre) lblPre.textContent = mPre;
-
-  // SVG horizontal bar chart
-  // Filtrar solo categorías con datos en algún mes
-  const subcatsConDatos = subcatKeys.filter(k => cur[k] > 0 || pre[k] > 0);
-  const subcatLabelFilt = subcatsConDatos.map(k => subcatLabel[subcatKeys.indexOf(k)]);
-
-  const rowH   = 38;
-  const labelW = 78;
-  const barMax = 140;
-  const totalW = labelW + barMax + 75;
-  const totalH = (subcatsConDatos.length || 1) * rowH + 10;
-
-  let rows = '';
-  subcatsConDatos.forEach((k, i) => {
-    const y    = i * rowH + 8;
-    const cW   = Math.max((cur[k] / maxVal) * barMax, cur[k] > 0 ? 3 : 0);
-    const pW   = Math.max((pre[k] / maxVal) * barMax, pre[k] > 0 ? 3 : 0);
-    const diff = cur[k] - pre[k];
-    const diffColor = diff > 0 ? '#d96b76' : diff < 0 ? '#82c66f' : '#9aa3a0';
-    const diffText  = diff !== 0 ? (diff > 0 ? '↑' : '↓') + money(Math.abs(diff)).replace('S/ ','') : '';
-    const lbl = subcatLabelFilt[i];
-
-    rows += `
-      <g class="chart-row" style="cursor:pointer" onclick="openDrill('${k}','${lbl}')"
-         onmouseenter="this.style.opacity='.75'" onmouseleave="this.style.opacity='1'">
-        <rect x="0" y="${y - 2}" width="${totalW}" height="${rowH - 2}" rx="4" fill="transparent"/>
-        <text x="0" y="${y + 10}" fill="#9aa3a0" font-size="11" dominant-baseline="middle">${lbl}</text>
-        <rect x="${labelW}" y="${y}" width="${pW}" height="9" rx="3" fill="#252828"/>
-        <rect x="${labelW}" y="${y + 12}" width="${cW}" height="11" rx="3" fill="#5cc0b1" opacity=".9"/>
-        <text x="${labelW + Math.max(cW, pW) + 6}" y="${y + 12}" fill="#eef1ef" font-size="11" dominant-baseline="hanging">${cur[k] > 0 ? money(cur[k]) : ''}</text>
-        ${diffText ? `<text x="${labelW + barMax + 46}" y="${y + 6}" fill="${diffColor}" font-size="10" text-anchor="end">${diffText}</text>` : ''}
-      </g>
-    `;
-  });
-
-  box.innerHTML = `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-    <svg viewBox="0 0 ${totalW} ${totalH}" width="${totalW}" height="${totalH}" style="max-width:100%;display:block">
-      <style>text{font-family:'Satoshi',system-ui,sans-serif}</style>
-      ${rows}
-    </svg>
-  </div>`;
-
-  // Si no hay datos
-  const hasCur = curMov.filter(m => m.type === 'Personal').length > 0;
-  if (!hasCur) box.innerHTML = '<div class="tiny muted">Sin datos de gastos personales este mes.</div>';
-}
-
-// ─────────────────────────────────────────────
-// INIT
-// ─────────────────────────────────────────────
-initState();
-setViewDate(todayISO());
-
-// Cargar tipo de cambio guardado
-const savedTC = lsLoad('radar_tipocambio', null);
-if (savedTC) { const el = document.getElementById('tipoCambio'); if (el) el.value = savedTC; }
-document.getElementById('tipoCambio')?.addEventListener('change', (e) => {
-  lsSave('radar_tipocambio', e.target.value);
-});
-
-// Cargar datos inyectados por Apps Script (sin async)
-let datosInyectados = false;
-if (INITIAL_DATA && INITIAL_DATA.movimientos && INITIAL_DATA.movimientos.ok) {
-  procesarSyncMovimientos(INITIAL_DATA.movimientos);
-  datosInyectados = true;
-}
-if (INITIAL_DATA && INITIAL_DATA.fijosData && INITIAL_DATA.fijosData.ok) {
-  procesarSyncFijosYPrestamos(INITIAL_DATA.fijosData);
-  datosInyectados = true;
-}
-if (INITIAL_DATA && INITIAL_DATA.proyectos && INITIAL_DATA.proyectos.ok && INITIAL_DATA.proyectos.proyectos) {
-  proyectos = INITIAL_DATA.proyectos.proyectos.map(function(p){ return {nombre:p.nombre, id:p.id}; });
-  lsSave('radar_proyectos', proyectos);
-  datosInyectados = true;
-}
-if (INITIAL_DATA && INITIAL_DATA.resumen) {
-  cargarResumenSheets(INITIAL_DATA.resumen);
-}
-
-// Forzar re-render completo siempre
-renderSemaforo();
-renderPrestamos();
-renderIngresos();
-renderFijos();
-renderProjectList();
-renderConstancia();
-// Re-renderizar vista actual para asegurarse de mostrar los datos
-setViewDate(viewDate);
-
-// Si no hubo datos inyectados (corriendo desde Netlify o template falló),
-// usar sync async como fallback
-if (!datosInyectados) {
-  sincronizarMovimientosDesdeSheets();
-  cargarFijosYPrestamosDesdeSheets();
-  cargarProyectosDesdeSheets();
-} else {
-  // Datos inyectados OK — sync en segundo plano para traer cambios recientes
-  setTimeout(function() {
-    sincronizarMovimientosDesdeSheets();
-    cargarFijosYPrestamosDesdeSheets();
-    cargarProyectosDesdeSheets();
-  }, 2000);
-}
-
-// ─────────────────────────────────────────────
-// SYNC PROYECTOS DESDE SHEETS
-// ─────────────────────────────────────────────
 function cargarProyectosDesdeSheets() {
   backendCall('getProyectos', {})
     .then(res => {
