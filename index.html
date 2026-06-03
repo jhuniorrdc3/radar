@@ -2332,6 +2332,47 @@ function guardarMontoReal(idx, val) {
   renderFijos();
 }
 
+
+function cargarFijoComoGasto(idx) {
+  const f = fijos[idx];
+  if (!f) return;
+  const monto = f.montoReal || f.monto;
+  if (!monto) return;
+
+  // Crear movimiento en el día de hoy
+  const hoy    = todayISO();
+  const lsKey  = 'radar_today_' + hoy;
+  const movs   = lsLoad(lsKey, []);
+
+  const nuevo = {
+    description: f.nombre,
+    amount:      monto,
+    type:        'Personal',
+    subcat:      detectSubcat(f.nombre.toLowerCase()),
+    account:     'TC',  // editable después
+    fechaMov:    hoy,
+    ts:          Date.now(),
+    fromFijo:    true
+  };
+  movs.push(nuevo);
+  lsSave(lsKey, movs);
+
+  // Marcar como pagado
+  const pagados = getFijosPagados();
+  const key = f.movId || String(idx);
+  pagados[key] = hoy;
+  localStorage.setItem('radar_fijos_pagados', JSON.stringify(pagados));
+
+  // Refrescar vistas
+  setViewDate(viewDate);
+  renderFijos();
+  renderSemaforo();
+
+  // Ir a Hoy para ver el gasto
+  switchTab('hoy');
+  kaxSay(f.nombre + ' registrado en tus gastos de hoy. Edítalo si el medio de pago es diferente.', 'happy', 4000);
+}
+
 window.deleteFijo = function(idx) {
   fijos.splice(idx, 1);
   lsSave('radar_fijos', fijos);
@@ -2374,8 +2415,9 @@ function renderFijos() {
         + montoRealHtml
         + '</div>'
         + '<div class="fijo-actions" onclick="event.stopPropagation()">'
+        + '<button class="fijo-btn" onclick="cargarFijoComoGasto(' + i + ')" title="Registrar pago en Hoy" style="color:var(--accent)">→</button>'
         + '<button class="fijo-btn" onclick="editFijo(' + i + ')" title="Editar">✏️</button>'
-        + '<button class="fijo-btn" onclick="deleteFijo(' + i + ')" title="Eliminar">×</button>'
+        + '<button class="fijo-btn" onclick="event.stopPropagation();if(confirm(\'¿Eliminar ' + f.nombre.replace(/\'/g,'') + '?\'))deleteFijo(' + i + ')" title="Eliminar">×</button>'
         + '</div>'
         + '</div>'
         + '</div>';
