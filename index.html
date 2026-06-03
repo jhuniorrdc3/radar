@@ -357,7 +357,15 @@
       <div class="card">
         <h2>Conciencia de hábito</h2>
         <div id="consejoBox"><div class="tiny muted">Registra gastos para ver consejos personalizados.</div></div>
-        <h3 style="margin-top:10px;margin-bottom:4px">Subcategorías de hoy</h3>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;margin-bottom:6px">
+          <h3 style="margin:0">Subcategorías de hoy</h3>
+          <div style="display:flex;gap:4px">
+            <button id="subcatBtnPersonal" onclick="setSubcatFiltro('personal')"
+              style="padding:3px 10px;border-radius:999px;border:none;cursor:pointer;font-size:.75rem;font-weight:600;background:var(--accent);color:#082320">Personal</button>
+            <button id="subcatBtnHC" onclick="setSubcatFiltro('hc')"
+              style="padding:3px 10px;border-radius:999px;border:none;cursor:pointer;font-size:.75rem;font-weight:600;background:var(--panel-2);color:var(--muted)">HC</button>
+          </div>
+        </div>
         <div class="subcat-grid" id="subcatBars">
           <div class="subcat" id="sbr-comida"><span class="sc-name">🍽️ Comida</span><div class="sc-track"><div class="sc-fill" id="scf-comida" style="width:0%"></div></div><span class="sc-val" id="sc-comida">S/ 0</span></div>
           <div class="subcat" id="sbr-transporte"><span class="sc-name">🚕 Transp.</span><div class="sc-track"><div class="sc-fill" id="scf-transporte" style="width:0%"></div></div><span class="sc-val" id="sc-transporte">S/ 0</span></div>
@@ -904,6 +912,7 @@ let prestamos = [];
 let fijos     = [];
 let currentPeriod = 'semana';
 let currentHistFilter = 'todo';
+let currentSubcatFiltro = 'personal'; // 'personal' | 'hc'
 let viewDate = todayISO(); // ahora sí: todayISO ya está declarada
 
 function lsSave(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {} }
@@ -1444,6 +1453,15 @@ function shiftDate(days) {
 // RENDER SAVED (la lista principal — usa viewDate)
 // ─────────────────────────────────────────────
 function getSavedForDate(dateStr) { return lsLoad('radar_today_' + dateStr, []); }
+
+function setSubcatFiltro(f) {
+  currentSubcatFiltro = f;
+  const btnP = document.getElementById('subcatBtnPersonal');
+  const btnH = document.getElementById('subcatBtnHC');
+  if (btnP) { btnP.style.background = f === 'personal' ? 'var(--accent)' : 'var(--panel-2)'; btnP.style.color = f === 'personal' ? '#082320' : 'var(--muted)'; }
+  if (btnH) { btnH.style.background = f === 'hc' ? 'var(--accent)' : 'var(--panel-2)'; btnH.style.color = f === 'hc' ? '#082320' : 'var(--muted)'; }
+  setViewDate(viewDate); // re-render subcats
+}
 
 // ════════════════════════════════════════
 // VISTA: HOY
@@ -2966,7 +2984,12 @@ function renderInformeCompleto() {
   const totalHoy   = savedToday.reduce((a,b) => a + b.amount, 0);
   const totalMes   = movMes.reduce((a,b) => a + b.amount, 0);
   const subcats    = {comida:0,transporte:0,cafe:0,farmacia:0,ropa:0,ocio:0,mercado:0,salud:0,otros:0};
-  savedToday.forEach(m => { if (m.type === 'Personal' && m.subcat && subcats[m.subcat] !== undefined) subcats[m.subcat] += m.amount; });
+  savedToday.forEach(m => {
+    const isPersonal = m.type === 'Personal';
+    const isHC       = m.type === 'Hot and Cold';
+    const matches    = currentSubcatFiltro === 'hc' ? isHC : isPersonal;
+    if (matches && m.subcat && subcats[m.subcat] !== undefined) subcats[m.subcat] += m.amount;
+  });
   const consejoTexts = CONSEJOS_RULES.filter(r => (subcats[r.subcat] || 0) > r.threshold).map(r => '• ' + r.msg);
   const projectMax   = {};
   movMes.forEach(m => { if (m.type === 'Hot and Cold') projectMax[m.project] = (projectMax[m.project]||0) + m.amount; });
