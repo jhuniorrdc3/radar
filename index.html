@@ -360,10 +360,8 @@
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;margin-bottom:6px">
           <h3 style="margin:0">Subcategorías de hoy</h3>
           <div style="display:flex;gap:4px">
-            <button id="subcatBtnPersonal" onclick="setSubcatFiltro('personal')"
-              style="padding:3px 10px;border-radius:999px;border:none;cursor:pointer;font-size:.75rem;font-weight:600;background:var(--accent);color:#082320">Personal</button>
-            <button id="subcatBtnHC" onclick="setSubcatFiltro('hc')"
-              style="padding:3px 10px;border-radius:999px;border:none;cursor:pointer;font-size:.75rem;font-weight:600;background:var(--panel-2);color:var(--muted)">HC</button>
+            <button id="subcatBtnPersonal" onclick="setSubcatFiltro('personal')" style="padding:3px 10px;border-radius:999px;border:none;cursor:pointer;font-size:.75rem;font-weight:600;background:var(--accent);color:#082320">Personal</button>
+            <button id="subcatBtnHC" onclick="setSubcatFiltro('hc')" style="padding:3px 10px;border-radius:999px;border:none;cursor:pointer;font-size:.75rem;font-weight:600;background:var(--panel-2);color:var(--muted)">HC</button>
           </div>
         </div>
         <div class="subcat-grid" id="subcatBars">
@@ -912,7 +910,7 @@ let prestamos = [];
 let fijos     = [];
 let currentPeriod = 'semana';
 let currentHistFilter = 'todo';
-let currentSubcatFiltro = 'personal'; // 'personal' | 'hc'
+let currentSubcatFiltro = 'personal';
 let viewDate = todayISO(); // ahora sí: todayISO ya está declarada
 
 function lsSave(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {} }
@@ -1458,9 +1456,9 @@ function setSubcatFiltro(f) {
   currentSubcatFiltro = f;
   const btnP = document.getElementById('subcatBtnPersonal');
   const btnH = document.getElementById('subcatBtnHC');
-  if (btnP) { btnP.style.background = f === 'personal' ? 'var(--accent)' : 'var(--panel-2)'; btnP.style.color = f === 'personal' ? '#082320' : 'var(--muted)'; }
-  if (btnH) { btnH.style.background = f === 'hc' ? 'var(--accent)' : 'var(--panel-2)'; btnH.style.color = f === 'hc' ? '#082320' : 'var(--muted)'; }
-  setViewDate(viewDate); // re-render subcats
+  if (btnP) { btnP.style.background = f==='personal'?'var(--accent)':'var(--panel-2)'; btnP.style.color = f==='personal'?'#082320':'var(--muted)'; }
+  if (btnH) { btnH.style.background = f==='hc'?'var(--accent)':'var(--panel-2)'; btnH.style.color = f==='hc'?'#082320':'var(--muted)'; }
+  setViewDate(viewDate);
 }
 
 // ════════════════════════════════════════
@@ -1481,7 +1479,6 @@ function renderSavedToday() {
     total += m.amount;
     if (m.type === 'Hot and Cold') { hc += m.amount; byProject[m.project] = (byProject[m.project] || 0) + m.amount; }
     else { personal += m.amount; }
-    if (m.subcat && subcats[m.subcat] !== undefined) subcats[m.subcat] += m.amount;
     if (m.account === 'TC') tc += m.amount;
 
     const div = document.createElement('div');
@@ -1508,6 +1505,12 @@ function renderSavedToday() {
   renderDailyBudget(personal);
   document.getElementById('countMoves').textContent = `${savedToday.length} movimiento${savedToday.length === 1 ? '' : 's'}`;
 
+  // Subcats filtradas según botón Personal/HC
+  savedToday.forEach(function(m) {
+    var isP = m.type === 'Personal', isH = m.type === 'Hot and Cold';
+    var ok  = currentSubcatFiltro === 'hc' ? isH : isP;
+    if (ok && m.subcat && subcats[m.subcat] !== undefined) subcats[m.subcat] += m.amount;
+  });
   const maxSubcatVal = Math.max(...Object.values(subcats), 1);
   Object.keys(subcats).forEach(k => {
     const el  = document.getElementById('sc-' + k);
@@ -2984,12 +2987,7 @@ function renderInformeCompleto() {
   const totalHoy   = savedToday.reduce((a,b) => a + b.amount, 0);
   const totalMes   = movMes.reduce((a,b) => a + b.amount, 0);
   const subcats    = {comida:0,transporte:0,cafe:0,farmacia:0,ropa:0,ocio:0,mercado:0,salud:0,otros:0};
-  savedToday.forEach(m => {
-    const isPersonal = m.type === 'Personal';
-    const isHC       = m.type === 'Hot and Cold';
-    const matches    = currentSubcatFiltro === 'hc' ? isHC : isPersonal;
-    if (matches && m.subcat && subcats[m.subcat] !== undefined) subcats[m.subcat] += m.amount;
-  });
+  savedToday.forEach(m => { if (m.type === 'Personal' && m.subcat && subcats[m.subcat] !== undefined) subcats[m.subcat] += m.amount; });
   const consejoTexts = CONSEJOS_RULES.filter(r => (subcats[r.subcat] || 0) > r.threshold).map(r => '• ' + r.msg);
   const projectMax   = {};
   movMes.forEach(m => { if (m.type === 'Hot and Cold') projectMax[m.project] = (projectMax[m.project]||0) + m.amount; });
