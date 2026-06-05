@@ -264,14 +264,12 @@
     .fijo-edit-row input{flex:1;min-width:80px;background:var(--panel-3);border:1px solid var(--line);border-radius:6px;padding:5px 8px;color:var(--text);font-size:.82rem}
     .fijo-edit-row button{background:var(--accent);color:#082320;border:none;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:.8rem;font-weight:700}
     .fijo-edit-row .btn-cancel{background:var(--panel-3);color:var(--muted)}
-    /* BARRA EQUILIBRIO MENSUAL */
+    /* BARRA EQUILIBRIO MENSUAL — siempre llena, indicador móvil */
     .eq-bar-wrap{margin-top:8px}
     .eq-bar-label{display:flex;justify-content:space-between;font-size:.7rem;color:var(--muted);margin-bottom:3px}
-    .eq-bar-track{height:10px;background:var(--panel-3);border-radius:999px;overflow:hidden;position:relative}
-    .eq-bar-center{position:absolute;left:50%;top:0;width:2px;height:100%;background:var(--muted);opacity:.5;z-index:1}
-    .eq-bar-fill-left{position:absolute;right:50%;top:0;height:100%;background:var(--good);border-radius:999px 0 0 999px;transition:width .7s cubic-bezier(.4,0,.2,1)}
-    .eq-bar-fill-right{position:absolute;left:50%;top:0;height:100%;background:var(--bad);border-radius:0 999px 999px 0;transition:width .7s cubic-bezier(.4,0,.2,1)}
-    .eq-bar-msg{font-size:.72rem;margin-top:3px;color:var(--muted)}
+    .eq-bar-track{height:10px;border-radius:999px;overflow:visible;position:relative;background:linear-gradient(to right, var(--good) 0%, var(--good) 50%, var(--bad) 50%, var(--bad) 100%)}
+    .eq-bar-indicator{position:absolute;top:-3px;width:4px;height:16px;background:#fff;border-radius:2px;box-shadow:0 0 4px rgba(0,0,0,.5);transition:left .7s cubic-bezier(.4,0,.2,1);transform:translateX(-50%)}
+    .eq-bar-msg{font-size:.72rem;margin-top:5px;color:var(--muted)}
   </style>
 </head>
 <body>
@@ -336,9 +334,7 @@
             <span style="color:var(--bad)">Déficit →</span>
           </div>
           <div class="eq-bar-track">
-            <div class="eq-bar-center"></div>
-            <div class="eq-bar-fill-left" id="eqBarLeft" style="width:0%"></div>
-            <div class="eq-bar-fill-right" id="eqBarRight" style="width:0%"></div>
+            <div class="eq-bar-indicator" id="eqBarIndicator" style="left:50%"></div>
           </div>
           <div class="eq-bar-msg" id="eqBarMsg"></div>
         </div>
@@ -1182,29 +1178,24 @@ function renderEqBar() {
   const presupuestoAcumulado = diasTranscurridos * DAILY_BUDGET;
   const saldo = presupuestoAcumulado - gastadoMes; // positivo = ahorro, negativo = déficit
 
-  const elLeft  = document.getElementById('eqBarLeft');
-  const elRight = document.getElementById('eqBarRight');
-  const elMsg   = document.getElementById('eqBarMsg');
-  if (!elLeft) return;
+  const elIndicator = document.getElementById('eqBarIndicator');
+  const elMsg       = document.getElementById('eqBarMsg');
+  if (!elIndicator) return;
 
-  // Máximo representable = 15 días de tope (para escalar la barra)
-  // Escala: máximo = presupuesto de la mitad del mes restante
   const diasEnMes = new Date(hoy.getFullYear(), hoy.getMonth()+1, 0).getDate();
-  const maxRef = DAILY_BUDGET * Math.max(diasEnMes / 2, 10);
-  const pct = Math.min(Math.abs(saldo) / maxRef * 50, 50); // máx 50% de cada lado
+  const maxRef    = DAILY_BUDGET * diasEnMes;
+  const rawPct    = 50 + (saldo / maxRef) * 50;
+  const posPct    = Math.max(2, Math.min(98, rawPct));
+  elIndicator.style.left = posPct + '%';
 
-  if (saldo >= 0) {
-    // Ahorro — barra verde crece desde el centro hacia la izquierda
-    elLeft.style.width  = pct + '%';
-    elRight.style.width = '0%';
-    if (elMsg) elMsg.innerHTML = saldo < 1
-      ? 'En equilibrio exacto con tu tope diario.'
-      : '<span style="color:var(--good)">✓ Llevas S/' + saldo.toFixed(0) + ' de ahorro acumulado este mes.</span>';
-  } else {
-    // Déficit — barra roja crece desde el centro hacia la derecha
-    elLeft.style.width  = '0%';
-    elRight.style.width = pct + '%';
-    if (elMsg) elMsg.innerHTML = '<span style="color:var(--bad)">⚠ Llevas S/' + Math.abs(saldo).toFixed(0) + ' de déficit acumulado este mes.</span>';
+  if (elMsg) {
+    if (Math.abs(saldo) < 5) {
+      elMsg.innerHTML = 'En equilibrio con tu tope diario.';
+    } else if (saldo > 0) {
+      elMsg.innerHTML = '<span style="color:var(--good)">✓ Llevas S/' + saldo.toFixed(0) + ' de ahorro acumulado este mes.</span>';
+    } else {
+      elMsg.innerHTML = '<span style="color:var(--bad)">⚠ Llevas S/' + Math.abs(saldo).toFixed(0) + ' de déficit en gastos variables.</span>';
+    }
   }
 }
 
