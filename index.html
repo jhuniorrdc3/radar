@@ -1160,13 +1160,7 @@ setTimeout(() => kaxSay('¡Hola Jhunior! Soy Kax. Registra tu día cuando estés
 // ─────────────────────────────────────────────
 function money(n) { return 'S/ ' + Number(n || 0).toFixed(2).replace(/\.00$/, ''); }
 
-function renderDailyBudget(personalHoy) {
-  const fill = document.getElementById('dbFill');
-  const msg  = document.getElementById('dbMsg');
-  const lbl  = document.getElementById('dbGastado');
-  const limLbl = document.getElementById('dbLimiteLabel');
-  if (!fill) return;
-  
+
 function renderEqBar() {
   const DAILY_BUDGET = parseFloat(localStorage.getItem('radar_daily_budget') || '51');
   // Gastos personales acumulados del mes
@@ -1203,6 +1197,14 @@ function renderEqBar() {
     if (elMsg) elMsg.innerHTML = '<span style="color:var(--bad)">⚠ Llevas S/' + Math.abs(saldo).toFixed(0) + ' de déficit acumulado este mes.</span>';
   }
 }
+
+function renderDailyBudget(personalHoy) {
+  const fill = document.getElementById('dbFill');
+  const msg  = document.getElementById('dbMsg');
+  const lbl  = document.getElementById('dbGastado');
+  const limLbl = document.getElementById('dbLimiteLabel');
+  if (!fill) return;
+  
 
   if (limLbl) limLbl.textContent = 'S/ ' + DAILY_BUDGET;
   const pct = Math.min((personalHoy / DAILY_BUDGET) * 100, 100);
@@ -1499,6 +1501,7 @@ function setViewDate(dateStr) {
   const titulo  = document.getElementById('movTitulo');
   if (titulo) titulo.textContent = isToday ? 'Movimientos de hoy' : 'Movimientos del ' + formatDateLabel(dateStr);
   renderSavedToday();
+  if (typeof renderEqBar === 'function') renderEqBar();
 }
 function formatDateLabel(iso) {
   const [y,m,d] = iso.split('-');
@@ -3465,7 +3468,7 @@ sincronizarMovimientosDesdeSheets();
 cargarFijosYPrestamosDesdeSheets();
 cargarProyectosDesdeSheets();
 
-document.getElementById('syncBtn').addEventListener('click', () => {
+document.getElementById('syncBtn')?.addEventListener('click', () => {
   sincronizarMovimientosDesdeSheets();
   cargarFijosYPrestamosDesdeSheets();
   cargarProyectosDesdeSheets();
