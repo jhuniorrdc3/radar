@@ -264,6 +264,14 @@
     .fijo-edit-row input{flex:1;min-width:80px;background:var(--panel-3);border:1px solid var(--line);border-radius:6px;padding:5px 8px;color:var(--text);font-size:.82rem}
     .fijo-edit-row button{background:var(--accent);color:#082320;border:none;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:.8rem;font-weight:700}
     .fijo-edit-row .btn-cancel{background:var(--panel-3);color:var(--muted)}
+    /* BARRA EQUILIBRIO MENSUAL */
+    .eq-bar-wrap{margin-top:8px}
+    .eq-bar-label{display:flex;justify-content:space-between;font-size:.7rem;color:var(--muted);margin-bottom:3px}
+    .eq-bar-track{height:10px;background:var(--panel-3);border-radius:999px;overflow:hidden;position:relative}
+    .eq-bar-center{position:absolute;left:50%;top:0;width:2px;height:100%;background:var(--muted);opacity:.5;z-index:1}
+    .eq-bar-fill-left{position:absolute;right:50%;top:0;height:100%;background:var(--good);border-radius:999px 0 0 999px;transition:width .7s cubic-bezier(.4,0,.2,1)}
+    .eq-bar-fill-right{position:absolute;left:50%;top:0;height:100%;background:var(--bad);border-radius:0 999px 999px 0;transition:width .7s cubic-bezier(.4,0,.2,1)}
+    .eq-bar-msg{font-size:.72rem;margin-top:3px;color:var(--muted)}
   </style>
 </head>
 <body>
@@ -320,6 +328,20 @@
         </div>
         <div class="db-track"><div class="db-fill ok" id="dbFill" style="width:0%"></div></div>
         <div class="db-msg" id="dbMsg">Registra gastos para ver cómo vas hoy.</div>
+        <!-- Barra equilibrio mensual -->
+        <div class="eq-bar-wrap" id="eqBarWrap">
+          <div class="eq-bar-label">
+            <span style="color:var(--good)">← Ahorro acumulado</span>
+            <span>Equilibrio</span>
+            <span style="color:var(--bad)">Déficit →</span>
+          </div>
+          <div class="eq-bar-track">
+            <div class="eq-bar-center"></div>
+            <div class="eq-bar-fill-left" id="eqBarLeft" style="width:0%"></div>
+            <div class="eq-bar-fill-right" id="eqBarRight" style="width:0%"></div>
+          </div>
+          <div class="eq-bar-msg" id="eqBarMsg"></div>
+        </div>
       </div>
       <div class="card">
         <h2>Recomendación del día</h2>
@@ -1144,7 +1166,43 @@ function renderDailyBudget(personalHoy) {
   const lbl  = document.getElementById('dbGastado');
   const limLbl = document.getElementById('dbLimiteLabel');
   if (!fill) return;
+  
+function renderEqBar() {
   const DAILY_BUDGET = parseFloat(localStorage.getItem('radar_daily_budget') || '51');
+  // Gastos personales acumulados del mes
+  const movMes = getAllMovesForPeriod('mes');
+  const gastadoMes = movMes.filter(m => m.type === 'Personal').reduce((a,b) => a+b.amount, 0);
+  // Días transcurridos en el mes (incluyendo hoy)
+  const hoy = new Date();
+  const diasTranscurridos = hoy.getDate();
+  const presupuestoAcumulado = diasTranscurridos * DAILY_BUDGET;
+  const saldo = presupuestoAcumulado - gastadoMes; // positivo = ahorro, negativo = déficit
+
+  const elLeft  = document.getElementById('eqBarLeft');
+  const elRight = document.getElementById('eqBarRight');
+  const elMsg   = document.getElementById('eqBarMsg');
+  if (!elLeft) return;
+
+  // Máximo representable = 15 días de tope (para escalar la barra)
+  const maxRef = DAILY_BUDGET * 15;
+  const pct = Math.min(Math.abs(saldo) / maxRef * 50, 50); // máx 50% de cada lado
+
+  if (saldo >= 0) {
+    // Ahorro — barra verde crece desde el centro hacia la izquierda
+    elLeft.style.width  = pct + '%';
+    elRight.style.width = '0%';
+    if (elMsg) elMsg.innerHTML = saldo < 1
+      ? 'En equilibrio exacto con tu tope diario.'
+      : '<span style="color:var(--good)">✓ Llevas S/' + saldo.toFixed(0) + ' de ahorro acumulado este mes.</span>';
+  } else {
+    // Déficit — barra roja crece desde el centro hacia la derecha
+    elLeft.style.width  = '0%';
+    elRight.style.width = pct + '%';
+    if (elMsg) elMsg.innerHTML = '<span style="color:var(--bad)">⚠ Llevas S/' + Math.abs(saldo).toFixed(0) + ' de déficit acumulado este mes.</span>';
+  }
+}
+
+const DAILY_BUDGET = parseFloat(localStorage.getItem('radar_daily_budget') || '51');
   if (limLbl) limLbl.textContent = 'S/ ' + DAILY_BUDGET;
   const pct = Math.min((personalHoy / DAILY_BUDGET) * 100, 100);
   fill.style.width = pct + '%';
@@ -1155,6 +1213,11 @@ function renderDailyBudget(personalHoy) {
     msg.textContent = 'Aún sin gastos personales. Tope: S/ ' + DAILY_BUDGET + '.';
   } else if (restante > 0) {
     msg.textContent = 'Te quedan S/ ' + restante.toFixed(0) + ' para hoy. ' + (pct < 70 ? '🟢 Bien.' : '🟡 Ve con cuidado.');
+    // Kax celebra si terminás el día bajo el tope (solo una vez, al anochecer)
+    const hora = new Date().getHours();
+    if (hora >= 23 && pct < 70 && window.innerWidth > 640) {
+      kaxSay('Buen día Jhunior. Te mantuviste en S/ ' + personalHoy.toFixed(0) + ' de ' + DAILY_BUDGET + '. Eso se acumula.', 'happy', 5000);
+    }
   } else {
     msg.textContent = '🔴 Superaste el tope por S/ ' + Math.abs(restante).toFixed(0) + '.';
     if (window.innerWidth <= 640) kaxPose('alert');
@@ -1323,7 +1386,12 @@ function splitMoves(text) {
   // FIX 6: Normalizar artefacto STT — "1. 50" → "1.50" (STT inserta espacio en decimales)
   let c = t
     .replace(/\n/g, ' ')
-    .replace(/(\d)\.\s+(\d)/g, '$1.$2');
+    .replace(/(\d)\.\s+(\d)/g, '$1.$2')
+    // FIX STT-DECIMAL: "750" → "7.50", "250"→"2.50" cuando va precedido de separador y es precio chico
+    // Aplica cuando: número de 3 dígitos donde últimos 2 son 00/50/25/75 y el primero es 1-9
+    .replace(/(?<![\d.])(\b[1-9])(50|25|75|00)\b(?!\.)/g, '$1.$2')
+    // "7 50" → "7.50" (STT separa los decimales con espacio)
+    .replace(/\b(\d{1,2})\s+(50|25|75|90|80|70|60|40|30|20|10)\b(?!\s*(?:soles?|s\/|\d))/gi, '$1.$2');
 
   // Cuenta global: SOLO si hay expresión explícita de "todo con X" / "todos yape" etc.
   // Si un ítem no menciona cuenta, es efectivo — no hereda de otros ítems.
@@ -2063,6 +2131,7 @@ function renderDeudaTC() {
         : 'var(--line)';
   }
 
+  renderEqBar();
   // Kax alerta si está en rojo (solo desktop para no tapar)
   if (sobreElLimite && window.innerWidth > 640) {
     kaxSay('Tu TC supera tu límite personal por ' + money(exceso) + '. Evita nuevos cargos hasta el 25.', 'alert', 6000);
