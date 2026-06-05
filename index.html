@@ -267,8 +267,9 @@
     /* BARRA EQUILIBRIO MENSUAL — siempre llena, indicador móvil */
     .eq-bar-wrap{margin-top:8px}
     .eq-bar-label{display:flex;justify-content:space-between;font-size:.7rem;color:var(--muted);margin-bottom:3px}
-    .eq-bar-track{height:10px;border-radius:999px;overflow:visible;position:relative;background:linear-gradient(to right, var(--good) 0%, var(--good) 50%, var(--bad) 50%, var(--bad) 100%)}
-    .eq-bar-indicator{position:absolute;top:-3px;width:4px;height:16px;background:#fff;border-radius:2px;box-shadow:0 0 4px rgba(0,0,0,.5);transition:left .7s cubic-bezier(.4,0,.2,1);transform:translateX(-50%)}
+    .eq-bar-track{height:10px;border-radius:999px;overflow:hidden;position:relative;background:linear-gradient(to right, #5aab7a 0%, #5aab7a 50%, #d96b76 50%, #d96b76 100%)}
+    .eq-bar-indicator-wrap{position:relative;height:10px;margin-top:-10px}
+    .eq-bar-indicator{position:absolute;top:-3px;width:4px;height:16px;background:#fff;border-radius:2px;box-shadow:0 0 6px rgba(0,0,0,.6);transition:left .7s cubic-bezier(.4,0,.2,1);transform:translateX(-50%);z-index:2}
     .eq-bar-msg{font-size:.72rem;margin-top:5px;color:var(--muted)}
   </style>
 </head>
@@ -333,7 +334,8 @@
             <span>Equilibrio</span>
             <span style="color:var(--bad)">Déficit →</span>
           </div>
-          <div class="eq-bar-track">
+          <div class="eq-bar-track"></div>
+          <div class="eq-bar-indicator-wrap">
             <div class="eq-bar-indicator" id="eqBarIndicator" style="left:50%"></div>
           </div>
           <div class="eq-bar-msg" id="eqBarMsg"></div>
@@ -1808,7 +1810,14 @@ function procesarSyncFijosYPrestamos(res) {
         return { ...f, nombre: s.nombre || f.nombre, monto: s.monto ?? f.monto, dia: s.dia ?? f.dia };
       });
       fijos = fijos.filter(f => !f.movId || idsSheets.has(f.movId));
-      res.fijos.forEach(f => { if (f.movId && !idsLS.has(f.movId)) fijos.push(f); });
+      res.fijos.forEach(f => {
+        if (f.movId && !idsLS.has(f.movId)) {
+          // No agregar si ya existe uno con el mismo nombre (evitar duplicados)
+          const nombreNorm = (f.nombre || '').toLowerCase().trim();
+          const yaExiste = fijos.some(x => (x.nombre||'').toLowerCase().trim() === nombreNorm);
+          if (!yaExiste) fijos.push(f);
+        }
+      });
       lsSave('radar_fijos', fijos);
       renderFijos();
     }
