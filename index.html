@@ -1199,12 +1199,12 @@ function renderEqBar() {
 }
 
 function renderDailyBudget(personalHoy) {
+  const DAILY_BUDGET = parseFloat(localStorage.getItem('radar_daily_budget') || '51');
   const fill = document.getElementById('dbFill');
   const msg  = document.getElementById('dbMsg');
   const lbl  = document.getElementById('dbGastado');
   const limLbl = document.getElementById('dbLimiteLabel');
   if (!fill) return;
-  
 
   if (limLbl) limLbl.textContent = 'S/ ' + DAILY_BUDGET;
   const pct = Math.min((personalHoy / DAILY_BUDGET) * 100, 100);
