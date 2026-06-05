@@ -1165,7 +1165,17 @@ function renderEqBar() {
   const DAILY_BUDGET = parseFloat(localStorage.getItem('radar_daily_budget') || '51');
   // Gastos personales acumulados del mes
   const movMes = getAllMovesForPeriod('mes');
-  const gastadoMes = movMes.filter(m => m.type === 'Personal').reduce((a,b) => a+b.amount, 0);
+  // Excluir gastos que coincidan con compromisos fijos (cuarto, Movistar, etc.)
+  // Los fijos están en el array 'fijos' con sus nombres
+  const nombresFijos = new Set(fijos.map(f => f.nombre.toLowerCase().trim()));
+  const gastadoMes = movMes.filter(m => {
+    if (m.type !== 'Personal') return false;
+    // Excluir si fue registrado desde un fijo (fromFijo flag)
+    if (m.fromFijo) return false;
+    // Excluir si el nombre coincide exactamente con un fijo
+    const desc = (m.description || '').toLowerCase().trim();
+    return !nombresFijos.has(desc);
+  }).reduce((a,b) => a+b.amount, 0);
   // Días transcurridos en el mes (incluyendo hoy)
   const hoy = new Date();
   const diasTranscurridos = hoy.getDate();
