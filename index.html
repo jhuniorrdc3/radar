@@ -264,14 +264,11 @@
     .fijo-edit-row input{flex:1;min-width:80px;background:var(--panel-3);border:1px solid var(--line);border-radius:6px;padding:5px 8px;color:var(--text);font-size:.82rem}
     .fijo-edit-row button{background:var(--accent);color:#082320;border:none;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:.8rem;font-weight:700}
     .fijo-edit-row .btn-cancel{background:var(--panel-3);color:var(--muted)}
-    /* BARRA EQUILIBRIO — estilo barra de vida */
+    /* BARRA EQUILIBRIO — bicolor, frontera móvil */
     .eq-bar-wrap{margin-top:8px}
     .eq-bar-label{display:flex;justify-content:space-between;font-size:.7rem;color:var(--muted);margin-bottom:3px}
-    .eq-bar-track{height:10px;border-radius:999px;overflow:hidden;position:relative;background:var(--panel-3)}
-    .eq-bar-fill{height:100%;border-radius:999px;transition:width .7s cubic-bezier(.4,0,.2,1),background .4s}
-    .eq-bar-fill.ok{background:#5aab7a}
-    .eq-bar-fill.warn{background:#d4a23a}
-    .eq-bar-fill.bad{background:#d96b76}
+    .eq-bar-track{height:10px;border-radius:999px;overflow:hidden;position:relative;background:#d96b76}
+    .eq-bar-green{position:absolute;left:0;top:0;height:100%;background:#5aab7a;transition:width .7s cubic-bezier(.4,0,.2,1)}
     .eq-bar-msg{font-size:.72rem;margin-top:4px}
   </style>
 </head>
@@ -337,7 +334,7 @@
             <span style="color:var(--bad)">Déficit →</span>
           </div>
           <div class="eq-bar-track">
-            <div class="eq-bar-fill ok" id="eqBarFill" style="width:50%"></div>
+            <div class="eq-bar-green" id="eqBarGreen" style="width:50%"></div>
           </div>
           <div class="eq-bar-msg" id="eqBarMsg"></div>
         </div>
@@ -1162,8 +1159,7 @@ function money(n) { return 'S/ ' + Number(n || 0).toFixed(2).replace(/\.00$/, ''
 
 function renderEqBar() {
   const DAILY_BUDGET = parseFloat(localStorage.getItem('radar_daily_budget') || '51');
-  // Gastos personales acumulados del mes
-  // Usar mes local del usuario (no del servidor)
+  const hoy = new Date();
   const mesLocal = hoy.getFullYear() + '-' + String(hoy.getMonth()+1).padStart(2,'0');
   const allKeys = [];
   for (let ki = 0; ki < localStorage.length; ki++) {
@@ -1186,23 +1182,22 @@ function renderEqBar() {
     return !nombresFijos.has(desc);
   }).reduce((a,b) => a+b.amount, 0);
   // Días transcurridos en el mes (incluyendo hoy)
-  const hoy = new Date();
   const diasTranscurridos = hoy.getDate();
   const presupuestoAcumulado = diasTranscurridos * DAILY_BUDGET;
   const saldo = presupuestoAcumulado - gastadoMes; // positivo = ahorro, negativo = déficit
 
-  const elFill = document.getElementById('eqBarFill');
-  const elMsg  = document.getElementById('eqBarMsg');
-  if (!elFill) return;
+  const elGreen = document.getElementById('eqBarGreen');
+  const elMsg   = document.getElementById('eqBarMsg');
+  if (!elGreen) return;
 
   const diasEnMes = new Date(hoy.getFullYear(), hoy.getMonth()+1, 0).getDate();
   const maxRef    = DAILY_BUDGET * diasEnMes;
-  // 50% = equilibrio, >50% = ahorro (barra crece verde), <50% = déficit (barra roja se vacía)
-  const rawPct = 50 + (saldo / maxRef) * 50;
-  const fillPct = Math.max(2, Math.min(98, rawPct));
-
-  elFill.style.width = fillPct + '%';
-  elFill.className = 'eq-bar-fill ' + (fillPct > 60 ? 'ok' : fillPct > 40 ? 'warn' : 'bad');
+  // 50% = equilibrio exacto
+  // >50% = verde avanza a la derecha (ahorro)
+  // <50% = rojo avanza a la izquierda (déficit)
+  const rawPct  = 50 + (saldo / maxRef) * 50;
+  const greenPct = Math.max(2, Math.min(98, rawPct));
+  elGreen.style.width = greenPct + '%';
 
   if (elMsg) {
     if (Math.abs(saldo) < 5) {
