@@ -2549,14 +2549,13 @@ function cargarFijoComoGasto(idx) {
   pagados[key] = hoy;
   localStorage.setItem('radar_fijos_pagados', JSON.stringify(pagados));
 
-  // Refrescar vistas
-  setViewDate(viewDate);
+  // Refrescar fijos y semáforo sin cambiar de tab
   renderFijos();
   renderSemaforo();
 
-  // Ir a Hoy para ver el gasto
+  // Ir a Hoy — switchTab llama setViewDate internamente
   switchTab('hoy');
-  kaxSay(f.nombre + ' registrado en tus gastos de hoy. Edítalo si el medio de pago es diferente.', 'happy', 4000);
+  kaxSay(f.nombre + ' registrado. Edita el medio de pago si es necesario.', 'happy', 4000);
 }
 
 window.deleteFijo = function(idx) {
