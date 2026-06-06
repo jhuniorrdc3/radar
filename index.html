@@ -265,11 +265,15 @@
     .fijo-edit-row button{background:var(--accent);color:#082320;border:none;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:.8rem;font-weight:700}
     .fijo-edit-row .btn-cancel{background:var(--panel-3);color:var(--muted)}
     /* BARRA EQUILIBRIO — bicolor, frontera móvil */
-    .eq-bar-wrap{margin-top:8px}
-    .eq-bar-label{display:flex;justify-content:space-between;font-size:.7rem;color:var(--muted);margin-bottom:3px}
-    .eq-bar-track{height:10px;border-radius:999px;overflow:hidden;position:relative;background:#d96b76}
-    .eq-bar-green{position:absolute;left:0;top:0;height:100%;background:#5aab7a;transition:width .7s cubic-bezier(.4,0,.2,1)}
-    .eq-bar-msg{font-size:.72rem;margin-top:4px}
+    .eq-bar-wrap{margin-top:10px}
+    .eq-bar-track{display:flex;height:36px;border-radius:8px;overflow:hidden;position:relative;gap:0}
+    .eq-bar-left-block{display:flex;align-items:center;padding:0 12px;height:100%;transition:width .7s cubic-bezier(.4,0,.2,1);overflow:hidden;min-width:0;box-sizing:border-box}
+    .eq-bar-right-block{display:flex;align-items:center;justify-content:flex-end;padding:0 12px;height:100%;transition:width .7s cubic-bezier(.4,0,.2,1);overflow:hidden;min-width:0;box-sizing:border-box}
+    .eq-bar-divider{width:3px;height:100%;background:#fff;flex-shrink:0;opacity:.85}
+    .eq-bar-block-text{font-size:.7rem;font-weight:600;letter-spacing:.04em;white-space:nowrap;text-transform:uppercase}
+    .eq-bar-block-num{font-size:.82rem;font-weight:700;margin-right:5px}
+    .eq-bar-block-num.right{margin-right:0;margin-left:5px}
+    .eq-bar-msg{font-size:.72rem;margin-top:5px}
   </style>
 </head>
 <body>
@@ -328,13 +332,16 @@
         <div class="db-msg" id="dbMsg">Registra gastos para ver cómo vas hoy.</div>
         <!-- Barra equilibrio mensual -->
         <div class="eq-bar-wrap" id="eqBarWrap">
-          <div class="eq-bar-label">
-            <span style="color:var(--good)">← Ahorro acumulado</span>
-            <span>Equilibrio</span>
-            <span style="color:var(--bad)">Déficit →</span>
-          </div>
-          <div class="eq-bar-track">
-            <div class="eq-bar-green" id="eqBarGreen" style="width:50%"></div>
+          <div class="eq-bar-track" id="eqBarTrack">
+            <div class="eq-bar-left-block" id="eqBarLeft" style="width:50%;background:#2d1515;justify-content:flex-end;gap:5px">
+              <span id="eqBarLeftLabel" style="font-size:.65rem;font-weight:600;letter-spacing:.06em;color:rgba(217,107,118,.5);text-transform:uppercase">Déficit</span>
+              <span id="eqBarLeftNum" style="font-size:.85rem;font-weight:700;color:#d96b76">S/0</span>
+            </div>
+            <div class="eq-bar-divider"></div>
+            <div class="eq-bar-right-block" id="eqBarRight" style="width:50%;background:#1e3328;justify-content:flex-start;gap:5px">
+              <span id="eqBarRightNum" style="font-size:.85rem;font-weight:700;color:#5aab7a">S/0</span>
+              <span id="eqBarRightLabel" style="font-size:.65rem;font-weight:600;letter-spacing:.06em;color:rgba(90,171,122,.5);text-transform:uppercase">Ahorro</span>
+            </div>
           </div>
           <div class="eq-bar-msg" id="eqBarMsg"></div>
         </div>
@@ -1173,39 +1180,64 @@ function renderEqBar() {
   // Excluir gastos que coincidan con compromisos fijos (cuarto, Movistar, etc.)
   // Los fijos están en el array 'fijos' con sus nombres
   const nombresFijos = new Set(fijos.map(f => f.nombre.toLowerCase().trim()));
+  const montosFijos  = new Set(fijos.map(f => f.montoReal || f.monto));
   const gastadoMes = movMes.filter(m => {
     if (m.type !== 'Personal') return false;
-    // Excluir si fue registrado desde un fijo (fromFijo flag)
+    // Excluir si fue registrado desde un fijo (botón →)
     if (m.fromFijo) return false;
-    // Excluir si el nombre coincide exactamente con un fijo
+    // Excluir si el nombre matchea un fijo (exacto o contenido)
     const desc = (m.description || '').toLowerCase().trim();
-    return !nombresFijos.has(desc);
+    if (nombresFijos.has(desc)) return false;
+    for (const nf of nombresFijos) { if (desc.includes(nf) || nf.includes(desc)) return false; }
+    // Excluir si el monto coincide exactamente con un fijo (pagos manuales del mismo)
+    if (montosFijos.has(m.amount)) return false;
+    return true;
   }).reduce((a,b) => a+b.amount, 0);
   // Días transcurridos en el mes (incluyendo hoy)
   const diasTranscurridos = hoy.getDate();
   const presupuestoAcumulado = diasTranscurridos * DAILY_BUDGET;
   const saldo = presupuestoAcumulado - gastadoMes; // positivo = ahorro, negativo = déficit
 
-  const elGreen = document.getElementById('eqBarGreen');
-  const elMsg   = document.getElementById('eqBarMsg');
-  if (!elGreen) return;
+  const elLeft       = document.getElementById('eqBarLeft');
+  const elRight      = document.getElementById('eqBarRight');
+  const elLeftNum    = document.getElementById('eqBarLeftNum');
+  const elRightNum   = document.getElementById('eqBarRightNum');
+  const elLeftLabel  = document.getElementById('eqBarLeftLabel');
+  const elRightLabel = document.getElementById('eqBarRightLabel');
+  const elMsg        = document.getElementById('eqBarMsg');
+  if (!elLeft || !elRight) return;
 
   const diasEnMes = new Date(hoy.getFullYear(), hoy.getMonth()+1, 0).getDate();
   const maxRef    = DAILY_BUDGET * diasEnMes;
-  // 50% = equilibrio exacto
-  // >50% = verde avanza a la derecha (ahorro)
-  // <50% = rojo avanza a la izquierda (déficit)
-  const rawPct  = 50 + (saldo / maxRef) * 50;
-  const greenPct = Math.max(2, Math.min(98, rawPct));
-  elGreen.style.width = greenPct + '%';
+  const ratio     = Math.min(Math.abs(saldo) / maxRef, 0.46);
+  // Rojo izquierda: crece en déficit. Verde derecha: crece en ahorro.
+  const defPct  = saldo >= 0 ? 50 - ratio * 100 : 50 + ratio * 100;
+  const ahorPct = 100 - defPct - 0.3;
+
+  elLeft.style.width  = defPct  + '%';
+  elRight.style.width = ahorPct + '%';
+
+  // Ambos números siempre visibles
+  const defVal  = saldo < 0 ? Math.abs(saldo) : 0;
+  const ahorVal = saldo > 0 ? saldo : 0;
+
+  if (elLeftNum)  elLeftNum.textContent  = 'S/' + defVal.toFixed(0);
+  if (elRightNum) elRightNum.textContent = 'S/' + ahorVal.toFixed(0);
+
+  // El lado dominante: label y número al 100% — el perdedor al 35%
+  const defGana  = saldo < 0;
+  if (elLeftLabel)  elLeftLabel.style.opacity  = defGana  ? '0.75' : '0.3';
+  if (elLeftNum)    elLeftNum.style.opacity     = defGana  ? '1'    : '0.3';
+  if (elRightLabel) elRightLabel.style.opacity  = !defGana ? '0.75' : '0.3';
+  if (elRightNum)   elRightNum.style.opacity    = !defGana ? '1'    : '0.3';
 
   if (elMsg) {
     if (Math.abs(saldo) < 5) {
       elMsg.innerHTML = '<span style="color:var(--muted)">En equilibrio exacto.</span>';
     } else if (saldo > 0) {
-      elMsg.innerHTML = '<span style="color:#5aab7a">✓ S/' + saldo.toFixed(0) + ' de ahorro acumulado este mes.</span>';
+      elMsg.innerHTML = '<span style="color:#5aab7a">✓ S/' + saldo.toFixed(0) + ' de margen acumulado este mes.</span>';
     } else {
-      elMsg.innerHTML = '<span style="color:#d96b76">⚠ S/' + Math.abs(saldo).toFixed(0) + ' de déficit en gastos variables.</span>';
+      elMsg.innerHTML = '<span style="color:#d96b76">⚠ S/' + Math.abs(saldo).toFixed(0) + ' sobre tu tope variable del mes.</span>';
     }
   }
 }
