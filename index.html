@@ -266,14 +266,12 @@
     .fijo-edit-row .btn-cancel{background:var(--panel-3);color:var(--muted)}
     /* BARRA EQUILIBRIO — bicolor, frontera móvil */
     .eq-bar-wrap{margin-top:10px}
-    .eq-bar-track{display:flex;height:36px;border-radius:8px;overflow:hidden;position:relative;gap:0}
+    .eq-bar-track{display:flex;height:38px;border-radius:10px;overflow:hidden;position:relative;gap:0}
     .eq-bar-left-block{display:flex;align-items:center;padding:0 12px;height:100%;transition:width .7s cubic-bezier(.4,0,.2,1);overflow:hidden;min-width:0;box-sizing:border-box}
     .eq-bar-right-block{display:flex;align-items:center;justify-content:flex-end;padding:0 12px;height:100%;transition:width .7s cubic-bezier(.4,0,.2,1);overflow:hidden;min-width:0;box-sizing:border-box}
-    .eq-bar-divider{width:3px;height:100%;background:#fff;flex-shrink:0;opacity:.85}
-    .eq-bar-block-text{font-size:.7rem;font-weight:600;letter-spacing:.04em;white-space:nowrap;text-transform:uppercase}
-    .eq-bar-block-num{font-size:.82rem;font-weight:700;margin-right:5px}
-    .eq-bar-block-num.right{margin-right:0;margin-left:5px}
-    .eq-bar-msg{font-size:.72rem;margin-top:5px}
+    .eq-bar-divider{width:3px;height:100%;background:#fff;flex-shrink:0;position:relative;z-index:10;
+      border-radius:2px;transition:background .7s,box-shadow .7s}
+    .eq-bar-msg{font-size:.72rem;margin-top:6px}
   </style>
 </head>
 <body>
@@ -1224,12 +1222,30 @@ function renderEqBar() {
   if (elLeftNum)  elLeftNum.textContent  = 'S/' + defVal.toFixed(0);
   if (elRightNum) elRightNum.textContent = 'S/' + ahorVal.toFixed(0);
 
-  // El lado dominante: label y número al 100% — el perdedor al 35%
-  const defGana  = saldo < 0;
+  // El lado dominante: label y número al 100% — el perdedor al 30%
+  const defGana = saldo < 0;
   if (elLeftLabel)  elLeftLabel.style.opacity  = defGana  ? '0.75' : '0.3';
   if (elLeftNum)    elLeftNum.style.opacity     = defGana  ? '1'    : '0.3';
   if (elRightLabel) elRightLabel.style.opacity  = !defGana ? '0.75' : '0.3';
   if (elRightNum)   elRightNum.style.opacity    = !defGana ? '1'    : '0.3';
+
+  // Glow interior del bloque dominante
+  if (elLeft) elLeft.style.boxShadow = defGana
+    ? 'inset -20px 0 30px rgba(217,107,118,.18)' : 'none';
+  if (elRight) elRight.style.boxShadow = !defGana
+    ? 'inset 20px 0 30px rgba(90,171,122,.18)' : 'none';
+
+  // Divisor: color y glow del lado que va ganando
+  const divider = document.querySelector('.eq-bar-divider');
+  if (divider) {
+    if (defGana) {
+      divider.style.background = '#d96b76';
+      divider.style.boxShadow  = '0 0 8px 4px rgba(217,107,118,.9), 0 0 22px 8px rgba(217,107,118,.4)';
+    } else {
+      divider.style.background = '#5aab7a';
+      divider.style.boxShadow  = '0 0 8px 4px rgba(90,171,122,.9), 0 0 22px 8px rgba(90,171,122,.4)';
+    }
+  }
 
   if (elMsg) {
     if (Math.abs(saldo) < 5) {
@@ -3528,3 +3544,4 @@ document.getElementById('syncBtn')?.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
