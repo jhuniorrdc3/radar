@@ -250,7 +250,7 @@
     .fijo-item.pagado{background:rgba(90,171,122,.08);border-left:3px solid var(--good);padding-left:8px}
     .fijo-item.pagado .fijo-nombre{color:var(--good)}
     .fijo-item.pagado .fijo-monto{color:var(--good)}
-    .fijo-item.urgente{border-left:3px solid var(--bad);padding-left:8px}
+    .fijo-item.urgente{border-left:2px solid rgba(211,162,86,.5);padding-left:9px}
     .fijo-left{flex:1;min-width:0}
     .fijo-nombre{font-weight:600;font-size:.9rem;display:flex;align-items:center;gap:6px}
     .fijo-nombre .check-icon{font-size:.85rem;opacity:0;transition:opacity .2s}
@@ -2165,6 +2165,16 @@ function guardarDeudaTC() {
   kaxSay('Deuda TC actualizada. Mantén el control.', 'alert', 3000);
 }
 
+function guardarLimiteTC() {
+  const input = document.getElementById('tcLimiteInput');
+  const val   = parseFloat(input.value);
+  if (isNaN(val) || val <= 0) return;
+  localStorage.setItem('radar_tc_limite', val.toString());
+  input.value = '';
+  renderDeudaTC();
+  kaxSay('Límite personal TC actualizado a S/' + val + '.', 'happy', 3000);
+}
+
 function renderDeudaTC() {
   const LIMITE_PERSONAL = parseFloat(localStorage.getItem('radar_tc_limite') || '2000');
   const deudaActual     = parseFloat(localStorage.getItem(TC_DEUDA_KEY) || '4256.74');
@@ -2517,7 +2527,7 @@ function guardarMontoReal(idx, val) {
 }
 
 
-function cargarFijoComoGasto(idx) {
+async function cargarFijoComoGasto(idx) {
   const f = fijos[idx];
   if (!f) return;
   const monto = f.montoReal || f.monto;
@@ -2525,37 +2535,49 @@ function cargarFijoComoGasto(idx) {
 
   if (!confirm('¿Registrar "' + f.nombre + '" (S/' + monto + ') como gasto de hoy?')) return;
 
-  // Crear movimiento en el día de hoy
   const hoy    = todayISO();
   const lsKey  = 'radar_today_' + hoy;
-  const movs   = lsLoad(lsKey, []);
+  const subcat = detectSubcat(f.nombre.toLowerCase());
 
   const nuevo = {
     description: f.nombre,
     amount:      monto,
     type:        'Personal',
-    subcat:      detectSubcat(f.nombre.toLowerCase()),
-    account:     'TC',  // editable después
+    subcat:      subcat,
+    account:     'TC',
+    project:     'Personal',
     fechaMov:    hoy,
     ts:          Date.now(),
-    fromFijo:    true
+    fromFijo:    true,
+    movId:       null
   };
+
+  // Guardar en Sheets primero para obtener movId (igual que un gasto normal)
+  try {
+    const res = await backendCall('guardarMovimiento', {
+      action:'guardarMovimiento', fecha:hoy, descripcion:f.nombre,
+      categoria: subcat, tipo:'gasto', monto:String(monto),
+      etiqueta:'personal', proyecto:'', tipo_deposito:'', banco:'TC', notas:'pago fijo'
+    });
+    if (res && res.ok) nuevo.movId = res.movId || null;
+  } catch(e) {}
+
+  // Guardar en localStorage
+  const movs = lsLoad(lsKey, []);
   movs.push(nuevo);
   lsSave(lsKey, movs);
 
-  // Marcar como pagado
+  // Marcar fijo como pagado
   const pagados = getFijosPagados();
   const key = f.movId || String(idx);
   pagados[key] = hoy;
   localStorage.setItem('radar_fijos_pagados', JSON.stringify(pagados));
 
-  // Refrescar fijos y semáforo
   renderFijos();
   renderSemaforo();
 
-  // Ir a Hoy y abrir modal de edición para ajustar cuenta/medio de pago
+  // Ir a Hoy y abrir modal de edición para ajustar medio de pago
   switchTab('hoy');
-  // El índice del nuevo movimiento es el último del array
   const idxNuevo = lsLoad(lsKey, []).length - 1;
   setTimeout(() => openEditModal(hoy, idxNuevo), 300);
 }
@@ -2590,19 +2612,20 @@ function renderFijos() {
       const urgente = diasRestantes <= 5 && !esPagado;
       const montoLabel = f.montoReal ? money(f.montoReal) : money(f.monto);
       const montoRealHtml = '<div class="fijo-monto-real" onclick="event.stopPropagation();pedirMontoReal(' + i + ')">' + (f.montoReal ? '✓ S/' + f.montoReal : '+ Monto real') + '</div>';
-      return '<div class="fijo-item' + (esPagado ? ' pagado' : urgente ? ' urgente' : '') + '" onclick="toggleFijoPagado(' + i + ')">'
+      // Click en la fila: si no está pagado → registra gasto. Si está pagado → desmarca.
+      const accionClick = esPagado ? 'toggleFijoPagado(' + i + ')' : 'cargarFijoComoGasto(' + i + ')';
+      return '<div class="fijo-item' + (esPagado ? ' pagado' : urgente ? ' urgente' : '') + '" onclick="' + accionClick + '">'
         + '<div class="fijo-left">'
         + '<div class="fijo-nombre"><span class="check-icon">✓</span>' + f.nombre + '</div>'
         + '<div class="fijo-meta">Vence día ' + dia + ' · ' + diasRestantes + ' días'
-        + (esPagado ? ' · <span style="color:var(--good)">Pagado</span>' : '') + '</div>'
+        + (esPagado ? ' · <span style="color:var(--good)">Pagado</span>' : urgente ? ' · <span style="color:var(--warn)">Pronto</span>' : '') + '</div>'
         + '</div>'
         + '<div class="fijo-right">'
         + '<div>'
-        + '<div class="fijo-monto" style="' + (urgente ? 'color:var(--bad)' : '') + '">' + montoLabel + '</div>'
+        + '<div class="fijo-monto">' + montoLabel + '</div>'
         + montoRealHtml
         + '</div>'
         + '<div class="fijo-actions" onclick="event.stopPropagation()">'
-        + '<button class="fijo-btn" onclick="cargarFijoComoGasto(' + i + ')" title="Registrar pago en Hoy" style="color:var(--accent)">→</button>'
         + '<button class="fijo-btn" onclick="editFijo(' + i + ')" title="Editar">✏️</button>'
         + '<button class="fijo-btn" onclick="event.stopPropagation();if(confirm(\'¿Eliminar ' + f.nombre.replace(/\'/g,'') + '?\'))deleteFijo(' + i + ')" title="Eliminar">×</button>'
         + '</div>'
