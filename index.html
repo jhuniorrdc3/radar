@@ -1870,19 +1870,31 @@ function procesarSyncFijosYPrestamos(res) {
       fijos = fijos.filter(f => !f.movId || idsSheets.has(f.movId));
 
       // Paso 3: agregar fijos nuevos de Sheets que no están en LS
-      // — dedup por movId Y por nombre (cubre fijos sin movId creados como defaults)
+      // Dedup agresivo: normalizar nombre quitando palabras comunes para detectar variantes
+      const normNombre = n => (n||'').toLowerCase().trim()
+        .replace(/alquiler\s+/g,'').replace(/cuarto/g,'cuarto').replace(/\s+/g,' ');
+
+      // Construir set de nombres normalizados ya existentes en LS
+      const nombresLS = new Set(fijos.map(f => normNombre(f.nombre)));
+
       res.fijos.forEach(f => {
         if (!f.movId) return;
-        if (idsLS.has(f.movId)) return; // ya existe por movId
-        const nombreNorm = (f.nombre || '').toLowerCase().trim();
-        const yaExiste = fijos.some(x => (x.nombre||'').toLowerCase().trim() === nombreNorm);
-        if (yaExiste) {
-          // Asignarle el movId de Sheets al existente sin movId, para que futuras syncs lo reconozcan
-          const idx = fijos.findIndex(x => (x.nombre||'').toLowerCase().trim() === nombreNorm && !x.movId);
-          if (idx >= 0) fijos[idx] = { ...fijos[idx], movId: f.movId, dia: f.dia ?? fijos[idx].dia, monto: f.monto ?? fijos[idx].monto };
+        if (idsLS.has(f.movId)) return; // ya existe por movId exacto
+
+        const nn = normNombre(f.nombre);
+
+        // Si hay un fijo LS sin movId con nombre similar, asignarle el movId y actualizar
+        const idx = fijos.findIndex(x => !x.movId && normNombre(x.nombre) === nn);
+        if (idx >= 0) {
+          fijos[idx] = { ...fijos[idx], movId: f.movId, dia: f.dia ?? fijos[idx].dia, monto: f.monto ?? fijos[idx].monto };
           return;
         }
+
+        // Si ya existe por nombre normalizado (con o sin movId), no agregar
+        if (nombresLS.has(nn)) return;
+
         fijos.push(f);
+        nombresLS.add(nn); // actualizar set para evitar duplicados dentro del mismo batch de Sheets
       });
 
       lsSave('radar_fijos', fijos);
