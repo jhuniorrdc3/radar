@@ -2523,6 +2523,8 @@ function cargarFijoComoGasto(idx) {
   const monto = f.montoReal || f.monto;
   if (!monto) return;
 
+  if (!confirm('¿Registrar "' + f.nombre + '" (S/' + monto + ') como gasto de hoy?')) return;
+
   // Crear movimiento en el día de hoy
   const hoy    = todayISO();
   const lsKey  = 'radar_today_' + hoy;
