@@ -827,10 +827,11 @@ function switchTab(tabId) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   const view = document.getElementById(tabId);
   if (view) view.classList.add('active');
+  if (tabId === 'hoy')      { setViewDate(viewDate || todayISO()); }
   if (tabId === 'finanzas') { renderHistorial(currentPeriod); preLlenarLimites(); renderDeudasFinanzas(); }
-  if (tabId === 'fijos') { cargarFijosYPrestamosDesdeSheets(); }
-  if (tabId === 'proyectos') { renderProyectosHC(); }
-  if (tabId === 'informe')  renderInformeCompleto();
+  if (tabId === 'fijos')    { cargarFijosYPrestamosDesdeSheets(); }
+  if (tabId === 'proyectos'){ renderProyectosHC(); }
+  if (tabId === 'informe')  { renderInformeCompleto(); }
 }
 
 document.querySelectorAll('.tab').forEach(btn => btn.addEventListener('click', () => {
