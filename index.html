@@ -2549,13 +2549,15 @@ function cargarFijoComoGasto(idx) {
   pagados[key] = hoy;
   localStorage.setItem('radar_fijos_pagados', JSON.stringify(pagados));
 
-  // Refrescar fijos y semáforo sin cambiar de tab
+  // Refrescar fijos y semáforo
   renderFijos();
   renderSemaforo();
 
-  // Ir a Hoy — switchTab llama setViewDate internamente
+  // Ir a Hoy y abrir modal de edición para ajustar cuenta/medio de pago
   switchTab('hoy');
-  kaxSay(f.nombre + ' registrado. Edita el medio de pago si es necesario.', 'happy', 4000);
+  // El índice del nuevo movimiento es el último del array
+  const idxNuevo = lsLoad(lsKey, []).length - 1;
+  setTimeout(() => openEditModal(hoy, idxNuevo), 300);
 }
 
 window.deleteFijo = function(idx) {
