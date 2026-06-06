@@ -172,9 +172,11 @@
     .db-label{font-size:.75rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
     .db-nums{font-size:.82rem;font-variant-numeric:tabular-nums}
     .db-nums strong{font-size:1rem}
-    .db-track{height:12px;background:var(--panel-3);border-radius:999px;overflow:hidden}
-    .db-fill{height:100%;border-radius:999px;transition:width .7s cubic-bezier(.4,0,.2,1),background .4s}
-    .db-fill.ok{background:var(--good)}.db-fill.warn{background:var(--warn)}.db-fill.over{background:var(--bad)}
+    .db-track{height:12px;background:var(--panel-3);border-radius:999px;overflow:visible;position:relative}
+    .db-fill{height:100%;border-radius:999px;transition:width .7s cubic-bezier(.4,0,.2,1),background .4s,box-shadow .4s}
+    .db-fill.ok{background:var(--good);box-shadow:0 0 8px 2px rgba(90,171,122,.6),0 0 18px 4px rgba(90,171,122,.25)}
+    .db-fill.warn{background:var(--warn);box-shadow:0 0 8px 2px rgba(211,162,86,.6),0 0 18px 4px rgba(211,162,86,.25)}
+    .db-fill.over{background:var(--bad);box-shadow:0 0 8px 2px rgba(217,107,118,.7),0 0 18px 4px rgba(217,107,118,.3)}
     .db-msg{font-size:.75rem;margin-top:4px;color:var(--muted)}
     /* GASTOS ACUMULADOS FILTROS */
     .hist-filter-btn{background:var(--panel-2);border:1px solid var(--line);color:var(--muted);padding:.35rem .8rem;border-radius:999px;cursor:pointer;font-size:.78rem;font-weight:600;transition:all .2s}
@@ -1178,17 +1180,12 @@ function renderEqBar() {
   // Excluir gastos que coincidan con compromisos fijos (cuarto, Movistar, etc.)
   // Los fijos están en el array 'fijos' con sus nombres
   const nombresFijos = new Set(fijos.map(f => f.nombre.toLowerCase().trim()));
-  const montosFijos  = new Set(fijos.map(f => f.montoReal || f.monto));
   const gastadoMes = movMes.filter(m => {
     if (m.type !== 'Personal') return false;
-    // Excluir si fue registrado desde un fijo (botón →)
     if (m.fromFijo) return false;
-    // Excluir si el nombre matchea un fijo (exacto o contenido)
     const desc = (m.description || '').toLowerCase().trim();
     if (nombresFijos.has(desc)) return false;
     for (const nf of nombresFijos) { if (desc.includes(nf) || nf.includes(desc)) return false; }
-    // Excluir si el monto coincide exactamente con un fijo (pagos manuales del mismo)
-    if (montosFijos.has(m.amount)) return false;
     return true;
   }).reduce((a,b) => a+b.amount, 0);
   // Días transcurridos en el mes (incluyendo hoy)
@@ -3544,4 +3541,3 @@ document.getElementById('syncBtn')?.addEventListener('click', () => {
 </script>
 </body>
 </html>
-
