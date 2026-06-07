@@ -2479,13 +2479,47 @@ document.getElementById('addFijoBtn').addEventListener('click', async () => {
 function getFijosPagados() {
   return JSON.parse(localStorage.getItem('radar_fijos_pagados') || '{}');
 }
-function toggleFijoPagado(idx) {
+async function toggleFijoPagado(idx) {
   const pagados = getFijosPagados();
   const key = fijos[idx]?.movId || String(idx);
-  if (pagados[key]) delete pagados[key];
-  else pagados[key] = new Date().toISOString().slice(0,10);
+
+  if (pagados[key]) {
+    // DESMARCAR: borrar también el gasto creado en Hoy y en Sheets
+    const info = pagados[key];
+    const fecha      = (info && info.fecha)      || info;        // objeto nuevo o string viejo
+    const gastoMovId = (info && info.gastoMovId) || null;
+    const gastoTs    = (info && info.gastoTs)    || null;
+    const nombre     = (fijos[idx]?.nombre || '').toLowerCase().trim();
+
+    if (fecha) {
+      const lsKey = 'radar_today_' + fecha;
+      let movs = lsLoad(lsKey, []);
+      const antes = movs.length;
+      movs = movs.filter(m => {
+        if (gastoMovId && m.movId === gastoMovId) return false;
+        if (gastoTs && m.ts === gastoTs) return false;
+        // Respaldo: borrar por nombre + fromFijo (cubre pagos viejos sin referencia)
+        if (m.fromFijo && (m.description||'').toLowerCase().trim() === nombre) return false;
+        return true;
+      });
+      if (movs.length < antes) {
+        lsSave(lsKey, movs);
+        if (gastoMovId) {
+          try { await backendCall('eliminarMovimiento', { movId: gastoMovId }); } catch(e) {}
+        }
+      }
+    }
+    delete pagados[key];
+    kaxSay('Pago de ' + (fijos[idx]?.nombre || 'fijo') + ' revertido. Gasto eliminado.', 'thinking', 3000);
+  } else {
+    pagados[key] = { fecha: new Date().toISOString().slice(0,10), gastoMovId: null, gastoTs: null };
+  }
+
   localStorage.setItem('radar_fijos_pagados', JSON.stringify(pagados));
   renderFijos();
+  if (typeof renderSemaforo === 'function') renderSemaforo();
+  if (typeof renderSavedToday === 'function') renderSavedToday();
+  if (typeof renderHistorial === 'function') renderHistorial(currentPeriod);
 }
 function editFijo(idx) {
   const f = fijos[idx];
@@ -2571,10 +2605,10 @@ async function cargarFijoComoGasto(idx) {
   movs.push(nuevo);
   lsSave(lsKey, movs);
 
-  // Marcar fijo como pagado
+  // Marcar fijo como pagado — guardar referencia al gasto creado para poder borrarlo al desmarcar
   const pagados = getFijosPagados();
   const key = f.movId || String(idx);
-  pagados[key] = hoy;
+  pagados[key] = { fecha: hoy, gastoMovId: nuevo.movId, gastoTs: nuevo.ts };
   localStorage.setItem('radar_fijos_pagados', JSON.stringify(pagados));
 
   renderFijos();
