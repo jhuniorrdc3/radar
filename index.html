@@ -1600,7 +1600,7 @@ function renderSavedToday() {
   list.innerHTML = '';
 
   const subcats = {comida:0,transporte:0,cafe:0,farmacia:0,ropa:0,ocio:0,mercado:0,salud:0,snacks:0,suscripciones:0,cuidado:0,otros:0};
-  let total = 0, hc = 0, personal = 0, tc = 0;
+  let total = 0, hc = 0, personal = 0, personalVariable = 0, tc = 0;
   const byProject = {};
 
   const reversed = [...savedToday].reverse();
@@ -1608,7 +1608,11 @@ function renderSavedToday() {
     const origIdx = savedToday.length - 1 - idx; // índice real para edit/delete
     total += m.amount;
     if (m.type === 'Hot and Cold') { hc += m.amount; byProject[m.project] = (byProject[m.project] || 0) + m.amount; }
-    else { personal += m.amount; }
+    else {
+      personal += m.amount;
+      // Para el presupuesto diario: excluir pagos de fijos (no son gasto variable)
+      if (!m.fromFijo) personalVariable += m.amount;
+    }
     if (m.account === 'TC') tc += m.amount;
 
     const div = document.createElement('div');
@@ -1632,7 +1636,7 @@ function renderSavedToday() {
   animateValue('totalHC',       hc);
   animateValue('totalPersonal', personal);
   animateValue('totalTC',       tc);
-  renderDailyBudget(personal);
+  renderDailyBudget(personalVariable);  // presupuesto diario sin fijos
   document.getElementById('countMoves').textContent = `${savedToday.length} movimiento${savedToday.length === 1 ? '' : 's'}`;
 
   // Subcats filtradas según botón Personal/HC
