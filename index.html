@@ -365,6 +365,7 @@
           <button onclick="abrirEditorMetas()" style="font-size:.72rem;padding:4px 11px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:7px;color:var(--accent);cursor:pointer">Editar</button>
         </div>
         <div id="metasList"></div>
+        <div class="tiny muted" style="margin-top:6px;opacity:.7">Refleja tus espacios de ahorro del banco. Toca "↻ Saldo real" al mover plata.</div>
         <div id="metaSugerencia" style="margin-top:10px"></div>
       </div>
 
@@ -510,6 +511,36 @@
         <button onclick="guardarLimiteTC()">Actualizar límite</button>
       </div>
       <div class="tiny muted" style="margin-top:6px">Actualiza tu deuda cuando llegue el estado de cuenta. Tu límite personal es S/2000.</div>
+    </div>
+
+    <div class="tc-deuda-wrap" id="debitoWrap" style="margin-top:14px">
+      <div class="tc-deuda-header">
+        <span class="tc-deuda-title">🟢 Débito disponible</span>
+        <span class="tc-deuda-vence" id="debitoActualizado"></span>
+      </div>
+      <div class="tc-deuda-nums">
+        <div>
+          <div class="tiny muted">Te queda ahora</div>
+          <div class="tc-deuda-total" id="debitoDisponible" style="color:var(--good)">S/ 0</div>
+        </div>
+        <div style="text-align:right">
+          <div class="tiny muted">Gastado este mes (débito/efectivo/Yape)</div>
+          <div style="font-size:1rem;font-weight:700;color:var(--muted)" id="debitoGastadoMes">S/ 0</div>
+        </div>
+      </div>
+      <div class="tc-split-bar">
+        <div id="debitoBarLleno" style="height:100%;width:100%;background:var(--good);border-radius:999px 0 0 999px;transition:width .7s"></div>
+        <div id="debitoBarVacio" style="height:100%;width:0%"></div>
+      </div>
+      <div class="tc-split-labels">
+        <span class="good"><strong id="debitoLabelIzq"></strong></span>
+        <span class="tiny muted"><strong id="debitoLabelDer"></strong></span>
+      </div>
+      <div class="tc-edit-row" style="margin-top:10px">
+        <input type="number" id="debitoInput" placeholder="Saldo real de mi débito (S/)" step="0.01"/>
+        <button onclick="guardarDebito()">Actualizar saldo</button>
+      </div>
+      <div class="tiny muted" style="margin-top:6px">Radar resta tus gastos en débito, efectivo y Yape. Corrige con el saldo real cuando recargues o saques del cajero.</div>
     </div>
 
     <!-- RESUMEN DEUDAS -->
@@ -850,7 +881,7 @@ function switchTab(tabId) {
   const view = document.getElementById(tabId);
   if (view) view.classList.add('active');
   if (tabId === 'hoy')      { setViewDate(viewDate || todayISO()); }
-  if (tabId === 'finanzas') { renderHistorial(currentPeriod); preLlenarLimites(); renderDeudasFinanzas(); }
+  if (tabId === 'finanzas') { renderHistorial(currentPeriod); preLlenarLimites(); renderDeudasFinanzas(); renderDeudaTC(); renderDebito(); }
   if (tabId === 'fijos')    { cargarFijosYPrestamosDesdeSheets(); }
   if (tabId === 'proyectos'){ renderProyectosHC(); }
   if (tabId === 'informe')  { renderInformeCompleto(); }
@@ -1753,6 +1784,10 @@ function backendCall(action, params) {
         case 'guardarProyecto':      runner.guardarProyectoJS(params);     break;
         case 'eliminarProyecto':     runner.eliminarProyectoJS(params);    break;
         case 'getCalendar':          runner.getCalendarJS(params);         break;
+        case 'getMetas':             runner.getMetasJS(params);            break;
+        case 'guardarMetas':         runner.guardarMetasJS(params);        break;
+        case 'getConfig':            runner.getConfigJS(params);           break;
+        case 'guardarConfig':        runner.guardarConfigJS(params);       break;
         default: reject(new Error('Accion no reconocida: ' + action));
       }
     } else {
@@ -2185,11 +2220,76 @@ function preLlenarLimites() {
   document.getElementById('editTCDeuda').placeholder     = 'Actual: S/ ' + deuda;
 }
 
+// ─────────────────────────────────────────────
+// DÉBITO DISPONIBLE — pozo de efectivo/Yape/débito
+// Modelo: saldo base + fecha. Radar resta gastos no-TC posteriores.
+// ─────────────────────────────────────────────
+const DEBITO_SALDO_KEY = 'radar_debito_saldo';
+const DEBITO_FECHA_KEY = 'radar_debito_fecha';
+
+function guardarDebito() {
+  const input = document.getElementById('debitoInput');
+  const val   = parseFloat(input.value);
+  if (isNaN(val) || val < 0) return;
+  localStorage.setItem(DEBITO_SALDO_KEY, val.toString());
+  localStorage.setItem(DEBITO_FECHA_KEY, todayISO());
+  backendCall('guardarConfig', { clave:'debito_saldo', valor:val.toString() }).catch(function(){});
+  backendCall('guardarConfig', { clave:'debito_fecha', valor:todayISO() }).catch(function(){});
+  input.value = '';
+  renderDebito();
+  kaxSay('Saldo de débito actualizado: ' + money(val) + '. Radar lo irá restando.', 'happy', 3500);
+}
+
+function renderDebito() {
+  const saldoBase = parseFloat(localStorage.getItem(DEBITO_SALDO_KEY) || '0');
+  const fechaBase = localStorage.getItem(DEBITO_FECHA_KEY) || '';
+
+  // Sumar gastos NO-TC desde la fecha base (débito/efectivo/Yape/Plin/bancos)
+  const movMes = getAllMovesForPeriod('mes');
+  const gastadoDesdeBase = movMes.filter(m => {
+    if (m.account === 'TC') return false;       // TC no toca el débito
+    if (m.type === 'Hot and Cold') return false; // HC no es gasto personal de débito
+    if (fechaBase && m.fechaMov && m.fechaMov < fechaBase) return false; // solo posteriores al saldo base
+    return true;
+  }).reduce((a,b) => a + b.amount, 0);
+
+  const disponible = Math.max(saldoBase - gastadoDesdeBase, 0);
+  const pct = saldoBase > 0 ? Math.min((disponible / saldoBase) * 100, 100) : 0;
+
+  const elDisp = document.getElementById('debitoDisponible');
+  const elGast = document.getElementById('debitoGastadoMes');
+  const elAct  = document.getElementById('debitoActualizado');
+  const elLleno= document.getElementById('debitoBarLleno');
+  const elVacio= document.getElementById('debitoBarVacio');
+  const elIzq  = document.getElementById('debitoLabelIzq');
+  const elDer  = document.getElementById('debitoLabelDer');
+  const wrap   = document.getElementById('debitoWrap');
+
+  if (elDisp) {
+    elDisp.textContent = money(disponible);
+    elDisp.style.color = disponible < saldoBase * 0.2 ? 'var(--bad)' : disponible < saldoBase * 0.5 ? 'var(--warn)' : 'var(--good)';
+  }
+  if (elGast) elGast.textContent = money(gastadoDesdeBase);
+  if (elAct)  elAct.textContent  = fechaBase ? ('Base: ' + fechaBase) : 'Sin saldo registrado';
+
+  if (elLleno) {
+    elLleno.style.width = pct.toFixed(1) + '%';
+    elLleno.style.background = disponible < saldoBase * 0.2 ? 'var(--bad)' : disponible < saldoBase * 0.5 ? 'var(--warn)' : 'var(--good)';
+  }
+  if (elVacio) elVacio.style.width = (100 - pct).toFixed(1) + '%';
+
+  if (elIzq) elIzq.textContent = money(disponible) + ' disponible';
+  if (elDer) elDer.textContent = 'Base: ' + money(saldoBase);
+
+  if (wrap) wrap.style.borderColor = (saldoBase > 0 && disponible < saldoBase * 0.2) ? 'rgba(217,107,118,.6)' : 'var(--line)';
+}
+
 function guardarDeudaTC() {
   const input = document.getElementById('tcDeudaInput');
   const val   = parseFloat(input.value);
   if (isNaN(val) || val < 0) return;
   localStorage.setItem(TC_DEUDA_KEY, val.toString());
+  backendCall('guardarConfig', { clave:'tc_deuda', valor:val.toString() }).catch(function(){});
   input.value = '';
   renderDeudaTC();
   kaxSay('Deuda TC actualizada. Mantén el control.', 'alert', 3000);
@@ -2200,6 +2300,7 @@ function guardarLimiteTC() {
   const val   = parseFloat(input.value);
   if (isNaN(val) || val <= 0) return;
   localStorage.setItem('radar_tc_limite', val.toString());
+  backendCall('guardarConfig', { clave:'tc_limite', valor:val.toString() }).catch(function(){});
   input.value = '';
   renderDeudaTC();
   kaxSay('Límite personal TC actualizado a S/' + val + '.', 'happy', 3000);
@@ -3664,6 +3765,22 @@ function getMetas() {
 
 function saveMetas(metas) {
   localStorage.setItem(METAS_KEY, JSON.stringify(metas));
+  // Sincronizar a Sheets (no bloquea la UI)
+  backendCall('guardarMetas', { metas: JSON.stringify(metas) }).catch(function(){});
+}
+
+// Trae metas desde Sheets y actualiza localStorage + UI
+function syncMetasDesdeSheets() {
+  backendCall('getMetas', {}).then(function(res){
+    if (res && res.ok && Array.isArray(res.metas) && res.metas.length) {
+      localStorage.setItem(METAS_KEY, JSON.stringify(res.metas));
+      renderMetas();
+    } else if (res && res.ok && res.metas && res.metas.length === 0) {
+      // Sheets vacío: subir las metas locales (primera vez)
+      const locales = getMetas();
+      if (locales.length) backendCall('guardarMetas', { metas: JSON.stringify(locales) }).catch(function(){});
+    }
+  }).catch(function(){});
 }
 
 function renderMetas() {
@@ -3694,9 +3811,35 @@ function renderMetas() {
       +   '<span class="meta-cifra">' + cifra + '</span>'
       + '</div>'
       + '<div class="meta-track"><div class="meta-fill" style="width:' + pct.toFixed(1) + '%;background:' + (m.color||'var(--accent)') + '"></div></div>'
-      + '<div class="meta-pct" style="color:' + (m.color||'var(--accent)') + '">' + pct.toFixed(0) + '%</div>'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:3px">'
+      +   '<button onclick="actualizarSaldoMeta(\'' + m.id + '\')" style="font-size:.68rem;padding:2px 9px;background:var(--panel-2);border:1px solid var(--line);border-radius:6px;color:var(--muted);cursor:pointer">↻ Saldo real</button>'
+      +   '<span class="meta-pct" style="color:' + (m.color||'var(--accent)') + ';margin:0">' + pct.toFixed(0) + '%</span>'
+      + '</div>'
       + '</div>';
   }).join('');
+}
+
+// Actualizar el saldo real de una meta con lo que tienes en el banco
+function actualizarSaldoMeta(id) {
+  const metas = getMetas();
+  const m = metas.find(x => x.id === id);
+  if (!m) return;
+  const etiqueta = m.tipo === 'deuda' ? 'pagado hasta ahora' : 'tienes en este espacio';
+  const val = prompt('💳 ' + m.nombre + '\n\n¿Cuánto ' + etiqueta + ' según tu banco?\n(escribe el saldo real)', m.acumulado);
+  if (val === null) return;
+  const num = parseFloat(val);
+  if (isNaN(num) || num < 0) return;
+  m.acumulado = Math.round(num * 100) / 100;
+  saveMetas(metas);
+  if (m.tipo === 'deuda') {
+    // Sincronizar deuda TC real: deuda restante = objetivo - pagado
+    const restante = Math.max(m.objetivo - m.acumulado, 0);
+    localStorage.setItem('radar_tc_deuda', restante.toString());
+    if (typeof renderDeudaTC === 'function') renderDeudaTC();
+  }
+  renderMetas();
+  const pct = m.objetivo > 0 ? Math.min((m.acumulado/m.objetivo)*100,100) : 0;
+  kaxSay(m.nombre + ' actualizado: ' + pct.toFixed(0) + '%. Refleja tu banco.', 'happy', 3500);
 }
 
 // Sugerir asignar el excedente del mes a una meta (mezcla: sugiere, tú confirmas)
@@ -3723,11 +3866,10 @@ function renderMetaSugerencia(saldo) {
   const monto = Math.round(saldo);
 
   box.innerHTML = '<div class="meta-sug">'
-    + 'Tienes <strong>' + money(monto) + '</strong> de excedente este mes. '
-    + '¿Lo destinas a <strong>' + (sugerida.emoji||'') + ' ' + sugerida.nombre + '</strong>?'
+    + 'Este mes te sobró <strong>' + money(monto) + '</strong>. '
+    + 'Buen momento para mover algo a <strong>' + (sugerida.emoji||'') + ' ' + sugerida.nombre + '</strong> en tu banco.'
     + '<div class="meta-sug-btns">'
-    +   '<button class="meta-sug-btn primary" onclick="asignarAMeta(\'' + sugerida.id + '\',' + monto + ')">Sí, asignar ' + money(monto) + '</button>'
-    +   '<button class="meta-sug-btn" onclick="abrirEditorMetas()">A otra meta</button>'
+    +   '<button class="meta-sug-btn primary" onclick="actualizarSaldoMeta(\'' + sugerida.id + '\')">Ya moví, actualizar saldo</button>'
     +   '<button class="meta-sug-btn" onclick="document.getElementById(\'metaSugerencia\').innerHTML=\'\'">Ahora no</button>'
     + '</div></div>';
 }
@@ -3820,8 +3962,24 @@ function guardarEditorMetas() {
 }
 
 
+// Trae ajustes únicos (deuda TC, débito, límite) desde Sheets
+function syncConfigDesdeSheets() {
+  backendCall('getConfig', {}).then(function(res){
+    if (!res || !res.ok || !res.config) return;
+    const c = res.config;
+    if (c.tc_deuda     !== undefined) localStorage.setItem(TC_DEUDA_KEY, c.tc_deuda);
+    if (c.tc_limite    !== undefined) localStorage.setItem('radar_tc_limite', c.tc_limite);
+    if (c.debito_saldo !== undefined) localStorage.setItem(DEBITO_SALDO_KEY, c.debito_saldo);
+    if (c.debito_fecha !== undefined) localStorage.setItem(DEBITO_FECHA_KEY, c.debito_fecha);
+    if (typeof renderDeudaTC === 'function') renderDeudaTC();
+    if (typeof renderDebito  === 'function') renderDebito();
+  }).catch(function(){});
+}
+
 // Sincronizar todo al cargar
 renderMetas();
+syncMetasDesdeSheets();
+syncConfigDesdeSheets();
 sincronizarMovimientosDesdeSheets();
 cargarFijosYPrestamosDesdeSheets();
 cargarProyectosDesdeSheets();
