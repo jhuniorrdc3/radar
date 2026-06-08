@@ -43,6 +43,18 @@
     .col2{grid-template-columns:1.2fr .8fr} .col2eq{grid-template-columns:1fr 1fr}
     .col3{grid-template-columns:repeat(3,1fr)} .col4{grid-template-columns:repeat(4,1fr)}
     .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
+    .meta-item{padding:10px 0;border-bottom:1px solid var(--line)}
+    .meta-item:last-child{border-bottom:none}
+    .meta-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px}
+    .meta-nombre{font-size:.9rem;font-weight:600;color:var(--text)}
+    .meta-cifra{font-size:.78rem;color:var(--muted)}
+    .meta-track{height:9px;border-radius:999px;background:var(--panel-3);overflow:hidden;position:relative}
+    .meta-fill{height:100%;border-radius:999px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+    .meta-pct{font-size:.7rem;margin-top:3px;text-align:right}
+    .meta-sug{background:var(--accent-dim);border:1px solid var(--accent);border-radius:10px;padding:10px 12px;font-size:.82rem}
+    .meta-sug-btns{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+    .meta-sug-btn{font-size:.74rem;padding:5px 12px;border-radius:7px;border:1px solid var(--line);background:var(--panel-2);color:var(--text);cursor:pointer}
+    .meta-sug-btn.primary{background:var(--accent);color:#06201c;border-color:var(--accent);font-weight:600}
     .card h2{margin:0 0 8px;font-size:1.05rem} .card h3{margin:0 0 6px;font-size:.98rem}
     .muted{color:var(--muted)} .small{font-size:var(--sm)} .tiny{font-size:var(--xs)}
     .entry{min-height:80px;width:100%;resize:vertical;border:none;outline:none;background:var(--panel-2);color:var(--text);padding:12px 14px;border-radius:14px;line-height:1.6;transition:box-shadow .2s}
@@ -346,6 +358,16 @@
           <div class="eq-bar-msg" id="eqBarMsg"></div>
         </div>
       </div>
+
+      <div class="card" id="metasCard">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <h2 style="margin:0">🎯 Mis metas</h2>
+          <button onclick="abrirEditorMetas()" style="font-size:.72rem;padding:4px 11px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:7px;color:var(--accent);cursor:pointer">Editar</button>
+        </div>
+        <div id="metasList"></div>
+        <div id="metaSugerencia" style="margin-top:10px"></div>
+      </div>
+
       <div class="card">
         <h2>Recomendación del día</h2>
         <div class="recommend" id="recommendation">Cargando tu agenda del día…</div>
@@ -1254,6 +1276,9 @@ function renderEqBar() {
       elMsg.innerHTML = '<span style="color:#d96b76">⚠ S/' + Math.abs(saldo).toFixed(0) + ' sobre tu tope variable del mes.</span>';
     }
   }
+
+  // Sugerir asignar excedente a una meta
+  if (typeof renderMetaSugerencia === 'function') renderMetaSugerencia(saldo);
 }
 
 function renderDailyBudget(personalHoy) {
@@ -1560,6 +1585,7 @@ function setViewDate(dateStr) {
   if (titulo) titulo.textContent = isToday ? 'Movimientos de hoy' : 'Movimientos del ' + formatDateLabel(dateStr);
   renderSavedToday();
   if (typeof renderEqBar === 'function') renderEqBar();
+  if (typeof renderMetas === 'function') renderMetas();
 }
 function formatDateLabel(iso) {
   const [y,m,d] = iso.split('-');
@@ -3617,7 +3643,185 @@ function cargarProyectosDesdeSheets() {
     .catch(() => {});
 }
 
+
+// ─────────────────────────────────────────────
+// METAS — sistema de objetivos con barras de progreso
+// ─────────────────────────────────────────────
+const METAS_KEY = 'radar_metas';
+
+function getMetas() {
+  const raw = localStorage.getItem(METAS_KEY);
+  if (raw) { try { return JSON.parse(raw); } catch(e) {} }
+  // Metas por defecto la primera vez
+  const def = [
+    { id:'deuda',  emoji:'💳', nombre:'Salir de deuda TC', objetivo:4256.74, acumulado:0, tipo:'deuda',  color:'var(--bad)'  },
+    { id:'viaje',  emoji:'✈️', nombre:'Viaje en pareja',    objetivo:2000,    acumulado:0, tipo:'ahorro', color:'var(--accent)' },
+    { id:'seguro', emoji:'🛡️', nombre:'Seguro de salud',    objetivo:600,     acumulado:0, tipo:'ahorro', color:'var(--good)' }
+  ];
+  localStorage.setItem(METAS_KEY, JSON.stringify(def));
+  return def;
+}
+
+function saveMetas(metas) {
+  localStorage.setItem(METAS_KEY, JSON.stringify(metas));
+}
+
+function renderMetas() {
+  const cont = document.getElementById('metasList');
+  if (!cont) return;
+  const metas = getMetas();
+
+  if (!metas.length) {
+    cont.innerHTML = '<div class="tiny muted">Sin metas. Toca Editar para crear una.</div>';
+    return;
+  }
+
+  cont.innerHTML = metas.map(m => {
+    let pct, cifra, restante;
+    if (m.tipo === 'deuda') {
+      // Para deuda: acumulado = cuánto ya pagaste; progreso = pagado/objetivo
+      pct = m.objetivo > 0 ? Math.min((m.acumulado / m.objetivo) * 100, 100) : 0;
+      restante = Math.max(m.objetivo - m.acumulado, 0);
+      cifra = 'Faltan ' + money(restante);
+    } else {
+      pct = m.objetivo > 0 ? Math.min((m.acumulado / m.objetivo) * 100, 100) : 0;
+      cifra = money(m.acumulado) + ' / ' + money(m.objetivo);
+    }
+    const completa = pct >= 100;
+    return '<div class="meta-item">'
+      + '<div class="meta-head">'
+      +   '<span class="meta-nombre">' + (m.emoji||'🎯') + ' ' + m.nombre + (completa ? ' ✓' : '') + '</span>'
+      +   '<span class="meta-cifra">' + cifra + '</span>'
+      + '</div>'
+      + '<div class="meta-track"><div class="meta-fill" style="width:' + pct.toFixed(1) + '%;background:' + (m.color||'var(--accent)') + '"></div></div>'
+      + '<div class="meta-pct" style="color:' + (m.color||'var(--accent)') + '">' + pct.toFixed(0) + '%</div>'
+      + '</div>';
+  }).join('');
+}
+
+// Sugerir asignar el excedente del mes a una meta (mezcla: sugiere, tú confirmas)
+function renderMetaSugerencia(saldo) {
+  const box = document.getElementById('metaSugerencia');
+  if (!box) return;
+  const metas = getMetas();
+
+  // Solo sugiere si hay excedente real y metas sin completar
+  const pendientes = metas.filter(m => {
+    if (m.tipo === 'deuda') return m.acumulado < m.objetivo;
+    return m.acumulado < m.objetivo;
+  });
+
+  if (saldo <= 5 || !pendientes.length) { box.innerHTML = ''; return; }
+
+  // Prioridad: deuda primero, luego la de menor % de avance
+  pendientes.sort((a,b) => {
+    if (a.tipo === 'deuda' && b.tipo !== 'deuda') return -1;
+    if (b.tipo === 'deuda' && a.tipo !== 'deuda') return 1;
+    return (a.acumulado/a.objetivo) - (b.acumulado/b.objetivo);
+  });
+  const sugerida = pendientes[0];
+  const monto = Math.round(saldo);
+
+  box.innerHTML = '<div class="meta-sug">'
+    + 'Tienes <strong>' + money(monto) + '</strong> de excedente este mes. '
+    + '¿Lo destinas a <strong>' + (sugerida.emoji||'') + ' ' + sugerida.nombre + '</strong>?'
+    + '<div class="meta-sug-btns">'
+    +   '<button class="meta-sug-btn primary" onclick="asignarAMeta(\'' + sugerida.id + '\',' + monto + ')">Sí, asignar ' + money(monto) + '</button>'
+    +   '<button class="meta-sug-btn" onclick="abrirEditorMetas()">A otra meta</button>'
+    +   '<button class="meta-sug-btn" onclick="document.getElementById(\'metaSugerencia\').innerHTML=\'\'">Ahora no</button>'
+    + '</div></div>';
+}
+
+function asignarAMeta(id, monto) {
+  const metas = getMetas();
+  const m = metas.find(x => x.id === id);
+  if (!m) return;
+  m.acumulado = Math.round((Number(m.acumulado) + Number(monto)) * 100) / 100;
+  saveMetas(metas);
+  // Si es deuda, también reducir la deuda TC real
+  if (m.tipo === 'deuda') {
+    const deudaActual = parseFloat(localStorage.getItem('radar_tc_deuda') || '4256.74');
+    const nueva = Math.max(deudaActual - monto, 0);
+    localStorage.setItem('radar_tc_deuda', nueva.toString());
+    if (typeof renderDeudaTC === 'function') renderDeudaTC();
+  }
+  renderMetas();
+  document.getElementById('metaSugerencia').innerHTML = '';
+  const pct = m.objetivo > 0 ? Math.min((m.acumulado/m.objetivo)*100,100) : 0;
+  kaxSay('+' + money(monto) + ' a ' + m.nombre + '. Vas ' + pct.toFixed(0) + '%. Sigue así.', 'happy', 4000);
+}
+
+// Editor de metas (nombre, objetivo, acumulado editables)
+function abrirEditorMetas() {
+  const metas = getMetas();
+  const rows = metas.map((m, i) =>
+    '<div style="border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px">'
+    + '<div style="display:flex;gap:6px;margin-bottom:6px">'
+    +   '<input id="me_emoji_'+i+'" value="'+(m.emoji||'')+'" style="width:42px;text-align:center;padding:6px;background:var(--panel-3);border:1px solid var(--line);border-radius:7px;color:var(--text)">'
+    +   '<input id="me_nombre_'+i+'" value="'+m.nombre.replace(/"/g,'&quot;')+'" style="flex:1;padding:6px 8px;background:var(--panel-3);border:1px solid var(--line);border-radius:7px;color:var(--text)">'
+    + '</div>'
+    + '<div style="display:flex;gap:6px;align-items:center">'
+    +   '<label style="font-size:.7rem;color:var(--muted);flex:1">Objetivo<br><input id="me_obj_'+i+'" type="number" value="'+m.objetivo+'" style="width:100%;padding:6px;background:var(--panel-3);border:1px solid var(--line);border-radius:7px;color:var(--text)"></label>'
+    +   '<label style="font-size:.7rem;color:var(--muted);flex:1">Acumulado<br><input id="me_acum_'+i+'" type="number" value="'+m.acumulado+'" style="width:100%;padding:6px;background:var(--panel-3);border:1px solid var(--line);border-radius:7px;color:var(--text)"></label>'
+    +   '<button onclick="borrarMeta('+i+')" style="align-self:flex-end;background:none;border:none;color:var(--bad);cursor:pointer;font-size:1.1rem;padding:6px">×</button>'
+    + '</div>'
+    + '<div style="font-size:.68rem;color:var(--muted);margin-top:4px">Tipo: '+(m.tipo==='deuda'?'Deuda (cuenta lo pagado)':'Ahorro')+'</div>'
+    + '</div>'
+  ).join('');
+
+  const overlay = document.createElement('div');
+  overlay.id = 'metasEditorOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  overlay.innerHTML = '<div style="background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;max-width:460px;width:100%;max-height:85vh;overflow-y:auto">'
+    + '<h2 style="margin:0 0 12px">Editar metas</h2>'
+    + '<div id="metasEditorRows">' + rows + '</div>'
+    + '<button onclick="agregarMetaVacia()" style="width:100%;padding:9px;background:var(--panel-2);border:1px dashed var(--line);border-radius:9px;color:var(--muted);cursor:pointer;margin-bottom:10px">+ Nueva meta</button>'
+    + '<div style="display:flex;gap:8px">'
+    +   '<button onclick="guardarEditorMetas()" style="flex:1;padding:11px;background:var(--accent);border:none;border-radius:10px;color:#06201c;font-weight:700;cursor:pointer">Guardar</button>'
+    +   '<button onclick="document.getElementById(\'metasEditorOverlay\').remove()" style="flex:1;padding:11px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;color:var(--text);cursor:pointer">Cancelar</button>'
+    + '</div></div>';
+  document.body.appendChild(overlay);
+}
+
+function agregarMetaVacia() {
+  const metas = getMetas();
+  metas.push({ id:'meta_'+Date.now(), emoji:'🎯', nombre:'Nueva meta', objetivo:1000, acumulado:0, tipo:'ahorro', color:'var(--accent)' });
+  saveMetas(metas);
+  document.getElementById('metasEditorOverlay')?.remove();
+  abrirEditorMetas();
+}
+
+function borrarMeta(i) {
+  if (!confirm('¿Borrar esta meta?')) return;
+  const metas = getMetas();
+  metas.splice(i, 1);
+  saveMetas(metas);
+  document.getElementById('metasEditorOverlay')?.remove();
+  abrirEditorMetas();
+  renderMetas();
+}
+
+function guardarEditorMetas() {
+  const metas = getMetas();
+  metas.forEach((m, i) => {
+    const emoji  = document.getElementById('me_emoji_'+i)?.value.trim();
+    const nombre = document.getElementById('me_nombre_'+i)?.value.trim();
+    const obj    = parseFloat(document.getElementById('me_obj_'+i)?.value);
+    const acum   = parseFloat(document.getElementById('me_acum_'+i)?.value);
+    if (emoji  !== undefined) m.emoji = emoji || '🎯';
+    if (nombre) m.nombre = nombre;
+    if (!isNaN(obj)  && obj  >= 0) m.objetivo  = obj;
+    if (!isNaN(acum) && acum >= 0) m.acumulado = acum;
+  });
+  saveMetas(metas);
+  document.getElementById('metasEditorOverlay')?.remove();
+  renderMetas();
+  kaxSay('Metas actualizadas.', 'happy', 2500);
+}
+
+
 // Sincronizar todo al cargar
+renderMetas();
 sincronizarMovimientosDesdeSheets();
 cargarFijosYPrestamosDesdeSheets();
 cargarProyectosDesdeSheets();
