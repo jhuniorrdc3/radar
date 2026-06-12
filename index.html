@@ -1667,8 +1667,13 @@ function renderSavedToday() {
     if (m.type === 'Hot and Cold') { hc += m.amount; byProject[m.project] = (byProject[m.project] || 0) + m.amount; }
     else {
       personal += m.amount;
-      // Para el presupuesto diario: excluir fijos (por flag o por subcategoría 'fijo')
-      if (!m.fromFijo && m.subcat !== 'fijo') personalVariable += m.amount;
+      // Para el presupuesto diario: excluir fijos por flag, subcategoría O nombre de compromiso
+      const descLow = (m.description || '').toLowerCase().trim();
+      const esFijoPorNombre = fijos.some(f => {
+        const nf = (f.nombre || '').toLowerCase().trim();
+        return nf && (descLow === nf || descLow.includes(nf) || nf.includes(descLow));
+      });
+      if (!m.fromFijo && m.subcat !== 'fijo' && !esFijoPorNombre) personalVariable += m.amount;
     }
     if (m.account === 'TC') tc += m.amount;
 
