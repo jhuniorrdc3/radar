@@ -422,7 +422,7 @@
           <div class="subcat" id="sbr-farmacia"><span class="sc-name">💊 Farmacia</span><div class="sc-track"><div class="sc-fill" id="scf-farmacia" style="width:0%"></div></div><span class="sc-val" id="sc-farmacia">S/ 0</span></div>
           <div class="subcat" id="sbr-ropa"><span class="sc-name">👗 Ropa</span><div class="sc-track"><div class="sc-fill" id="scf-ropa" style="width:0%"></div></div><span class="sc-val" id="sc-ropa">S/ 0</span></div>
           <div class="subcat" id="sbr-salud"><span class="sc-name">🏋️ Salud</span><div class="sc-track"><div class="sc-fill" id="scf-salud" style="width:0%"></div></div><span class="sc-val" id="sc-salud">S/ 0</span></div>
-          <div class="subcat" id="sbr-suscripciones"><span class="sc-name">🔔 Suscr.</span><div class="sc-track"><div class="sc-fill" id="scf-suscripciones" style="width:0%"></div></div><span class="sc-val" id="sc-suscripciones">S/ 0</span></div>
+          <div class="subcat" id="sbr-fijo"><span class="sc-name">📌 Fijo</span><div class="sc-track"><div class="sc-fill" id="scf-fijo" style="width:0%"></div></div><span class="sc-val" id="sc-fijo">S/ 0</span></div>
           <div class="subcat" id="sbr-cuidado"><span class="sc-name">💈 Cuidado</span><div class="sc-track"><div class="sc-fill" id="scf-cuidado" style="width:0%"></div></div><span class="sc-val" id="sc-cuidado">S/ 0</span></div>
           <div class="subcat" id="sbr-otros"><span class="sc-name">❓ Otros</span><div class="sc-track"><div class="sc-fill" id="scf-otros" style="width:0%"></div></div><span class="sc-val" id="sc-otros">S/ 0</span></div>
         </div>
@@ -749,7 +749,7 @@
           <option value="mercado">Mercado</option>
           <option value="salud">Salud</option>
           <option value="snacks">Snacks</option>
-          <option value="suscripciones">Suscripciones</option>
+          <option value="fijo">Fijo</option>
           <option value="cuidado">Cuidado personal</option>
           <option value="otros">Otros</option>
         </select>
@@ -814,7 +814,7 @@
           <option value="mercado">Mercado</option>
           <option value="salud">Salud</option>
           <option value="snacks">Snacks</option>
-          <option value="suscripciones">Suscripciones</option>
+          <option value="fijo">Fijo</option>
           <option value="cuidado">Cuidado personal</option>
           <option value="otros">Otros</option>
         </select>
@@ -1399,7 +1399,7 @@ function detectProject(t) {
 function detectSubcat(t) {
   const l = t.toLowerCase();
   if (/café|cafe|cappuccino|americano/.test(l))         return 'cafe';
-  if (/suscripci[oó]n|perplexity|claude|chatgpt|netflix|spotify|amazon|prime|youtube|premium|adobe|canva|notion|figma|dropbox|icloud|plan\s*mensual/.test(l)) return 'suscripciones';
+  if (/suscripci[oó]n|perplexity|claude|chatgpt|netflix|spotify|amazon|prime|youtube|premium|adobe|canva|notion|figma|dropbox|icloud|seguro|alquiler|cuarto|movistar|claro|internet|luz|agua|plan\s*mensual|fijo/.test(l)) return 'fijo';
   if (/galleta|choc|doritos|papas\s*fritas|pringles|snack|chifles|wafer|golosina|caramelo|gomita|oreo|chips/.test(l)) return 'snacks';
   if (/barberia|barbero|peluquer|corte\s*de\s*cabello|spa|manicur|pedicur|depilac|cosm[eé]tico|perfume|shampoo|cuidado\s*personal/.test(l)) return 'cuidado';
   // FIX 4: abarrotes antes que comida para que bodega/palta/fideos no caigan en comida
@@ -1656,7 +1656,7 @@ function renderSavedToday() {
   const list = document.getElementById('movementList');
   list.innerHTML = '';
 
-  const subcats = {comida:0,transporte:0,cafe:0,farmacia:0,ropa:0,ocio:0,mercado:0,salud:0,snacks:0,suscripciones:0,cuidado:0,otros:0};
+  const subcats = {comida:0,transporte:0,cafe:0,farmacia:0,ropa:0,ocio:0,mercado:0,salud:0,snacks:0,fijo:0,cuidado:0,otros:0};
   let total = 0, hc = 0, personal = 0, personalVariable = 0, tc = 0;
   const byProject = {};
 
@@ -1667,8 +1667,8 @@ function renderSavedToday() {
     if (m.type === 'Hot and Cold') { hc += m.amount; byProject[m.project] = (byProject[m.project] || 0) + m.amount; }
     else {
       personal += m.amount;
-      // Para el presupuesto diario: excluir pagos de fijos (no son gasto variable)
-      if (!m.fromFijo) personalVariable += m.amount;
+      // Para el presupuesto diario: excluir fijos (por flag o por subcategoría 'fijo')
+      if (!m.fromFijo && m.subcat !== 'fijo') personalVariable += m.amount;
     }
     if (m.account === 'TC') tc += m.amount;
 
@@ -2499,7 +2499,7 @@ function renderHistorial(period) {
   const moves = currentHistFilter === 'personal' ? allMoves.filter(m => m.type === 'Personal')
               : currentHistFilter === 'hc'       ? allMoves.filter(m => m.type === 'Hot and Cold')
               : allMoves;
-  const subcats = {comida:0,transporte:0,cafe:0,farmacia:0,ropa:0,ocio:0,mercado:0,salud:0,snacks:0,suscripciones:0,cuidado:0,otros:0};
+  const subcats = {comida:0,transporte:0,cafe:0,farmacia:0,ropa:0,ocio:0,mercado:0,salud:0,snacks:0,fijo:0,cuidado:0,otros:0};
   let totalP = 0, totalHC = 0;
 
   moves.forEach(m => {
@@ -2509,7 +2509,7 @@ function renderHistorial(period) {
     if (m.subcat && subcats[m.subcat] !== undefined) subcats[m.subcat] += m.amount;
   });
 
-  const subNames = {comida:'🍽️ Comida',transporte:'🚕 Transp.',cafe:'☕ Café',farmacia:'💊 Farmac.',ropa:'👗 Ropa',ocio:'💑 Ocio',mercado:'🛒 Mercado',salud:'🏋️ Salud',snacks:'🍫 Snacks',suscripciones:'🔔 Suscr.',cuidado:'💈 Cuidado',otros:'❓ Otros'};
+  const subNames = {comida:'🍽️ Comida',transporte:'🚕 Transp.',cafe:'☕ Café',farmacia:'💊 Farmac.',ropa:'👗 Ropa',ocio:'💑 Ocio',mercado:'🛒 Mercado',salud:'🏋️ Salud',snacks:'🍫 Snacks',fijo:'📌 Fijo',cuidado:'💈 Cuidado',otros:'❓ Otros'};
   const subcatsEl = document.getElementById('histSubcats');
   if (subcatsEl) {
     const sorted = Object.entries(subcats).sort((a,b) => b[1]-a[1]);
@@ -2606,6 +2606,34 @@ document.getElementById('addFijoBtn').addEventListener('click', async () => {
 function getFijosPagados() {
   return JSON.parse(localStorage.getItem('radar_fijos_pagados') || '{}');
 }
+
+function saveFijosPagados(pagados) {
+  localStorage.setItem('radar_fijos_pagados', JSON.stringify(pagados));
+  // Empujar a Sheets (mes actual como clave para reset mensual)
+  const mesActual = todayISO().slice(0,7);
+  backendCall('guardarConfig', { clave:'fijos_pagados_' + mesActual, valor: JSON.stringify(pagados) }).catch(function(){});
+}
+
+// Trae fijos pagados de Sheets y los fusiona (UNIÓN) con los locales
+function syncFijosPagadosDesdeSheets() {
+  const mesActual = todayISO().slice(0,7);
+  backendCall('getConfig', {}).then(function(res){
+    if (!res || !res.ok || !res.config) return;
+    const raw = res.config['fijos_pagados_' + mesActual];
+    if (!raw) return;
+    let remotos;
+    try { remotos = JSON.parse(raw); } catch(e) { return; }
+    const locales = getFijosPagados();
+    // UNIÓN: si está pagado en cualquiera de los dos, queda pagado
+    const union = Object.assign({}, remotos, locales);
+    // Pero los locales pueden tener desmarcados que en remoto siguen — priorizar lo que exista
+    Object.keys(remotos).forEach(k => { if (!(k in union)) union[k] = remotos[k]; });
+    localStorage.setItem('radar_fijos_pagados', JSON.stringify(union));
+    // Subir la unión para que ambos queden iguales
+    backendCall('guardarConfig', { clave:'fijos_pagados_' + mesActual, valor: JSON.stringify(union) }).catch(function(){});
+    if (typeof renderFijos === 'function') renderFijos();
+  }).catch(function(){});
+}
 async function toggleFijoPagado(idx) {
   const pagados = getFijosPagados();
   const key = fijos[idx]?.movId || String(idx);
@@ -2642,7 +2670,7 @@ async function toggleFijoPagado(idx) {
     pagados[key] = { fecha: new Date().toISOString().slice(0,10), gastoMovId: null, gastoTs: null };
   }
 
-  localStorage.setItem('radar_fijos_pagados', JSON.stringify(pagados));
+  saveFijosPagados(pagados);
   renderFijos();
   if (typeof renderSemaforo === 'function') renderSemaforo();
   if (typeof renderSavedToday === 'function') renderSavedToday();
@@ -2702,7 +2730,7 @@ async function cargarFijoComoGasto(idx) {
 
   const hoy    = todayISO();
   const lsKey  = 'radar_today_' + hoy;
-  const subcat = detectSubcat(f.nombre.toLowerCase());
+  const subcat = 'fijo';  // todo pago desde Compromisos es subcategoría fijo
 
   const nuevo = {
     description: f.nombre,
@@ -2736,7 +2764,7 @@ async function cargarFijoComoGasto(idx) {
   const pagados = getFijosPagados();
   const key = f.movId || String(idx);
   pagados[key] = { fecha: hoy, gastoMovId: nuevo.movId, gastoTs: nuevo.ts };
-  localStorage.setItem('radar_fijos_pagados', JSON.stringify(pagados));
+  saveFijosPagados(pagados);
 
   renderFijos();
   renderSemaforo();
@@ -3976,10 +4004,26 @@ function syncConfigDesdeSheets() {
   }).catch(function(){});
 }
 
+// Migración única: subcat 'suscripciones' → 'fijo'
+function migrarSuscripcionesAFijo() {
+  if (localStorage.getItem('radar_migr_fijo_v1')) return; // ya migrado
+  Object.keys(localStorage).filter(k => k.startsWith('radar_today_')).forEach(k => {
+    let movs;
+    try { movs = JSON.parse(localStorage.getItem(k)); } catch(e) { return; }
+    if (!Array.isArray(movs)) return;
+    let cambio = false;
+    movs.forEach(m => { if (m.subcat === 'suscripciones') { m.subcat = 'fijo'; cambio = true; } });
+    if (cambio) localStorage.setItem(k, JSON.stringify(movs));
+  });
+  localStorage.setItem('radar_migr_fijo_v1', '1');
+}
+
 // Sincronizar todo al cargar
+migrarSuscripcionesAFijo();
 renderMetas();
 syncMetasDesdeSheets();
 syncConfigDesdeSheets();
+syncFijosPagadosDesdeSheets();
 sincronizarMovimientosDesdeSheets();
 cargarFijosYPrestamosDesdeSheets();
 cargarProyectosDesdeSheets();
