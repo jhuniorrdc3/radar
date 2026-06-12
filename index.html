@@ -1304,7 +1304,34 @@ function renderEqBar() {
     } else if (saldo > 0) {
       elMsg.innerHTML = '<span style="color:#5aab7a">✓ S/' + saldo.toFixed(0) + ' de margen acumulado este mes.</span>';
     } else {
-      elMsg.innerHTML = '<span style="color:#d96b76">⚠ S/' + Math.abs(saldo).toFixed(0) + ' sobre tu tope variable del mes.</span>';
+      // Déficit: calcular proyección de recuperación basada en el gasto de hoy
+      const deficit = Math.abs(saldo);
+      const hoyISOstr = hoy.getFullYear() + '-' + String(hoy.getMonth()+1).padStart(2,'0') + '-' + String(hoy.getDate()).padStart(2,'0');
+      const movsHoy = lsLoad('radar_today_' + hoyISOstr, []);
+      const gastadoHoy = movsHoy.filter(m => {
+        if (m.type !== 'Personal') return false;
+        if (m.fromFijo || m.subcat === 'fijo') return false;
+        const d = (m.description||'').toLowerCase().trim();
+        for (const nf of nombresFijos) { if (nf && (d===nf || d.includes(nf) || nf.includes(d))) return false; }
+        return true;
+      }).reduce((a,b)=>a+b.amount, 0);
+
+      const margenHoy = DAILY_BUDGET - gastadoHoy; // positivo = ahorraste hoy
+
+      let extra = '';
+      if (margenHoy > 0) {
+        const dias = Math.ceil(deficit / margenHoy);
+        if (dias <= 60) {
+          extra = ' <span style="color:#5aab7a">Hoy ahorraste S/' + margenHoy.toFixed(0) + '. Si sigues así, en ~' + dias + ' día' + (dias>1?'s':'') + ' tu déficit desaparece. 💪</span>';
+        } else {
+          extra = ' <span style="color:var(--muted)">Hoy ahorraste S/' + margenHoy.toFixed(0) + '. Vas bien, sigue recortando.</span>';
+        }
+      } else if (margenHoy === DAILY_BUDGET) {
+        extra = ' <span style="color:var(--muted)">Aún sin gastos hoy. Un día bajo tu tope empieza a cerrar la brecha.</span>';
+      } else {
+        extra = ' <span style="color:var(--muted)">Hoy pasaste tu tope. Un día bajo S/' + DAILY_BUDGET + ' empieza a recuperarte.</span>';
+      }
+      elMsg.innerHTML = '<span style="color:#d96b76">⚠ S/' + deficit.toFixed(0) + ' sobre tu tope del mes.</span>' + extra;
     }
   }
 
