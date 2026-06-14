@@ -1530,6 +1530,9 @@ function splitMoves(text) {
   // FIX 6: Normalizar artefacto STT — "1. 50" → "1.50" (STT inserta espacio en decimales)
   let c = t
     .replace(/\n/g, ' ')
+    // FIX STT "X sol/soles Y" → "X.Y" : el STT parte "1.90 soles" como "un sol 90" → "1 sol 90"
+    // Captura: dígito + "sol"/"soles" + dígitos de centavos → decimal
+    .replace(/\b(\d{1,4})\s+sol(?:es)?\s+(\d{1,2})\b/gi, (m, ent, cent) => ent + '.' + (cent.length === 1 ? cent + '0' : cent))
     .replace(/(\d)\.\s+(\d)/g, '$1.$2')
     // FIX STT-DECIMAL: "750" → "7.50", "250"→"2.50" cuando va precedido de separador y es precio chico
     // Aplica cuando: número de 3 dígitos donde últimos 2 son 00/50/25/75 y el primero es 1-9
