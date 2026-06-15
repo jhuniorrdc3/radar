@@ -1502,43 +1502,68 @@ function resolverMultiplicacion(text) {
 // PROCESAMIENTO DE TEXTO / SYNC
 // ════════════════════════════════════════
 function splitMoves(text) {
-  // Convertir números escritos en palabras a dígitos
-  // Cubre los montos más comunes en gastos diarios peruanos
-  const numWords = {
-    'cero':0,'un':1,'uno':1,'una':1,'dos':2,'tres':3,'cuatro':4,'cinco':5,
-    'seis':6,'siete':7,'ocho':8,'nueve':9,'diez':10,'once':11,'doce':12,
-    'trece':13,'catorce':14,'quince':15,'dieciséis':16,'dieciseis':16,
-    'diecisiete':17,'dieciocho':18,'diecinueve':19,'veinte':20,
-    'veintiuno':21,'veintidós':22,'veintidos':22,'veintitrés':23,
-    'veintitres':23,'veinticuatro':24,'veinticinco':25,'veintiséis':26,
-    'veintiseis':26,'veintisiete':27,'veintiocho':28,'veintinueve':29,
-    'treinta':30,'cuarenta':40,'cincuenta':50,'sesenta':60,
-    'setenta':70,'ochenta':80,'noventa':90,'cien':100,'ciento':100,
-    'doscientos':200,'trescientos':300,'cuatrocientos':400,
-    'quinientos':500,'seiscientos':600,'setecientos':700,
-    'ochocientos':800,'novecientos':900,'mil':1000
-  };
-  // Reemplazar palabra numérica suelta seguida de "soles", "sol", "s/" o al final de frase
-  let t = text.replace(
-    /\b(cero|un[ao]?|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce|trece|catorce|quince|diecis[eé]is|diecisiete|dieciocho|diecinueve|veinte|veintiun[ao]?|veintid[oó]s|veintitr[eé]s|veinticuatro|veinticinco|veintis[eé]is|veintisiete|veintiocho|veintinueve|treinta|cuarenta|cincuenta|sesenta|setenta|ochenta|noventa|cien(?:to)?|doscientos|trescientos|cuatrocientos|quinientos|seiscientos|setecientos|ochocientos|novecientos|mil)\b/gi,
-    (w) => {
-      const n = numWords[w.toLowerCase()];
-      return n !== undefined ? n : w;
+  // ── Conversor de montos hablados a dígitos (forma de hablar peruana) ──
+  // Maneja: enteros compuestos ("ciento cuatro"→104, "cuatrocientos veinte"→420),
+  // decimales sin "con" ("cuatro veinte"→4.20, "diez treinta"→10.30),
+  // decimales con "con" ("cuarenta con cincuenta"→40.50, "ciento cinco con treinta"→105.30),
+  // y con "sol(es)" ("tres soles veinte"→3.20, "un sol noventa"→1.90).
+  const _units={'cero':0,'un':1,'uno':1,'una':1,'dos':2,'tres':3,'cuatro':4,'cinco':5,'seis':6,'siete':7,'ocho':8,'nueve':9,'diez':10,'once':11,'doce':12,'trece':13,'catorce':14,'quince':15,'dieciseis':16,'diecisiete':17,'dieciocho':18,'diecinueve':19,'veinte':20,'veintiuno':21,'veintidos':22,'veintitres':23,'veinticuatro':24,'veinticinco':25,'veintiseis':26,'veintisiete':27,'veintiocho':28,'veintinueve':29};
+  const _tens={'treinta':30,'cuarenta':40,'cincuenta':50,'sesenta':60,'setenta':70,'ochenta':80,'noventa':90};
+  const _hund={'cien':100,'ciento':100,'doscientos':200,'doscientas':200,'trescientos':300,'cuatrocientos':400,'quinientos':500,'seiscientos':600,'setecientos':700,'ochocientos':800,'novecientos':900,'mil':1000};
+  const _ALL=Object.assign({},_units,_tens,_hund);
+  const _norm=(w)=>w.toLowerCase().replace(/[.,;]+$/,'').replace(/[éóíáú]/g,c=>({'é':'e','ó':'o','í':'i','á':'a','ú':'u'}[c]));
+  const _isNum=(t)=>_ALL[t]!==undefined;
+  // grab: lee UN número español válido (cientos+decena+unidad en orden)
+  const _grab=(tokens,i)=>{
+    let total=0,j=i,hubo=false,fase=0;
+    while(j<tokens.length){
+      const t=tokens[j];
+      if(t==='y'&&hubo){j++;continue;}
+      if(_hund[t]!==undefined&&fase===0){total+=_hund[t];hubo=true;fase=1;j++;continue;}
+      if(_tens[t]!==undefined&&fase<=1){total+=_tens[t];hubo=true;fase=2;j++;continue;}
+      if(_units[t]!==undefined&&fase<=1){total+=_units[t];hubo=true;fase=3;j++;continue;}
+      if(_units[t]!==undefined&&_units[t]<10&&fase===2){total+=_units[t];hubo=true;fase=3;j++;continue;}
+      break;
     }
-  );
+    return hubo?{valor:total,fin:j}:null;
+  };
+  const _startsHund=(t)=>_hund[t]!==undefined;
+
+  {
+    const raw=text.split(/\s+/), tok=raw.map(_norm), out=[];
+    let i=0;
+    // detecta puntuación final pegada al token original (coma, punto)
+    const _punct=(s)=>{ const m=s.match(/[.,;]+$/); return m?m[0]:''; };
+    while(i<raw.length){
+      if(!_isNum(tok[i])){ out.push(raw[i]); i++; continue; }
+      const first=_grab(tok,i);
+      if(!first){ out.push(raw[i]); i++; continue; }
+      let j=first.fin;
+      const next=j<raw.length?tok[j]:'';
+      // "con" o "sol(es)" + centavo
+      if(next==='con'||/^sol(es)?$/.test(next)){
+        const cent=_grab(tok,j+1);
+        if(cent&&cent.valor<100){ out.push(first.valor+'.'+String(cent.valor).padStart(2,'0')+_punct(raw[cent.fin-1])); i=cent.fin; continue; }
+      }
+      // entero simple (<100, no cientos) + otro número = decimal implícito
+      if(!_startsHund(tok[i])&&first.valor<100&&j<raw.length&&_isNum(tok[j])){
+        const cent=_grab(tok,j);
+        if(cent&&cent.valor<100){ out.push(first.valor+'.'+String(cent.valor).padStart(2,'0')+_punct(raw[cent.fin-1])); i=cent.fin; continue; }
+      }
+      out.push(String(first.valor)+_punct(raw[first.fin-1])); i=j;
+    }
+    text=out.join(' ');
+  }
+  let t = text;
 
   // FIX 6: Normalizar artefacto STT — "1. 50" → "1.50" (STT inserta espacio en decimales)
   let c = t
     .replace(/\n/g, ' ')
-    // FIX STT "X sol/soles Y" → "X.Y" : el STT parte "1.90 soles" como "un sol 90" → "1 sol 90"
-    // Captura: dígito + "sol"/"soles" + dígitos de centavos → decimal
     .replace(/\b(\d{1,4})\s+sol(?:es)?\s+(\d{1,2})\b/gi, (m, ent, cent) => ent + '.' + (cent.length === 1 ? cent + '0' : cent))
-    .replace(/(\d)\.\s+(\d)/g, '$1.$2')
-    // FIX STT-DECIMAL: "750" → "7.50", "250"→"2.50" cuando va precedido de separador y es precio chico
-    // Aplica cuando: número de 3 dígitos donde últimos 2 son 00/50/25/75 y el primero es 1-9
-    .replace(/(?<![\d.])(\b[1-9])(50|25|75|00)\b(?!\.)/g, '$1.$2')
-    // "7 50" → "7.50" (STT separa los decimales con espacio)
-    .replace(/\b(\d{1,2})\s+(50|25|75|90|80|70|60|40|30|20|10)\b(?!\s*(?:soles?|s\/|\d))/gi, '$1.$2');
+    .replace(/(\d)\.\s+(\d)/g, '$1.$2');
+    // NOTA: se eliminaron los fixes STT-decimal por dígitos ("750"→"7.50", "500"→"5.00")
+    // porque rompían montos reales (500→5.00). El conversor de palabras de arriba ya
+    // maneja los decimales hablados ("siete cincuenta"→7.50). Los dígitos se respetan tal cual.
 
   // Cuenta global: SOLO si hay expresión explícita de "todo con X" / "todos yape" etc.
   // Si un ítem no menciona cuenta, es efectivo — no hereda de otros ítems.
