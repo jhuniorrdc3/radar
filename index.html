@@ -1540,6 +1540,14 @@ function splitMoves(text) {
       if(!first){ out.push(raw[i]); i++; continue; }
       let j=first.fin;
       const next=j<raw.length?tok[j]:'';
+      // "X punto Y" → decimal explícito (un dígito = decena: "nueve punto cinco"→9.50)
+      if(next==='punto'){
+        const cent=_grab(tok,j+1);
+        if(cent&&cent.valor<100){
+          const cv = cent.valor < 10 ? cent.valor*10 : cent.valor; // "cinco"→50, "noventa"→90
+          out.push(first.valor+'.'+String(cv).padStart(2,'0')+_punct(raw[cent.fin-1])); i=cent.fin; continue;
+        }
+      }
       // "con" o "sol(es)" + centavo
       if(next==='con'||/^sol(es)?$/.test(next)){
         const cent=_grab(tok,j+1);
