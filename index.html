@@ -1579,9 +1579,11 @@ function splitMoves(text) {
   const cuentaGlobal = globalMatch ? detectAccount(globalMatch[0]) : null;
 
   c = c
-    // FIX 1: "suma" y signo "+" como separadores
+    // FIX 1: "suma", "más" y signo "+" como separadores entre gastos
     .replace(/\+/g, '|||')
     .replace(/\bsuma\b/gi, '|||')
+    // "más" como separador: solo cuando separa contenido con números (evita "café más grande")
+    .replace(/\s+m[aá]s\s+(?=.*\d)/gi, '|||')
     // FIX 3: tildes — \b no funciona con é/á/ó en JS; usamos lookaround de espacio
     .replace(/(?<!\w)(adem[aá]s|tambi[eé]n|luego|y\s+luego|pero\s+tambi[eé]n|adicionalmente)(?!\w)/gi, '|||')
     // FIX 7: "y compra/gasté/pagué/tomé/almorcé/compré/fui" → split
