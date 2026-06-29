@@ -359,6 +359,35 @@
         </div>
       </div>
 
+      <div class="card" id="feedbackCard" style="grid-column:1/-1;display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h2 style="margin:0">📊 Cómo vas</h2>
+          <div style="display:flex;gap:6px">
+            <button id="fbTabHoy" onclick="setFeedbackPeriodo('hoy')" style="font-size:.72rem;padding:4px 12px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:7px;color:var(--accent);cursor:pointer">Hoy</button>
+            <button id="fbTabMes" onclick="setFeedbackPeriodo('mes')" style="font-size:.72rem;padding:4px 12px;background:var(--panel-2);border:1px solid var(--line);border-radius:7px;color:var(--muted);cursor:pointer">Mes</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
+          <div style="background:var(--panel-2);border-radius:9px;padding:10px 8px;text-align:center">
+            <div class="tiny muted">Te queda hoy</div>
+            <div id="fbQueda" style="font-size:1.15rem;font-weight:700;color:#5aab7a">S/ 0</div>
+            <div class="tiny muted" id="fbQuedaSub" style="opacity:.7">de S/ 51</div>
+          </div>
+          <div style="background:var(--panel-2);border-radius:9px;padding:10px 8px;text-align:center">
+            <div class="tiny muted" id="fbMesLabel">Mes</div>
+            <div id="fbMes" style="font-size:1.15rem;font-weight:700">S/ 0</div>
+            <div class="tiny muted" id="fbMesSub" style="opacity:.7">déficit</div>
+          </div>
+          <div style="background:var(--panel-2);border-radius:9px;padding:10px 8px;text-align:center">
+            <div class="tiny muted" id="fbGastadoLabel">Hoy</div>
+            <div id="fbGastado" style="font-size:1.15rem;font-weight:700">S/ 0</div>
+            <div class="tiny muted" style="opacity:.7">gastado</div>
+          </div>
+        </div>
+        <div class="tiny muted" id="fbChartTitle" style="margin-bottom:8px">En qué gastas más hoy</div>
+        <div id="fbChart"></div>
+      </div>
+
       <div class="card" id="metasCard">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <h2 style="margin:0">🎯 Mis metas</h2>
@@ -1716,6 +1745,103 @@ function setSubcatFiltro(f) {
 // ════════════════════════════════════════
 // VISTA: HOY
 // ════════════════════════════════════════
+// ─── FEEDBACK INMEDIATO: 3 métricas + gráfico de categorías (hoy/mes) ───
+let feedbackPeriodo = 'hoy';
+function setFeedbackPeriodo(p) {
+  feedbackPeriodo = p;
+  const tabHoy = document.getElementById('fbTabHoy');
+  const tabMes = document.getElementById('fbTabMes');
+  if (tabHoy && tabMes) {
+    const on  = 'background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent)';
+    const off = 'background:var(--panel-2);border:1px solid var(--line);color:var(--muted)';
+    tabHoy.style.cssText = 'font-size:.72rem;padding:4px 12px;border-radius:7px;cursor:pointer;' + (p==='hoy'?on:off);
+    tabMes.style.cssText = 'font-size:.72rem;padding:4px 12px;border-radius:7px;cursor:pointer;' + (p==='mes'?on:off);
+  }
+  renderFeedback();
+}
+
+function renderFeedback() {
+  const card = document.getElementById('feedbackCard');
+  if (!card) return;
+  const DAILY = parseFloat(localStorage.getItem('radar_daily_budget') || '51');
+
+  // ── Métricas del día (siempre, no dependen del toggle) ──
+  const hoyMovs = getSavedForDate(todayISO());
+  let gastadoHoyVar = 0, gastadoHoyTotal = 0;
+  hoyMovs.forEach(m => {
+    if (m.type === 'Hot and Cold') return;
+    gastadoHoyTotal += m.amount;
+    const d = (m.description||'').toLowerCase().trim();
+    const esFijo = m.fromFijo || m.subcat === 'fijo' || fijos.some(f => { const nf=(f.nombre||'').toLowerCase().trim(); return nf && (d===nf||d.includes(nf)||nf.includes(d)); });
+    if (!esFijo) gastadoHoyVar += m.amount;
+  });
+  const queda = DAILY - gastadoHoyVar;
+
+  const elQueda = document.getElementById('fbQueda');
+  if (elQueda) { elQueda.textContent = money(Math.max(queda,0)); elQueda.style.color = queda < 0 ? '#d96b76' : queda < DAILY*0.3 ? '#d9a441' : '#5aab7a'; }
+  const elQuedaSub = document.getElementById('fbQuedaSub');
+  if (elQuedaSub) elQuedaSub.textContent = queda < 0 ? ('S/' + Math.abs(queda).toFixed(0) + ' sobre tope') : ('de ' + money(DAILY));
+  const elGastado = document.getElementById('fbGastado');
+  if (elGastado) elGastado.textContent = money(gastadoHoyTotal);
+
+  // ── Déficit/ahorro del mes ──
+  const mesMovs = getAllMovesForPeriod('mes');
+  let gastadoMesVar = 0;
+  mesMovs.forEach(m => {
+    if (m.type === 'Hot and Cold') return;
+    const d = (m.description||'').toLowerCase().trim();
+    const esFijo = m.fromFijo || m.subcat === 'fijo' || fijos.some(f => { const nf=(f.nombre||'').toLowerCase().trim(); return nf && (d===nf||d.includes(nf)||nf.includes(d)); });
+    if (!esFijo) gastadoMesVar += m.amount;
+  });
+  const hoy = new Date();
+  const diasTrans = hoy.getDate();
+  const topeMes = diasTrans * DAILY;
+  const balance = topeMes - gastadoMesVar; // positivo=ahorro, negativo=déficit
+  const elMes = document.getElementById('fbMes');
+  const elMesSub = document.getElementById('fbMesSub');
+  if (elMes) {
+    if (balance >= 0) { elMes.textContent = money(balance); elMes.style.color = '#5aab7a'; if(elMesSub) elMesSub.textContent='ahorro'; }
+    else { elMes.textContent = '−' + money(Math.abs(balance)); elMes.style.color = '#d96b76'; if(elMesSub) elMesSub.textContent='déficit'; }
+  }
+
+  // ── Gráfico de categorías según toggle ──
+  const fuente = feedbackPeriodo === 'mes' ? mesMovs : hoyMovs;
+  const titulo = document.getElementById('fbChartTitle');
+  if (titulo) titulo.textContent = feedbackPeriodo === 'mes' ? 'En qué gastas más este mes' : 'En qué gastas más hoy';
+
+  const subNames = {comida:'🍽️ Comida',transporte:'🚕 Transp.',cafe:'☕ Café',farmacia:'💊 Farmac.',ropa:'👗 Ropa',ocio:'💑 Ocio',mercado:'🛒 Mercado',salud:'🏋️ Salud',snacks:'🍫 Snacks',fijo:'📌 Fijo',cuidado:'💈 Cuidado',otros:'❓ Otros'};
+  const acc = {};
+  fuente.forEach(m => {
+    if (m.type === 'Hot and Cold') return;
+    const k = m.subcat || 'otros';
+    if (k === 'fijo') return; // el gráfico de "en qué gastas" es de gasto variable, no fijos
+    acc[k] = (acc[k]||0) + m.amount;
+  });
+  const orden = Object.entries(acc).filter(([,v]) => v > 0).sort((a,b) => b[1]-a[1]).slice(0,5);
+  const max = orden.length ? orden[0][1] : 1;
+  const colores = ['#1D9E75','#5DCAA5','#9FE1CB','#c5e8db','#e1f5ee'];
+
+  const chart = document.getElementById('fbChart');
+  if (chart) {
+    if (!orden.length) {
+      chart.innerHTML = '<div class="tiny muted" style="text-align:center;padding:10px">Aún no hay gastos ' + (feedbackPeriodo==='mes'?'este mes':'hoy') + '.</div>';
+    } else {
+      chart.innerHTML = orden.map(([k,v],i) =>
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">'
+        + '<span style="font-size:.72rem;width:74px;flex-shrink:0">' + (subNames[k]||k) + '</span>'
+        + '<div style="flex:1;height:14px;background:var(--panel-2);border-radius:7px;overflow:hidden">'
+        +   '<div style="width:' + ((v/max)*100).toFixed(0) + '%;height:100%;background:' + colores[i] + ';border-radius:7px"></div>'
+        + '</div>'
+        + '<span style="font-size:.72rem;width:52px;text-align:right;flex-shrink:0">' + money(v) + '</span>'
+        + '</div>'
+      ).join('');
+    }
+  }
+
+  // Mostrar la tarjeta solo si hay algún gasto hoy o este mes
+  card.style.display = (hoyMovs.length || mesMovs.length) ? 'block' : 'none';
+}
+
 function renderSavedToday() {
   const savedToday = getSavedForDate(viewDate);
   const list = document.getElementById('movementList');
@@ -1764,6 +1890,7 @@ function renderSavedToday() {
   animateValue('totalPersonal', personal);
   animateValue('totalTC',       tc);
   renderDailyBudget(personalVariable);  // presupuesto diario sin fijos
+  if (typeof renderFeedback === 'function') renderFeedback();
   document.getElementById('countMoves').textContent = `${savedToday.length} movimiento${savedToday.length === 1 ? '' : 's'}`;
 
   // Subcats filtradas según botón Personal/HC
